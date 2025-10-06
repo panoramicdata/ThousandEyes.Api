@@ -7,14 +7,14 @@ using System.Text.Json;
 namespace ThousandEyes.Api.Infrastructure;
 
 /// <summary>
-/// HTTP message handler that converts Refit API exceptions to HaloApiExceptions
+/// HTTP message handler that converts Refit API exceptions to ThousandEyesApiExceptions
 /// </summary>
 internal sealed class ErrorHandler(ILogger? logger) : DelegatingHandler
 {
 	private readonly ILogger _logger = logger ?? NullLogger.Instance;
 
 	/// <summary>
-	/// Processes HTTP requests and converts any API exceptions to HaloApiExceptions
+	/// Processes HTTP requests and converts any API exceptions to ThousandEyesApiExceptions
 	/// </summary>
 	/// <param name="request">The HTTP request message</param>
 	/// <param name="cancellationToken">Cancellation token</param>
@@ -31,9 +31,9 @@ internal sealed class ErrorHandler(ILogger? logger) : DelegatingHandler
 			_logger.LogError(apiException, "API exception occurred: {StatusCode} {ReasonPhrase}",
 				apiException.StatusCode, apiException.ReasonPhrase);
 
-			// Convert Refit ApiException to appropriate HaloApiException
-			var haloException = ConvertToHaloApiException(apiException, request);
-			throw haloException;
+			// Convert Refit ApiException to appropriate ThousandEyesApiException
+			var thousandEyesException = ConvertToThousandEyesApiException(apiException, request);
+			throw thousandEyesException;
 		}
 		catch (Exception ex)
 		{
@@ -43,12 +43,12 @@ internal sealed class ErrorHandler(ILogger? logger) : DelegatingHandler
 	}
 
 	/// <summary>
-	/// Converts a Refit ApiException to the appropriate HaloApiException type
+	/// Converts a Refit ApiException to the appropriate ThousandEyesApiException type
 	/// </summary>
 	/// <param name="apiException">The Refit API exception</param>
 	/// <param name="request">The original HTTP request</param>
-	/// <returns>The appropriate HaloApiException</returns>
-	private static HaloApiException ConvertToHaloApiException(ApiException apiException, HttpRequestMessage request)
+	/// <returns>The appropriate ThousandEyesApiException</returns>
+	private static ThousandEyesApiException ConvertToThousandEyesApiException(ApiException apiException, HttpRequestMessage request)
 	{
 		var statusCode = (int)apiException.StatusCode;
 		var message = apiException.ReasonPhrase ?? $"API request failed with status {statusCode}";
@@ -94,7 +94,7 @@ internal sealed class ErrorHandler(ILogger? logger) : DelegatingHandler
 		// Map status codes to specific exception types
 		return statusCode switch
 		{
-			400 => new HaloBadRequestException(
+			400 => new ThousandEyesBadRequestException(
 				message: $"Bad request: {message}",
 				validationErrors: validationErrors,
 				statusCode: statusCode,
@@ -104,7 +104,7 @@ internal sealed class ErrorHandler(ILogger? logger) : DelegatingHandler
 				requestMethod: requestMethod,
 				innerException: apiException),
 
-			401 => new HaloAuthenticationException(
+			401 => new ThousandEyesAuthenticationException(
 				message: $"Authentication failed: {message}",
 				statusCode: statusCode,
 				errorCode: null,
@@ -113,7 +113,7 @@ internal sealed class ErrorHandler(ILogger? logger) : DelegatingHandler
 				requestMethod: requestMethod,
 				innerException: apiException),
 
-			403 => new HaloAuthorizationException(
+			403 => new ThousandEyesAuthorizationException(
 				message: $"Authorization failed: {message}",
 				statusCode: statusCode,
 				errorCode: null,
@@ -122,7 +122,7 @@ internal sealed class ErrorHandler(ILogger? logger) : DelegatingHandler
 				requestMethod: requestMethod,
 				innerException: apiException),
 
-			404 => new HaloNotFoundException(
+			404 => new ThousandEyesNotFoundException(
 				message: $"Resource not found: {message}",
 				resourceType: ExtractResourceTypeFromUrl(requestUrl),
 				resourceId: ExtractResourceIdFromUrl(requestUrl),
@@ -133,20 +133,11 @@ internal sealed class ErrorHandler(ILogger? logger) : DelegatingHandler
 				requestMethod: requestMethod,
 				innerException: apiException),
 
-			429 => new HaloRateLimitException(
+			429 => new ThousandEyesRateLimitException(
 				message: $"Rate limit exceeded: {message}",
-				retryAfterSeconds: ExtractRetryAfterSeconds(apiException),
-				rateLimit: null,
-				remainingRequests: null,
-				resetTime: null,
-				statusCode: statusCode,
-				errorCode: null,
-				details: details,
-				requestUrl: requestUrl,
-				requestMethod: requestMethod,
-				innerException: apiException),
+				retryAfterSeconds: ExtractRetryAfterSeconds(apiException)),
 
-			>= 500 => new HaloServerException(
+			>= 500 => new ThousandEyesServerException(
 				message: $"Server error: {message}",
 				statusCode: statusCode,
 				errorCode: null,
@@ -155,7 +146,7 @@ internal sealed class ErrorHandler(ILogger? logger) : DelegatingHandler
 				requestMethod: requestMethod,
 				innerException: apiException),
 
-			_ => new HaloApiException(
+			_ => new ThousandEyesApiException(
 				message: $"API error: {message}",
 				statusCode: statusCode,
 				errorCode: null,
@@ -192,7 +183,7 @@ internal sealed class ErrorHandler(ILogger? logger) : DelegatingHandler
 	}
 
 	/// <summary>
-	/// Extracts resource type from URL (e.g., "Tickets", "Users", "Clients")
+	/// Extracts resource type from URL (e.g., "account-groups", "users", "roles")
 	/// </summary>
 	/// <param name="url">The request URL</param>
 	/// <returns>The resource type or null if not found</returns>
@@ -206,10 +197,10 @@ internal sealed class ErrorHandler(ILogger? logger) : DelegatingHandler
 		var uri = new Uri(url);
 		var segments = uri.Segments;
 
-		// Look for /api/{resourceType} pattern
+		// Look for /v7/{resourceType} pattern for ThousandEyes API
 		for (var i = 0; i < segments.Length - 1; i++)
 		{
-			if (segments[i].Equals("api/", StringComparison.OrdinalIgnoreCase))
+			if (segments[i].Equals("v7/", StringComparison.OrdinalIgnoreCase))
 			{
 				var resourceSegment = segments[i + 1].TrimEnd('/');
 				return resourceSegment;
@@ -220,7 +211,7 @@ internal sealed class ErrorHandler(ILogger? logger) : DelegatingHandler
 	}
 
 	/// <summary>
-	/// Extracts resource ID from URL (e.g., the ID in /api/Tickets/123)
+	/// Extracts resource ID from URL (e.g., the ID in /v7/users/123)
 	/// </summary>
 	/// <param name="url">The request URL</param>
 	/// <returns>The resource ID or null if not found</returns>
@@ -234,10 +225,10 @@ internal sealed class ErrorHandler(ILogger? logger) : DelegatingHandler
 		var uri = new Uri(url);
 		var segments = uri.Segments;
 
-		// Look for /api/{resourceType}/{id} pattern
+		// Look for /v7/{resourceType}/{id} pattern for ThousandEyes API
 		for (var i = 0; i < segments.Length - 2; i++)
 		{
-			if (segments[i].Equals("api/", StringComparison.OrdinalIgnoreCase))
+			if (segments[i].Equals("v7/", StringComparison.OrdinalIgnoreCase))
 			{
 				var idSegment = segments[i + 2].TrimEnd('/');
 				return int.TryParse(idSegment, out var intId) ? intId : idSegment;

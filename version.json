@@ -1,8 +1,8 @@
 {
-	"version": "2.196",
+	"version": "7.0",
 	"versionHeightOffset": 26,
 	"publicReleaseRefSpec": [
 		"^refs/heads/main$",
-		"^refs/tags/v2\\.\\d+\\.\\d+"
+		"^refs/tags/v7\\.\\d+\\.\\d+"
 	]
 }

@@ -1,0 +1,1097 @@
+openapi: 3.0.1
+info:
+  description: |2
+
+    Event detection occurs when ThousandEyes identifies that error signals related to a component (proxy, network node, AS, server etc) have deviated from the baselines established by events.
+    * To determine this, ThousandEyes takes the test results from all accounts groups within an organization, and analyzes that data.
+    * Noisy test results (those that have too many errors in a short window) are removed until they stabilize, and the rest of the results are tagged with the components associated with that test result (for example, proxy, network, or server).
+    * Next, any increase in failures from the test results and each component helps in determining the problem domain and which component may be at fault.
+    * When this failure rate increases beyond a pre-defined threshold (set by the algorithm), an event is triggered and an email notification is sent to the user (if they've enabled email alerts).
+
+    With the Events API, you can perform the following tasks on the ThousandEyes platform:
+    * **Retrieve Events**: Obtain a list of events and detailed information for each event. For more information about events, see [Event Detection](https://docs.thousandeyes.com/product-documentation/event-detection).
+  title: Event Detection API
+  version: 7.0.63
+servers:
+- description: ThousandEyes API production URL
+  url: https://api.thousandeyes.com/v7
+security:
+- BearerAuth: []
+tags:
+- name: Events
+paths:
+  /events:
+    get:
+      description: "Retrieves a list of events within the specified time window. If\
+        \ no events are active during the specified time range, an empty response\
+        \ is returned.  **Note**: You must provide either a time window using the\
+        \ `window` parameter or specify `startDate` and `endDate`."
+      operationId: getEvents
+      parameters:
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      - description: |-
+          A dynamic time interval up to the current time of the request. Specify the interval as a number followed by an optional type: `s` for seconds (default if no type is specified), `m` for minutes, `h` for hours, `d` for days, and `w` for weeks.
+          For a precise date range, use `startDate` and `endDate`.
+        in: query
+        name: window
+        schema:
+          example: 12h
+          pattern: "^\\d+(?:[smhdw]{1})?$"
+          type: string
+      - description: "Use with the `endDate` parameter. Include the complete time\
+          \ (hours, minutes, and seconds) in UTC time zone, following the ISO 8601\
+          \ date-time format. See the example for reference. Please note that this\
+          \ parameter can't be used with `window`."
+        in: query
+        name: startDate
+        schema:
+          example: 2022-07-17T22:00:54Z
+          format: date-time
+          type: string
+      - description: "Defaults to current time the request is made. Use with the `startDate`\
+          \ parameter. Include the complete time (hours, minutes, and seconds) in\
+          \ UTC time zone, following the ISO 8601 date-time format. See the example\
+          \ for reference. Please note that this parameter can't be used with `window`."
+        in: query
+        name: endDate
+        schema:
+          example: 2022-07-18T22:00:54Z
+          format: date-time
+          type: string
+      - description: (Optional) Maximum number of objects to return.
+        in: query
+        name: max
+        schema:
+          example: 5
+          type: integer
+      - description: (Optional) Opaque cursor used for pagination. Clients should
+          use `next` value from `_links` instead of this parameter.
+        in: query
+        name: cursor
+        schema:
+          type: string
+          example: null
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/Events'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "429":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Exhausted rate limit for the organization
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+        "502":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad Gateway
+        default:
+          description: An error occurred
+      summary: List events
+      tags:
+      - Events
+  /events/{id}:
+    get:
+      description: Returns detailed information about an event using its ID.
+      operationId: getEvent
+      parameters:
+      - description: Unique event ID.
+        example: e9c3bf02-a48c-4aa8-9e5f-898800d6f569
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/EventDetail'
+          description: OK
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "429":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Exhausted rate limit for the organization
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+        "502":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad Gateway
+        default:
+          description: An error occurred
+      summary: Retrieve event
+      tags:
+      - Events
+components:
+  parameters:
+    EventId:
+      description: Unique event ID.
+      example: e9c3bf02-a48c-4aa8-9e5f-898800d6f569
+      explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        format: uuid
+        type: string
+      style: simple
+    AccountGroupId:
+      description: A unique identifier associated with your account group. You can
+        retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note that
+        you must be assigned to the target account group. Specifying this parameter
+        without being assigned to the target account group will result in an error
+        response.
+      in: query
+      name: aid
+      required: false
+      schema:
+        example: "1234"
+        type: string
+    Window:
+      description: |-
+        A dynamic time interval up to the current time of the request. Specify the interval as a number followed by an optional type: `s` for seconds (default if no type is specified), `m` for minutes, `h` for hours, `d` for days, and `w` for weeks.
+        For a precise date range, use `startDate` and `endDate`.
+      in: query
+      name: window
+      schema:
+        example: 12h
+        pattern: "^\\d+(?:[smhdw]{1})?$"
+        type: string
+    StartDateParameter:
+      description: "Use with the `endDate` parameter. Include the complete time (hours,\
+        \ minutes, and seconds) in UTC time zone, following the ISO 8601 date-time\
+        \ format. See the example for reference. Please note that this parameter can't\
+        \ be used with `window`."
+      in: query
+      name: startDate
+      schema:
+        example: 2022-07-17T22:00:54Z
+        format: date-time
+        type: string
+    EndDateParameter:
+      description: "Defaults to current time the request is made. Use with the `startDate`\
+        \ parameter. Include the complete time (hours, minutes, and seconds) in UTC\
+        \ time zone, following the ISO 8601 date-time format. See the example for\
+        \ reference. Please note that this parameter can't be used with `window`."
+      in: query
+      name: endDate
+      schema:
+        example: 2022-07-18T22:00:54Z
+        format: date-time
+        type: string
+    PaginationMax:
+      description: (Optional) Maximum number of objects to return.
+      in: query
+      name: max
+      schema:
+        example: 5
+        type: integer
+    PaginationCursor:
+      description: (Optional) Opaque cursor used for pagination. Clients should use
+        `next` value from `_links` instead of this parameter.
+      in: query
+      name: cursor
+      schema:
+        type: string
+        example: null
+  responses:
+    "400":
+      content:
+        application/problem+json:
+          example:
+            type: about:blank
+            title: Request validation failed. There are invalid or missing fields
+            status: 400
+            detail: Your request object contains invalid fields.
+            instance: /v7
+            errors:
+            - code: AM-5432
+              field: firstName
+              message: firstName cannot have fancy characters
+            - code: DASH-5622
+              field: password
+              message: Password cannot be blank
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+      description: Bad Request
+    "401":
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+      description: Unauthorized
+    "403":
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Insufficient permissions to query endpoint
+    "404":
+      content:
+        application/problem+json:
+          example:
+            type: about:blank
+            title: URI Resource Not Found
+            status: 404
+            detail: Details explaining if the 404 error is related to an invalid URI
+              or a wrong ID
+            instance: /v7
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Not found
+    "429":
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Exhausted rate limit for the organization
+    "500":
+      content:
+        application/problem+json:
+          example:
+            type: about:blank
+            title: Internal server error
+            status: 500
+            detail: Optional detail about the internal error message.
+            instance: /v7
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Internal server error
+    "502":
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Bad Gateway
+    GeneralError:
+      description: An error occurred
+  schemas:
+    Events:
+      properties:
+        aid:
+          description: A unique identifier associated with your account group. You
+            can retrieve your `AccountGroupId` from the `/account-groups` endpoint.
+          example: "1234"
+          type: string
+        startDate:
+          description: "(Optional) When passing `window` or `startDate` parameter,\
+            \  the client will also receive the `startDate` field indicating the UTC\
+            \ start date of the data's time range being retrieved  (ISO date-time\
+            \ format)."
+          example: 2022-07-17T22:00:54Z
+          format: date-time
+          readOnly: true
+          type: string
+        endDate:
+          description: "(Optional) When passing `window` or `endDate` parameter, \
+            \ the client will also receive the `endDate` field indicating the UTC\
+            \ end date of the data's time range being retrieved  (ISO date-time format)."
+          example: 2022-07-18T22:00:54Z
+          format: date-time
+          readOnly: true
+          type: string
+        events:
+          items:
+            $ref: '#/components/schemas/Event'
+          type: array
+          x-paginated-items: true
+        _links:
+          $ref: '#/components/schemas/PaginationNextAndSelfLinks'
+      type: object
+    Event:
+      allOf:
+      - $ref: '#/components/schemas/SimpleEventDetail'
+      - properties:
+          title:
+            description: Event title
+            example: Affecting destinations in google.com
+            readOnly: true
+            type: string
+          type:
+            $ref: '#/components/schemas/EventType'
+          affectedTests:
+            $ref: '#/components/schemas/AffectedCount'
+          affectedTargets:
+            $ref: '#/components/schemas/AffectedCount'
+          affectedAgents:
+            $ref: '#/components/schemas/AffectedCount'
+          _links:
+            $ref: '#/components/schemas/SelfLinks'
+        type: object
+    SimpleEventDetail:
+      properties:
+        id:
+          description: A unique ID for each event.
+          example: e9c3bf02-a48c-4aa8-9e5f-898800d6f569
+          format: uuid
+          readOnly: true
+          type: string
+        typeName:
+          description: "Event type name. Examples include, Local Agent Issue, Network\
+            \ Path Issue, Network Outage, DNS Issue, Server Issue, and Proxy Issue."
+          example: Network Issue
+          readOnly: true
+          type: string
+        state:
+          $ref: '#/components/schemas/EventState'
+        startDate:
+          description: "The start date and time (in UTC, ISO 8601 format) when the\
+            \ event was first detected."
+          example: 2020-04-23T13:43:16Z
+          format: date-time
+          readOnly: true
+          type: string
+        endDate:
+          description: "The end date and time (in UTC, ISO 8601 format) when the event\
+            \ was resolved (due to timeout). This value is populated for \"ongoing\"\
+            \ events."
+          example: 2020-04-23T13:43:16Z
+          format: date-time
+          readOnly: true
+          type: string
+        severity:
+          $ref: '#/components/schemas/EventAlertSeverity'
+      type: object
+    EventDetail:
+      discriminator:
+        mapping:
+          target: '#/components/schemas/TargetEventDetail'
+          target-network: '#/components/schemas/TargetNetworkEventDetail'
+          proxy: '#/components/schemas/ProxyEventDetail'
+          dns: '#/components/schemas/DnsEventDetail'
+          agent-local: '#/components/schemas/AgentLocalEventDetail'
+          network: '#/components/schemas/NetworkEventDetail'
+          network-pop: '#/components/schemas/NetworkPopEventDetail'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/TargetEventDetail'
+      - $ref: '#/components/schemas/TargetNetworkEventDetail'
+      - $ref: '#/components/schemas/ProxyEventDetail'
+      - $ref: '#/components/schemas/DnsEventDetail'
+      - $ref: '#/components/schemas/AgentLocalEventDetail'
+      - $ref: '#/components/schemas/NetworkEventDetail'
+      - $ref: '#/components/schemas/NetworkPopEventDetail'
+    EventDetailBase:
+      allOf:
+      - $ref: '#/components/schemas/SimpleEventDetail'
+      - properties:
+          aid:
+            $ref: '#/components/schemas/AccountGroupId'
+          summary:
+            description: A brief summary describing the cause of the event.
+            example: Significant number of issues detected with 66.29.146.15
+            readOnly: true
+            type: string
+          affectedTests:
+            $ref: '#/components/schemas/AffectedTests'
+          affectedTargets:
+            $ref: '#/components/schemas/AffectedTargets'
+          affectedAgents:
+            $ref: '#/components/schemas/AffectedAgents'
+          cause:
+            $ref: '#/components/schemas/Cause'
+          _links:
+            $ref: '#/components/schemas/SelfLinks'
+        type: object
+    TargetEventDetail:
+      allOf:
+      - $ref: '#/components/schemas/EventDetailBase'
+      - properties:
+          type:
+            $ref: '#/components/schemas/TargetEventType'
+          grouping:
+            $ref: '#/components/schemas/TargetEventGrouping'
+        required:
+        - type
+        type: object
+      type: object
+    TargetEventGrouping:
+      properties:
+        target:
+          description: Target name (for target events).
+          example: google.com
+          readOnly: true
+          type: string
+      type: object
+    TargetNetworkEventDetail:
+      allOf:
+      - $ref: '#/components/schemas/EventDetailBase'
+      - properties:
+          type:
+            $ref: '#/components/schemas/TargetNetworkEventType'
+          grouping:
+            $ref: '#/components/schemas/TargetNetworkEventGrouping'
+        required:
+        - type
+        type: object
+      type: object
+    TargetNetworkEventGrouping:
+      properties:
+        prefix:
+          description: Prefix value for target-network events.
+          example: 0.0.0.0/0
+          readOnly: true
+          type: string
+      type: object
+    ProxyEventDetail:
+      allOf:
+      - $ref: '#/components/schemas/EventDetailBase'
+      - properties:
+          type:
+            $ref: '#/components/schemas/ProxyEventType'
+          grouping:
+            $ref: '#/components/schemas/ProxyEventGrouping'
+        required:
+        - type
+        type: object
+      type: object
+    ProxyEventGrouping:
+      properties:
+        proxy:
+          description: Proxy name or IP (for proxy events).
+          example: my.proxy.com
+          readOnly: true
+          type: string
+      type: object
+    DnsEventDetail:
+      allOf:
+      - $ref: '#/components/schemas/EventDetailBase'
+      - properties:
+          type:
+            $ref: '#/components/schemas/DnsEventType'
+          grouping:
+            $ref: '#/components/schemas/DnsEventGrouping'
+        required:
+        - type
+        type: object
+      type: object
+    DnsEventGrouping:
+      properties:
+        rootDomain:
+          description: Root domain name (for dns events).
+          example: thousandeyes.com
+          readOnly: true
+          type: string
+      type: object
+    AgentLocalEventDetail:
+      allOf:
+      - $ref: '#/components/schemas/EventDetailBase'
+      - properties:
+          type:
+            $ref: '#/components/schemas/AgentLocalEventType'
+          grouping:
+            $ref: '#/components/schemas/AgentLocalEventGrouping'
+        required:
+        - type
+        type: object
+      type: object
+    AgentLocalEventGrouping:
+      properties:
+        agentId:
+          description: Numeric Agent ID (for agent-local events).
+          example: "123456"
+          readOnly: true
+          type: string
+      type: object
+    NetworkEventDetail:
+      allOf:
+      - $ref: '#/components/schemas/EventDetailBase'
+      - properties:
+          type:
+            $ref: '#/components/schemas/NetworkEventType'
+          grouping:
+            $ref: '#/components/schemas/NetworkEventGrouping'
+        required:
+        - type
+        type: object
+      type: object
+    NetworkPopEventDetail:
+      allOf:
+      - $ref: '#/components/schemas/EventDetailBase'
+      - properties:
+          type:
+            $ref: '#/components/schemas/NetworkPopEventType'
+          grouping:
+            $ref: '#/components/schemas/NetworkEventGrouping'
+        required:
+        - type
+        type: object
+      type: object
+    NetworkEventGrouping:
+      properties:
+        sourceAsn:
+          description: AS number of the source network (for network-pop and network
+            events).
+          example: 1234
+          readOnly: true
+          type: integer
+        destAsn:
+          description: AS number of the destination network (for network events).
+          example: 4321
+          readOnly: true
+          type: integer
+        sourceCountryCode:
+          description: The source network's country code (for network-pop and network
+            events).
+          example: US
+          readOnly: true
+          type: string
+      type: object
+    AffectedCount:
+      properties:
+        total:
+          description: The total number affected.
+          example: 5
+          readOnly: true
+          type: integer
+        inAccountGroup:
+          description: Indicates if in the affected account group.
+          example: 2
+          readOnly: true
+          type: integer
+      type: object
+    AffectedTests:
+      allOf:
+      - $ref: '#/components/schemas/AffectedCount'
+      - properties:
+          tests:
+            description: List of affected tests.
+            items:
+              $ref: '#/components/schemas/EventApiAffectedTest'
+            type: array
+            uniqueItems: true
+        type: object
+    AffectedTargets:
+      allOf:
+      - $ref: '#/components/schemas/AffectedCount'
+      - properties:
+          targets:
+            description: List of affected targets.
+            items:
+              $ref: '#/components/schemas/ApiAffectedTarget'
+            type: array
+            uniqueItems: true
+        type: object
+    AffectedAgents:
+      allOf:
+      - $ref: '#/components/schemas/AffectedCount'
+      - properties:
+          agents:
+            description: List of affected agents.
+            items:
+              $ref: '#/components/schemas/EventApiAffectedAgent'
+            type: array
+            uniqueItems: true
+        type: object
+    EventApiAffectedTest:
+      properties:
+        testId:
+          description: The ID of the affected test.
+          example: "226770"
+          readOnly: true
+          type: string
+        testType:
+          $ref: '#/components/schemas/TestType'
+        name:
+          description: The test name as configured in the test settings.
+          example: Google test
+          readOnly: true
+          type: string
+        affectedTargetIds:
+          description: An array of unique target IDs contributed data points which
+            generated the signal for the event.
+          example:
+          - "123"
+          - "1234"
+          items:
+            type: string
+          type: array
+        affectedAgentIds:
+          description: An array of unique agent IDs that contributed data points which
+            generated the signal for the event.
+          example:
+          - "2954"
+          - "2953"
+          items:
+            type: string
+          type: array
+        _links:
+          $ref: '#/components/schemas/EventTestLinks'
+      type: object
+    ApiAffectedTarget:
+      properties:
+        serverId:
+          description: The ID of the target server.
+          example: "123"
+          readOnly: true
+          type: string
+        name:
+          description: The target name as configured in the test settings.
+          example: google.com
+          readOnly: true
+          type: string
+        ip:
+          description: "The target server IP resolved by the agent. Depending on the\
+            \ failure type, the IP may not be present. For example, if the agent failed\
+            \ to resolve it or if the requests were routed through the proxy."
+          example: 216.239.32.10
+          readOnly: true
+          type: string
+        affectedTestIds:
+          description: An array of unique test IDs that contributed data points which
+            generated the signal for the event.
+          example:
+          - "123"
+          - "1234"
+          items:
+            type: string
+          type: array
+        affectedAgentIds:
+          description: An array of unique agent IDs that contributed data points which
+            generated the signal for the event.
+          example:
+          - "2954"
+          - "2953"
+          items:
+            type: string
+          type: array
+      type: object
+    EventApiAffectedAgent:
+      properties:
+        agentId:
+          description: The ID of the virtual agent.
+          example: "2954"
+          readOnly: true
+          type: string
+        type:
+          $ref: '#/components/schemas/CloudEnterpriseAgentType'
+        name:
+          description: The name of the agent as defined in settings.
+          example: "São Paulo, Brazil - agent"
+          readOnly: true
+          type: string
+        location:
+          description: The name of the agent's location.
+          example: "São Paulo, Brazil"
+          readOnly: true
+          type: string
+        countryCode:
+          description: The country code of the agent's location .
+          example: BR
+          readOnly: true
+          type: string
+        affectedTargetIds:
+          description: An array of unique target IDs that contributed data points
+            which generated the signal for the event.
+          example:
+          - "123"
+          - "1234"
+          items:
+            type: string
+          type: array
+        affectedTestIds:
+          description: An array of unique agent IDs that contributed data points which
+            generated the signal for the event.
+          example:
+          - "2954"
+          - "2953"
+          items:
+            type: string
+          type: array
+        _links:
+          $ref: '#/components/schemas/AgentLinks'
+      type: object
+    EventStartDate:
+      description: "The start date and time (in UTC, ISO 8601 format) when the event\
+        \ was first detected."
+      example: 2020-04-23T13:43:16Z
+      format: date-time
+      readOnly: true
+      type: string
+    EventEndDate:
+      description: "The end date and time (in UTC, ISO 8601 format) when the event\
+        \ was resolved (due to timeout). This value is populated for \"ongoing\" events."
+      example: 2020-04-23T13:43:16Z
+      format: date-time
+      readOnly: true
+      type: string
+    EventAlertSeverity:
+      description: The severity of the alert.
+      enum:
+      - high
+      - medium
+      - low
+      - unknown
+      example: medium
+      type: string
+    EventType:
+      description: "Specifies the event type in a machine-readable and backwards-compatible\
+        \ format. Allowed values are: `agent-local`, `network-pop`, `network`, `dns`,\
+        \ `target`, and `proxy`."
+      enum:
+      - agent-local
+      - network-pop
+      - network
+      - dns
+      - target
+      - target-network
+      - proxy
+      example: target
+      readOnly: true
+      type: string
+    TargetEventType:
+      description: Target event type.
+      example: target
+      pattern: ^target$
+      type: string
+    TargetNetworkEventType:
+      description: Target network event type.
+      example: target-network
+      pattern: ^target-network$
+      type: string
+    ProxyEventType:
+      description: Proxy event type.
+      example: proxy
+      pattern: ^proxy$
+      type: string
+    DnsEventType:
+      description: DNS event type.
+      example: dns
+      pattern: ^dns$
+      type: string
+    AgentLocalEventType:
+      description: Agent local event type.
+      example: agent-local
+      pattern: ^agent-local$
+      type: string
+    NetworkEventType:
+      description: Network event type.
+      example: network
+      pattern: ^network$
+      type: string
+    NetworkPopEventType:
+      description: Network pop event type.
+      example: network-pop
+      pattern: ^network-pop$
+      type: string
+    EventState:
+      description: "Indicates the state of the event, whether it is ongoing (active)\
+        \ or has been resolved."
+      enum:
+      - active
+      - resolved
+      example: resolved
+      readOnly: true
+      type: string
+    Cause:
+      description: The cause of the error.
+      example:
+      - Network Loss and/or High RTT
+      items:
+        type: string
+      type: array
+      uniqueItems: true
+    AgentLinks:
+      description: A links object containing the agent link.
+      properties:
+        agent:
+          $ref: '#/components/schemas/Link'
+      readOnly: true
+      type: object
+    EventTestLinks:
+      description: A links object containing the self link.
+      properties:
+        test:
+          $ref: '#/components/schemas/Link'
+      readOnly: true
+      type: object
+    PaginationNextAndSelfLinks:
+      description: "A links object containing pagination-related links, including\
+        \ only next and self."
+      properties:
+        next:
+          $ref: '#/components/schemas/Link'
+        self:
+          $ref: '#/components/schemas/Link'
+      type: object
+    ValidationError:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - properties:
+          errors:
+            description: "(Optional) When multiple errors occur, the details for each\
+              \ error are listed."
+            items:
+              $ref: '#/components/schemas/ValidationErrorItem'
+            nullable: true
+            type: array
+        type: object
+      type: object
+    Error:
+      properties:
+        type:
+          description: "A URI reference that identifies the problem type. When this\
+            \ member is not present, its value is assumed to be \"about:blank\"."
+          type: string
+        title:
+          description: "A short, human-readable summary of the problem type."
+          type: string
+        status:
+          description: The HTTP status code generated by the origin server for this
+            occurrence of the problem.
+          type: integer
+        detail:
+          description: A human-readable explanation specific to this occurrence of
+            the problem.
+          type: string
+        instance:
+          description: A URI reference that identifies the specific occurrence of
+            the problem.
+          type: string
+      type: object
+    ValidationErrorItem:
+      properties:
+        code:
+          description: (Optional) A unique error type/code that can be referenced
+            in the documentation for further details.
+          type: string
+        field:
+          description: Identifies the field that triggered this particular error.
+          type: string
+        message:
+          description: "A short, human-readable summary of the error."
+          type: string
+      type: object
+    UnauthorizedError:
+      properties:
+        error:
+          example: invalid_token
+          type: string
+        error_description:
+          example: Invalid access token
+          type: string
+      type: object
+    AccountGroupId:
+      description: A unique identifier associated with your account group. You can
+        retrieve your `AccountGroupId` from the `/account-groups` endpoint.
+      example: "1234"
+      type: string
+    StartDate:
+      description: "(Optional) When passing `window` or `startDate` parameter,  the\
+        \ client will also receive the `startDate` field indicating the UTC start\
+        \ date of the data's time range being retrieved  (ISO date-time format)."
+      example: 2022-07-17T22:00:54Z
+      format: date-time
+      readOnly: true
+      type: string
+    EndDate:
+      description: "(Optional) When passing `window` or `endDate` parameter,  the\
+        \ client will also receive the `endDate` field indicating the UTC end date\
+        \ of the data's time range being retrieved  (ISO date-time format)."
+      example: 2022-07-18T22:00:54Z
+      format: date-time
+      readOnly: true
+      type: string
+    SelfLinks:
+      description: A links object containing the self link.
+      properties:
+        self:
+          $ref: '#/components/schemas/Link'
+      readOnly: true
+      type: object
+    Link:
+      description: A hyperlink from the containing resource to a URI.
+      properties:
+        href:
+          description: "Its value is either a URI [RFC3986] or a URI template [RFC6570]."
+          example: https://api.thousandeyes.com/v7/link/to/resource/id
+          type: string
+        templated:
+          description: Should be true when the link object's "href" property is a
+            URI template.
+          type: boolean
+        type:
+          description: Used as a hint to indicate the media type expected when dereferencing
+            the target resource.
+          type: string
+        deprecation:
+          description: Its presence indicates that the link is to be deprecated at
+            a future date. Its value is a URL that should provide further information
+            about the deprecation.
+          type: string
+        name:
+          description: Its value may be used as a secondary key for selecting link
+            objects that share the same relation type.
+          type: string
+        profile:
+          description: A URI that hints about the profile of the target resource.
+          type: string
+        title:
+          description: Intended for labelling the link with a human-readable identifier
+          type: string
+        hreflang:
+          description: Indicates the language of the target resource
+          type: string
+      required:
+      - href
+      type: object
+    TestType:
+      description: "This is a read only value, as test type is implicit in the test\
+        \ creation url."
+      enum:
+      - api
+      - agent-to-agent
+      - agent-to-server
+      - bgp
+      - http-server
+      - page-load
+      - web-transactions
+      - ftp-server
+      - dns-trace
+      - dns-server
+      - dnssec
+      - sip-server
+      - voice
+      example: agent-to-server
+      readOnly: true
+      type: string
+    CloudEnterpriseAgentType:
+      description: Type of the agent.
+      enum:
+      - cloud
+      - enterprise-cluster
+      - enterprise
+      example: enterprise-cluster
+      readOnly: true
+      type: string
+  securitySchemes:
+    BearerAuth:
+      description: Bearer authentication token
+      scheme: bearer
+      type: http

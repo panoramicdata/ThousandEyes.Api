@@ -5,30 +5,27 @@ namespace ThousandEyes.Api.Test;
 public class ClientTests
 {
 	[Fact]
-	public void CreateClient_ValidCredentials_Succeeds()
+	public void CreateClient_ValidBearerToken_Succeeds()
 		=> _ = new ThousandEyesClient(new ThousandEyesClientOptions
 		{
-			Account = "test",
-			ClientId = "11111111-1111-1111-1111-111111111111",
-			ClientSecret = "11111111-1111-1111-1111-111111111111-11111111-1111-1111-1111-111111111111"
+			BearerToken = "test-bearer-token-12345"
 		});
 
 	[Fact]
-	public void CreateClient_ValidCredentials_ExposesProperties()
+	public void CreateClient_ValidBearerToken_ExposesProperties()
 	{
 		// Arrange
 		var options = new ThousandEyesClientOptions
 		{
-			Account = "test-account",
-			ClientId = "22222222-2222-2222-2222-222222222222",
-			ClientSecret = "11111111-1111-1111-1111-111111111111-11111111-1111-1111-1111-111111111111"
+			BearerToken = "test-bearer-token-abc123"
 		};
 
 		// Act
 		var client = new ThousandEyesClient(options);
 
 		// Assert
-		_ = client.Account.Should().Be("test-account");
+		_ = client.Should().NotBeNull();
+		// Note: Bearer token is not exposed as a public property for security reasons
 	}
 
 	[Fact]
@@ -37,28 +34,11 @@ public class ClientTests
 		// Arrange & Act
 		var options = new ThousandEyesClientOptions
 		{
-			Account = "my-account",
-			ClientId = "33333333-3333-3333-3333-333333333333",
-			ClientSecret = "44444444-4444-4444-4444-444444444444-55555555-5555-5555-5555-555555555555"
+			BearerToken = "my-bearer-token-xyz789"
 		};
 
 		// Assert
-		_ = options.Account.Should().Be("my-account");
-		_ = options.ClientId.Should().Be("33333333-3333-3333-3333-333333333333");
-		_ = options.ClientSecret.Should().Be("44444444-4444-4444-4444-444444444444-55555555-5555-5555-5555-555555555555");
-	}
-
-	[Fact]
-	public void CreateClient_InvalidClientId_Throws()
-	{
-		Action act = () => _ = new ThousandEyesClient(new ThousandEyesClientOptions
-		{
-			Account = "test",
-			ClientId = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-			ClientSecret = "11111111-1111-1111-1111-111111111111-11111111-1111-1111-1111-111111111111"
-		});
-		_ = act.Should().ThrowExactly<FormatException>()
-			.WithMessage("ClientId must be a valid GUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).");
+		_ = options.BearerToken.Should().Be("my-bearer-token-xyz789");
 	}
 
 	[Fact]
@@ -70,163 +50,130 @@ public class ClientTests
 	}
 
 	[Fact]
-	public void CreateClient_NullHaloAccount_ThrowsArgumentException()
+	public void CreateClient_NullBearerToken_ThrowsFormatException()
 	{
 		Action act = () => _ = new ThousandEyesClient(new ThousandEyesClientOptions
 		{
-			Account = null!,
-			ClientId = "11111111-1111-1111-1111-111111111111",
-			ClientSecret = "11111111-1111-1111-1111-111111111111-11111111-1111-1111-1111-111111111111"
-		});
-		_ = act.Should().ThrowExactly<ArgumentException>()
-			.WithMessage("Account cannot be null or empty. (Parameter 'Account')");
-	}
-
-	[Fact]
-	public void CreateClient_EmptyHaloAccount_ThrowsArgumentException()
-	{
-		Action act = () => _ = new ThousandEyesClient(new ThousandEyesClientOptions
-		{
-			Account = "",
-			ClientId = "11111111-1111-1111-1111-111111111111",
-			ClientSecret = "11111111-1111-1111-1111-111111111111-11111111-1111-1111-1111-111111111111"
-		});
-		_ = act.Should().ThrowExactly<ArgumentException>()
-			.WithMessage("Account cannot be null or empty. (Parameter 'Account')");
-	}
-
-	[Fact]
-	public void CreateClient_WhitespaceHaloAccount_ThrowsArgumentException()
-	{
-		Action act = () => _ = new ThousandEyesClient(new ThousandEyesClientOptions
-		{
-			Account = "   ",
-			ClientId = "11111111-1111-1111-1111-111111111111",
-			ClientSecret = "11111111-1111-1111-1111-111111111111-11111111-1111-1111-1111-111111111111"
-		});
-		_ = act.Should().ThrowExactly<ArgumentException>()
-			.WithMessage("Account cannot be null or empty. (Parameter 'Account')");
-	}
-
-	[Fact]
-	public void CreateClient_NullThousandEyesClientId_ThrowsArgumentException()
-	{
-		Action act = () => _ = new ThousandEyesClient(new ThousandEyesClientOptions
-		{
-			Account = "test",
-			ClientId = null!,
-			ClientSecret = "11111111-1111-1111-1111-111111111111-11111111-1111-1111-1111-111111111111"
-		});
-		_ = act.Should().ThrowExactly<ArgumentException>()
-			.WithMessage("ClientId cannot be null or empty. (Parameter 'ClientId')");
-	}
-
-	[Fact]
-	public void CreateClient_EmptyThousandEyesClientId_ThrowsArgumentException()
-	{
-		Action act = () => _ = new ThousandEyesClient(new ThousandEyesClientOptions
-		{
-			Account = "test",
-			ClientId = "",
-			ClientSecret = "11111111-1111-1111-1111-111111111111-11111111-1111-1111-1111-111111111111"
-		});
-		_ = act.Should().ThrowExactly<ArgumentException>()
-			.WithMessage("ClientId cannot be null or empty. (Parameter 'ClientId')");
-	}
-
-	[Fact]
-	public void CreateClient_InvalidThousandEyesClientIdFormat_NoHyphens_ThrowsFormatException()
-	{
-		Action act = () => _ = new ThousandEyesClient(new ThousandEyesClientOptions
-		{
-			Account = "test",
-			ClientId = "111111111111111111111111111111111111",
-			ClientSecret = "11111111-1111-1111-1111-111111111111-11111111-1111-1111-1111-111111111111"
+			BearerToken = null!
 		});
 		_ = act.Should().ThrowExactly<FormatException>()
-			.WithMessage("ClientId must be a valid GUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).");
+			.WithMessage("BearerToken must be set.");
 	}
 
 	[Fact]
-	public void CreateClient_InvalidThousandEyesClientIdFormat_WrongLength_ThrowsFormatException()
+	public void CreateClient_EmptyBearerToken_ThrowsFormatException()
 	{
 		Action act = () => _ = new ThousandEyesClient(new ThousandEyesClientOptions
 		{
-			Account = "test",
-			ClientId = "1111-1111-1111-1111-111111111111",
-			ClientSecret = "11111111-1111-1111-1111-111111111111-11111111-1111-1111-1111-111111111111"
+			BearerToken = ""
 		});
 		_ = act.Should().ThrowExactly<FormatException>()
-			.WithMessage("ClientId must be a valid GUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).");
+			.WithMessage("BearerToken must be set.");
 	}
 
 	[Fact]
-	public void CreateClient_NullThousandEyesClientSecret_ThrowsArgumentException()
+	public void CreateClient_WhitespaceBearerToken_ThrowsFormatException()
 	{
 		Action act = () => _ = new ThousandEyesClient(new ThousandEyesClientOptions
 		{
-			Account = "test",
-			ClientId = "11111111-1111-1111-1111-111111111111",
-			ClientSecret = null!
+			BearerToken = "   "
+		});
+		_ = act.Should().ThrowExactly<FormatException>()
+			.WithMessage("BearerToken must be set.");
+	}
+
+	[Fact]
+	public void CreateClient_ValidBearerTokenWithTimeout_Succeeds()
+	{
+		// Arrange & Act
+		var client = new ThousandEyesClient(new ThousandEyesClientOptions
+		{
+			BearerToken = "test-bearer-token",
+			RequestTimeout = TimeSpan.FromSeconds(60)
+		});
+
+		// Assert
+		_ = client.Should().NotBeNull();
+	}
+
+	[Fact]
+	public void CreateClient_ValidBearerTokenWithRetryOptions_Succeeds()
+	{
+		// Arrange & Act
+		var client = new ThousandEyesClient(new ThousandEyesClientOptions
+		{
+			BearerToken = "test-bearer-token",
+			MaxRetryAttempts = 5,
+			RetryDelay = TimeSpan.FromSeconds(2),
+			UseExponentialBackoff = true
+		});
+
+		// Assert
+		_ = client.Should().NotBeNull();
+	}
+
+	[Fact]
+	public void CreateClient_ValidBearerTokenWithLogging_Succeeds()
+	{
+		// Arrange
+		var logger = new TestLogger();
+
+		// Act
+		var client = new ThousandEyesClient(new ThousandEyesClientOptions
+		{
+			BearerToken = "test-bearer-token",
+			Logger = logger,
+			EnableRequestLogging = true,
+			EnableResponseLogging = true
+		});
+
+		// Assert
+		_ = client.Should().NotBeNull();
+	}
+
+	[Fact]
+	public void CreateClient_InvalidTimeoutZero_ThrowsArgumentException()
+	{
+		Action act = () => _ = new ThousandEyesClient(new ThousandEyesClientOptions
+		{
+			BearerToken = "test-bearer-token",
+			RequestTimeout = TimeSpan.Zero
 		});
 		_ = act.Should().ThrowExactly<ArgumentException>()
-			.WithMessage("ClientSecret cannot be null or empty. (Parameter 'ClientSecret')");
+			.WithMessage("RequestTimeout must be greater than zero. (Parameter 'RequestTimeout')");
 	}
 
 	[Fact]
-	public void CreateClient_EmptyThousandEyesClientSecret_ThrowsArgumentException()
+	public void CreateClient_InvalidTimeoutNegative_ThrowsArgumentException()
 	{
 		Action act = () => _ = new ThousandEyesClient(new ThousandEyesClientOptions
 		{
-			Account = "test",
-			ClientId = "11111111-1111-1111-1111-111111111111",
-			ClientSecret = ""
+			BearerToken = "test-bearer-token",
+			RequestTimeout = TimeSpan.FromSeconds(-1)
 		});
 		_ = act.Should().ThrowExactly<ArgumentException>()
-			.WithMessage("ClientSecret cannot be null or empty. (Parameter 'ClientSecret')");
+			.WithMessage("RequestTimeout must be greater than zero. (Parameter 'RequestTimeout')");
 	}
 
 	[Fact]
-	public void CreateClient_InvalidThousandEyesClientSecretFormat_SingleGuid_ThrowsFormatException()
+	public void CreateClient_NegativeRetryAttempts_ThrowsArgumentException()
 	{
 		Action act = () => _ = new ThousandEyesClient(new ThousandEyesClientOptions
 		{
-			Account = "test",
-			ClientId = "11111111-1111-1111-1111-111111111111",
-			ClientSecret = "11111111-1111-1111-1111-111111111111"
+			BearerToken = "test-bearer-token",
+			MaxRetryAttempts = -1
 		});
-		_ = act.Should().ThrowExactly<FormatException>()
-			.WithMessage("ClientSecret must be in the format of two concatenated GUIDs (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).");
+		_ = act.Should().ThrowExactly<ArgumentException>()
+			.WithMessage("MaxRetryAttempts cannot be negative. (Parameter 'MaxRetryAttempts')");
 	}
 
-	[Fact]
-	public void CreateClient_InvalidThousandEyesClientSecretFormat_NoHyphens_ThrowsFormatException()
+	private class TestLogger : ILogger
 	{
-		Action act = () => _ = new ThousandEyesClient(new ThousandEyesClientOptions
+		public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+		public bool IsEnabled(LogLevel logLevel) => true;
+		public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
 		{
-			Account = "test",
-			ClientId = "11111111-1111-1111-1111-111111111111",
-			ClientSecret = "1111111111111111111111111111111111111111111111111111111111111111111111111111"
-		});
-		_ = act.Should().ThrowExactly<FormatException>()
-			.WithMessage("ClientSecret must be in the format of two concatenated GUIDs (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).");
+			// Test logger implementation
+		}
 	}
-
-	[Fact]
-	public void CreateClient_ValidCredentialsWithMixedCase_Succeeds()
-		=> _ = new ThousandEyesClient(new ThousandEyesClientOptions
-		{
-			Account = "test",
-			ClientId = "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE",
-			ClientSecret = "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE-FFFFFFFF-1111-2222-3333-444444444444"
-		});
-
-	[Fact]
-	public void CreateClient_ValidCredentialsWithLowerCase_Succeeds()
-		=> _ = new ThousandEyesClient(new ThousandEyesClientOptions
-		{
-			Account = "test",
-			ClientId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-			ClientSecret = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee-ffffffff-1111-2222-3333-444444444444"
-		});
 }

@@ -16,7 +16,7 @@
 // Preferred
 public class ThousandEyesClient(ThousandEyesClientOptions options) : IThousandEyesClient
 {
-    public string Account => options.HaloAccount;
+    public string BearerToken => options.BearerToken;
 }
 
 // Instead of
@@ -29,7 +29,7 @@ public class ThousandEyesClient : IThousandEyesClient
         _options = options;
     }
     
-    public string Account => _options.HaloAccount;
+    public string BearerToken => _options.BearerToken;
 }
 ```
 
@@ -50,8 +50,7 @@ var emptyList = new List<string>();
 ```csharp
 public class ThousandEyesClientOptions
 {
-    public required string HaloAccount { get; init; }
-    public required string ThousandEyesClientId { get; init; }
+    public required string BearerToken { get; init; }
 }
 ```
 
@@ -59,14 +58,14 @@ public class ThousandEyesClientOptions
 - Always use file-scoped namespaces:
 ```csharp
 // Preferred
-namespace HaloPsa.Api;
+namespace ThousandEyes.Api;
 
 public class ThousandEyesClient
 {
 }
 
 // Instead of
-namespace HaloPsa.Api
+namespace ThousandEyes.Api
 {
     public class ThousandEyesClient
     {
@@ -123,7 +122,51 @@ public void LogError(string message) => _logger.LogError(message);
 #### Records
 - Use records for immutable data structures:
 ```csharp
-public record HaloApiResponse(string Data, int StatusCode, DateTime Timestamp);
+public record ThousandEyesApiResponse(string Data, int StatusCode, DateTime Timestamp);
+```
+
+#### Async/Await and CancellationTokens
+
+##### Mandatory CancellationTokens
+- **ALWAYS include CancellationToken parameters** in async methods - no exceptions
+- **Never use optional CancellationToken parameters** - this avoids developer confusion at the expense of verbosity
+- **Always pass CancellationTokens through the call chain**
+
+```csharp
+// Preferred - Explicit CancellationToken required
+public async Task<UserDetail> GetByIdAsync(string id, CancellationToken cancellationToken)
+{
+    // Implementation
+}
+
+// Call site - forces developer to be explicit
+var user = await client.Users.GetByIdAsync("123", cancellationToken);
+
+// Instead of - confusing optional parameter
+public async Task<UserDetail> GetByIdAsync(string id, CancellationToken cancellationToken = default)
+{
+    // Implementation
+}
+```
+
+##### Query Parameters
+- **Avoid optional query parameters in API methods** - be explicit about all parameters
+- **Use overloads instead of optional parameters** when you need simplified versions
+
+```csharp
+// Preferred - All parameters explicit
+[Get("/users/{id}")]
+Task<UserDetail> GetByIdAsync(string id, [Query] string? aid, CancellationToken cancellationToken);
+
+// If you need a simpler version, use overloads
+public async Task<UserDetail> GetByIdAsync(string id, CancellationToken cancellationToken)
+{
+    return await GetByIdAsync(id, aid: null, cancellationToken);
+}
+
+// Instead of - confusing optional behavior
+[Get("/users/{id}")]
+Task<UserDetail> GetByIdAsync(string id, [Query] string? aid = null, CancellationToken cancellationToken = default);
 ```
 
 ### Code Organization
@@ -142,10 +185,58 @@ public record HaloApiResponse(string Data, int StatusCode, DateTime Timestamp);
 - Use camelCase with underscore prefix for private fields: `_fieldName`
 - Use meaningful, descriptive names
 
-### Testing Standards
-- Use AwesomeAssertions for fluent test assertions
+### Testing Standards & Test Success Rate
+
+#### Comprehensive Testing Requirements
+- **Maintain 100% test success rate** for all code
+- **Write tests FIRST or alongside implementation** - never leave code untested
+- **Update existing tests** when modifying functionality
+- **All tests must pass** before considering any task complete
+- **Zero failing tests policy** - no exceptions, all tests must be green
+
+#### Testing Patterns
+- Use AwesomeAssertions for fluent test assertions (note: uses `.Should()` syntax like FluentAssertions)
 - Follow AAA pattern (Arrange, Act, Assert)
 - Use descriptive test method names that explain the scenario
+- Group related tests using `[Collection("Integration Tests")]` for integration tests
+
+#### Test Categories
+- **Unit Tests**: Test individual methods/classes in isolation
+- **Integration Tests**: Test API endpoints, HTTP handlers, authentication flows
+- **Infrastructure Tests**: Test client instantiation, configuration, disposal
+- **Error Handling Tests**: Test exception scenarios and edge cases
+
+#### Test Maintenance Strategy
+- **For each new feature**: Create corresponding unit and integration tests
+- **For each bug fix**: Add regression tests to prevent reoccurrence
+- **For each refactor**: Update tests to match new implementation while preserving behavior verification
+- **Regular test reviews**: Ensure tests remain valuable and maintainable
+
+#### Test Success Expectations by Component
+- **Public API Methods**: 100% test success rate (all paths, success and error cases)
+- **HTTP Infrastructure**: 100% test success rate (handlers, retry logic, authentication)
+- **Configuration/Options**: 100% test success rate (validation, edge cases)
+- **Internal Utilities**: 100% test success rate
+- **Exception Scenarios**: All custom exceptions must have passing tests
+
+#### Test Quality Standards
+```csharp
+[Fact]
+public async Task GetUsers_WithValidFilter_ReturnsFilteredResults()
+{
+    // Arrange - Set up test data and dependencies
+    var client = _fixture.GetThousandEyesClient();
+    var cancellationToken = new CancellationToken();
+    
+    // Act - Execute the operation being tested
+    var result = await client.Users.GetAllAsync(cancellationToken);
+    
+    // Assert - Verify behavior and state
+    result.Should().NotBeNull();
+    result.Users.Should().NotBeEmpty();
+    result.Users.Should().OnlyContain(u => !string.IsNullOrEmpty(u.Name));
+}
+```
 
 ### EditorConfig Compliance
 - Follow the .editorconfig settings in the workspace
@@ -169,15 +260,15 @@ public record HaloApiResponse(string Data, int StatusCode, DateTime Timestamp);
 
 ## Project-Specific Guidelines
 
-### Halo PSA API Library Structure
+### ThousandEyes API Library Structure
 
 #### Project Organization
-- **Main Library**: `HaloPsa.Api` (targets .NET 9)
+- **Main Library**: `ThousandEyes.Api` (targets .NET 9)
   - Core client classes and interfaces
-  - API models and DTOs (to be generated from OpenAPI spec)
+  - API models and DTOs (based on OpenAPI spec v7.0.63)
   - Authentication and configuration
   
-- **Test Project**: `HaloPsa.Api.Test` (targets .NET 9)
+- **Test Project**: `ThousandEyes.Api.Test` (targets .NET 9)
   - Unit tests with AwesomeAssertions
   - Integration tests using Microsoft Testing Platform
   - Uses User Secrets for sensitive configuration
@@ -187,42 +278,42 @@ public record HaloApiResponse(string Data, int StatusCode, DateTime Timestamp);
 // ThousandEyesClientOptions pattern - always use required properties
 public class ThousandEyesClientOptions
 {
-    public required string HaloAccount { get; init; }
-    public required string ThousandEyesClientId { get; init; }     // GUID format
-    public required string ThousandEyesClientSecret { get; init; } // Two concatenated GUIDs
+    public required string BearerToken { get; init; }
 }
 ```
 
 #### Validation Patterns
-- Use `Regex` source generators for input validation:
+- Use proper validation for Bearer tokens:
 ```csharp
-[GeneratedRegex(@"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", RegexOptions.Compiled)]
-private static partial Regex GetGuidRegex();
+internal void Validate()
+{
+    if (string.IsNullOrWhiteSpace(BearerToken))
+        throw new ArgumentException("BearerToken cannot be null or empty.", nameof(BearerToken));
+}
 ```
 
 #### Interface Design
 - All public client functionality should be exposed through interfaces
 - Use `IThousandEyesClient` for main client operations
-- Consider creating specialized interfaces for different API areas (e.g., `ITicketsApi`, `IUsersApi`)
+- Create specialized interfaces for different API areas (e.g., `IAccountGroupsApi`, `IUsersApi`)
 
 #### OpenAPI Integration
-- The project includes a comprehensive `swagger.json` specification
+- The project includes a comprehensive `administrative_api_7_0_63.yaml` specification
 - Generate API models and clients from this specification
 - API supports extensive filtering, pagination, and field selection
 - Common patterns:
   - List endpoints: Support filtering, sorting, pagination
-  - Single endpoints: Support `includedetails` parameter
-  - POST/PUT: Accept arrays for batch operations
+  - Single endpoints: Support optional parameters like `expand`
+  - POST/PUT: Accept structured request bodies
+  - DELETE: Standard resource deletion
 
 #### Test Configuration
-- Integration tests use User Secrets (ID: `4b5a486e-641f-4a44-b583-4419dbb564a9`)
+- Integration tests use User Secrets
 - Test configuration structure:
 ```json
 {
-  "HaloApi": {
-    "HaloAccount": "your-account",
-    "ThousandEyesClientId": "guid-here",
-    "ThousandEyesClientSecret": "two-guids-concatenated"
+  "ThousandEyesApi": {
+    "BearerToken": "your-test-bearer-token"
   }
 }
 ```
@@ -233,28 +324,38 @@ private static partial Regex GetGuidRegex();
 - Global usings for `Xunit` and `Microsoft.Extensions.Logging`
 
 #### API Endpoint Patterns
-Based on the OpenAPI spec, follow these patterns:
+Based on the OpenAPI spec v7.0.63, follow these patterns:
 
-1. **Resource Collections**: `/Resource` (GET for list, POST for create/update)
-2. **Single Resources**: `/Resource/{id}` (GET for single, DELETE for removal)
-3. **Special Operations**: `/Resource/Action` for specific operations
+1. **Resource Collections**: `/resource` (GET for list, POST for create)
+2. **Single Resources**: `/resource/{id}` (GET for single, PUT for update, DELETE for removal)
+3. **Special Operations**: `/resource/special` for specific operations (e.g., `/users/current`)
 4. **Common Query Parameters**:
-   - `count` - Number of results to return
-   - `page_no`, `page_size` - Pagination
-   - `order`, `orderdesc` - Sorting
-   - `includedetails` - Extended information
-   - `search` - Text search
+   - `aid` - Account group ID context
+   - `expand` - Expand related resources
+   - `window` - Time window for events
+   - `startDate`, `endDate` - Date range filtering
+   - `cursor` - Pagination cursor
+   - `useAllPermittedAids` - Cross-account querying
 
 #### Error Handling Patterns
 ```csharp
 // Validation in client options
 internal void Validate()
 {
-    if (string.IsNullOrWhiteSpace(HaloAccount))
-        throw new ArgumentException("HaloAccount cannot be null or empty.", nameof(HaloAccount));
-    
-    if (!_guidRegex.IsMatch(ThousandEyesClientId))
-        throw new FormatException("ThousandEyesClientId must be a valid GUID format.");
+    if (string.IsNullOrWhiteSpace(BearerToken))
+        throw new ArgumentException("BearerToken cannot be null or empty.", nameof(BearerToken));
+}
+
+// API exception hierarchy
+public class ThousandEyesApiException : Exception
+{
+    public int StatusCode { get; }
+    public string? ErrorDetails { get; }
+}
+
+public class ThousandEyesBadRequestException : ThousandEyesApiException
+{
+    public ValidationError? ValidationError { get; }
 }
 ```
 
@@ -264,7 +365,7 @@ internal void Validate()
 - Use appropriate log levels (Information for normal operations, Warning for issues)
 
 ### Build and Packaging
-- Uses Nerdbank.GitVersioning for semantic versioning (current: `2.196-alpha`)
+- Uses Nerdbank.GitVersioning for semantic versioning
 - Source Link enabled for debugging support
 - Package generation enabled with comprehensive metadata
 - Zero warnings policy enforced at build time
@@ -279,36 +380,47 @@ internal void Validate()
 ## Ongoing Development Guidelines
 
 ### Implementation Plan Reference
-- **📋 Implementation Plan**: See `Specification/ImplementationPlan.md` for the complete phased development approach
-- **🎯 Current Focus**: Check the "Current Phase" section in the implementation plan
+- **📋 Implementation Plan**: See `Specification/ImplementationPlan.md` for the complete development approach
+- **🎯 Current Status**: Complete implementation of Administrative API v7.0.63
 - **📊 Progress Tracking**: Update the implementation plan as each phase/milestone is completed
 
 ### Development Workflow
 1. **Always reference the implementation plan** before starting new work
 2. **Update progress markers** in the implementation plan as work is completed
-3. **Follow the phased approach** - don't jump ahead to later phases
+3. **Follow the phased approach** - complete current phase before moving to next
 4. **Run integration tests** after each significant change
 5. **Maintain zero warnings** policy throughout development
 
 ### Refit Integration Guidelines
 - Use Refit for HTTP client generation from OpenAPI spec
-- Follow Meraki.Api patterns for HTTP handlers and interceptors
+- Follow established patterns for HTTP handlers and interceptors
 - Implement custom `DelegatingHandler` for logging and retry logic
-- Structure APIs by functional groups (e.g., `IPsaApi`, `IServiceDeskApi`)
+- Structure APIs by functional groups (e.g., `IAccountGroupsApi`, `IUsersApi`)
 
 ### API Client Structure
 ```csharp
 // Target API structure
 var client = new ThousandEyesClient(options);
-await client.Psa.Tickets.GetAllAsync(filter, cancellationToken);
-await client.ServiceDesk.Assets.GetByIdAsync(id, cancellationToken);
+await client.AccountGroups.GetAllAsync(cancellationToken);
+await client.Users.GetByIdAsync("123", cancellationToken);
+await client.Roles.CreateAsync(request, cancellationToken);
+await client.UserEvents.GetAllAsync(window: "24h", cancellationToken: cancellationToken);
 ```
 
 ### Integration Testing Approach
-- Use full administrator credentials in sandbox environment
+- Use valid Bearer token in test environment
 - Always restore system state after tests (create/cleanup pattern)
-- Test each API group thoroughly before moving to next phase
+- Test each API group thoroughly
 - Include both positive and negative test cases
+- Test all HTTP status codes and error scenarios
+
+### ThousandEyes API Specifics
+- **Administrative API v7.0.63**: Complete coverage of account management, user management, roles, permissions, and audit logs
+- **Bearer Token Authentication**: Simple token-based authentication
+- **Account Group Context**: Many operations support `aid` parameter for account group context
+- **Expand Parameters**: Support for expanding related resources (users, agents)
+- **Pagination**: Cursor-based pagination for large result sets
+- **Time Filtering**: Advanced time-based filtering for audit events
 
 ### Questions and Clarifications
 - **When stuck**: Add questions to the "Clarifying Questions" section in the implementation plan

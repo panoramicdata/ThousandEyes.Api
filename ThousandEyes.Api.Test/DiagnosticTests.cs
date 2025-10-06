@@ -1,51 +1,41 @@
 using AwesomeAssertions;
+using ThousandEyes.Api.Interfaces;
 
 namespace ThousandEyes.Api.Test;
 
 [Collection("Integration Tests")]
-public class DiagnosticTests(IntegrationTestFixture fixture) : TestBase(fixture)
+public class DiagnosticTests(IntegrationTestFixture fixture)
 {
+	private readonly IntegrationTestFixture _fixture = fixture;
+
+	private IThousandEyesClient ThousandEyesClient => _fixture.GetThousandEyesClient();
+	private ILogger Logger => _fixture.Logger;
+
 	[Fact]
-	public async Task RawHttpClient_CheckApiEndpoint()
+	public async Task CanConnectToApiAsync()
 	{
-		// Test raw HTTP access to see what we actually get back
+		// This test attempts to connect to the ThousandEyes API
+		// It should pass if the Bearer token and network connectivity are working
 		using var httpClient = new HttpClient();
+		httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+			"Bearer", 
+			_fixture.Configuration["ThousandEyes:BearerToken"]);
 
-		var baseUrl = ThousandEyesClient.BaseUrl;
-		Console.WriteLine($"Testing raw HTTP access to: {baseUrl}");
-		Logger.LogInformation("Testing raw HTTP access to: {BaseUrl}", baseUrl);
-
+		var baseUrl = "https://api.thousandeyes.com/v7";
+		
 		try
 		{
-			var response = await httpClient.GetAsync($"{baseUrl}/api/Tickets", CancellationToken);
-			var content = await response.Content.ReadAsStringAsync(CancellationToken);
+			var cancellationToken = TestContext.Current.CancellationToken;
+			var response = await httpClient.GetAsync($"{baseUrl}/account-groups", cancellationToken);
+			var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
-			Console.WriteLine($"HTTP Status: {response.StatusCode}");
-			Console.WriteLine($"Content Type: {response.Content.Headers.ContentType?.MediaType}");
-			Console.WriteLine($"Content Length: {content.Length}");
+			Console.WriteLine($"Response Status: {response.StatusCode}");
+			Console.WriteLine($"Response Content: {content[..Math.Min(200, content.Length)]}...");
 
-			// Log response headers
-			Console.WriteLine("Response Headers:");
-			foreach (var header in response.Headers)
-			{
-				Console.WriteLine($"  {header.Key}: {string.Join(", ", header.Value.Take(1))}");
-			}
-
-			if (content.Length > 0)
-			{
-				Console.WriteLine("Content Preview (first 1000 chars):");
-				Console.WriteLine(content.Length > 1000 ? content[..1000] + "..." : content);
-			}
-			else
-			{
-				Console.WriteLine("Content is empty");
-			}
-
-			Logger.LogInformation("HTTP Status: {StatusCode}", response.StatusCode);
-			Logger.LogInformation("Content Type: {ContentType}", response.Content.Headers.ContentType?.MediaType);
-			Logger.LogInformation("Content Length: {Length}", content.Length);
-
-			// Log what we actually got for analysis
+			Logger.LogInformation("API connection test - Status: {StatusCode}", response.StatusCode);
+			
+			// Should get a successful response (either 200 or 401 if token is invalid)
+			// If we get network errors, that indicates connectivity issues
 			_ = response.Should().NotBeNull();
 			_ = content.Should().NotBeNull();
 		}
@@ -63,29 +53,21 @@ public class DiagnosticTests(IntegrationTestFixture fixture) : TestBase(fixture)
 		// Diagnostic test to verify user secrets are loaded correctly
 		var config = _fixture.Configuration;
 
-		var account = config["HaloApi:Account"];
-		var clientId = config["HaloApi:ClientId"];
-		var clientSecret = config["HaloApi:ClientSecret"];
+		var bearerToken = config["ThousandEyes:BearerToken"];
 
-		Console.WriteLine($"Account: {account}");
-		Console.WriteLine($"ClientId: {clientId}");
-		Console.WriteLine($"ClientSecret: {(!string.IsNullOrEmpty(clientSecret) ? "***SET***" : "NOT SET")}");
+		Console.WriteLine($"Bearer Token: {(!string.IsNullOrEmpty(bearerToken) ? "***SET***" : "NOT SET")}");
 
-		Logger.LogInformation("Account: {Account}", account);
-		Logger.LogInformation("ClientId: {ClientId}", clientId);
-		Logger.LogInformation("ClientSecret: {HasSecret}", !string.IsNullOrEmpty(clientSecret) ? "***SET***" : "NOT SET");
+		Logger.LogInformation("Bearer Token: {HasToken}", !string.IsNullOrEmpty(bearerToken) ? "***SET***" : "NOT SET");
 
-		_ = account.Should().NotBeNullOrEmpty();
-		_ = clientId.Should().NotBeNullOrEmpty();
-		_ = clientSecret.Should().NotBeNullOrEmpty();
+		_ = bearerToken.Should().NotBeNullOrEmpty();
 
-		// Check the constructed URL
-		var expectedUrl = $"https://{account}.halopsa.com";
+		// Check the expected API Base URL for ThousandEyes
+		var expectedUrl = "https://api.thousandeyes.com/v7";
 		Console.WriteLine($"Expected API Base URL: {expectedUrl}");
-		Console.WriteLine($"Actual API Base URL: {ThousandEyesClient.BaseUrl}");
 
 		Logger.LogInformation("Expected API Base URL: {Url}", expectedUrl);
 
-		_ = ThousandEyesClient.BaseUrl.Should().Be(expectedUrl);
+		// Note: We don't have a static BaseUrl property in ThousandEyesClient like the old Halo client
+		// The URL is configured internally based on the ThousandEyes API specification
 	}
 }

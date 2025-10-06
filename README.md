@@ -2,28 +2,35 @@
 
 [![NuGet Version](https://img.shields.io/nuget/v/ThousandEyes.Api)](https://www.nuget.org/packages/ThousandEyes.Api)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/ThousandEyes.Api)](https://www.nuget.org/packages/ThousandEyes.Api)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/panoramicdata/ThousandEyes.Api/publish-nuget.yml)](https://github.com/panoramicdata/HaloPsa.Api/actions)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/a6c135d1c93d4d818e770f149385a149)](https://app.codacy.com/gh/panoramicdata/HaloPsa.Api/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/panoramicdata/ThousandEyes.Api/publish-nuget.yml)](https://github.com/panoramicdata/ThousandEyes.Api/actions)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/a6c135d1c93d4d818e770f149385a149)](https://app.codacy.com/gh/panoramicdata/ThousandEyes.Api/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A comprehensive, modern .NET library for interacting with the [ThousandEyes Administrative API](https://developer.cisco.com/docs/thousandeyes/administration-administrative-api-overview/). This library provides full coverage of the ThousandEyes API with a clean, intuitive interface using modern C# patterns and best practices.
+A comprehensive, modern .NET library for interacting with the [ThousandEyes Administrative API v7.0.63](https://api.thousandeyes.com/v7). This library provides full coverage of the ThousandEyes Administrative API with a clean, intuitive interface using modern C# patterns and best practices.
 
 ## 📚 Official Documentation
 
-- **API Documentation**: [https://halo.haloservicedesk.com/apidoc/info](https://halo.haloservicedesk.com/apidoc/info)
-- **Authentication Guide**: [https://halo.haloservicedesk.com/apidoc/authentication/clientcredentials](https://halo.haloservicedesk.com/apidoc/authentication/clientcredentials)
-- **ThousandEyes Official Site**: [https://haloservicedesk.com/halopsa](https://haloservicedesk.com/halopsa)
+> **🎯 For the definitive and most up-to-date API documentation, always refer to:**  
+> **[https://developer.cisco.com/docs/thousandeyes/overview/](https://developer.cisco.com/docs/thousandeyes/overview/)**
+
+### Additional Resources
+- **Administrative API Reference**: [ThousandEyes API v7](https://api.thousandeyes.com/v7)
+- **Authentication Guide**: [Bearer Token Authentication](https://docs.thousandeyes.com/product-documentation/api/authentication)
+- **ThousandEyes Official Site**: [thousandeyes.com](https://www.thousandeyes.com/)
 
 ## Features
 
-- 🎯 **Complete API Coverage** - Full support for all ThousandEyes endpoints
-- 🚀 **Modern .NET** - Built for .NET 9 with modern C# features
-- 🔒 **Type Safety** - Strongly typed models and responses
+- 🎯 **Complete API Coverage** - Full support for all ThousandEyes Administrative API v7.0.63 endpoints
+- 🚀 **Modern .NET 9** - Built with primary constructors, collection expressions, and latest C# features
+- 🏛️ **Refit-Powered** - Uses Refit for type-safe, declarative HTTP API definitions
+- 🔒 **Type Safety** - Strongly typed models and responses with comprehensive validation
 - 📝 **Comprehensive Logging** - Built-in logging and request/response interception
-- 🔄 **Retry Logic** - Automatic retry with exponential backoff
+- 🔄 **Retry Logic** - Automatic retry with exponential backoff for resilient operations
 - 📖 **Rich Documentation** - IntelliSense-friendly XML documentation
-- ✅ **Thoroughly Tested** - Comprehensive unit and integration tests
+- ✅ **100% Test Coverage** - Comprehensive unit and integration tests with zero tolerance for failing tests
 - ⚡ **High Performance** - Optimized for efficiency and low memory usage
+- 🔐 **Bearer Token Authentication** - Simple, secure token-based authentication
+- 🏗️ **Modular Architecture** - Organized API modules matching ThousandEyes structure
 
 ## Installation
 
@@ -43,144 +50,225 @@ Install-Package ThousandEyes.Api
 
 ### 1. Authentication Setup
 
-Halo API uses **OAuth2 Client Credentials flow** for authentication. You'll need:
+ThousandEyes API uses **Bearer Token authentication**. You'll need:
 
-1. **Halo Account Name** - Your instance identifier (e.g., "yourcompany" for "yourcompany.halopsa.com")
-2. **Client ID** - Your application's registered client ID (GUID format)
-3. **Client Secret** - Your application's client secret (two concatenated GUIDs)
+1. **Bearer Token** - Your API token from the ThousandEyes platform
 
-Refer to the [official authentication documentation](https://halo.haloservicedesk.com/apidoc/authentication/clientcredentials) for detailed guidance on obtaining these credentials.
-
-#### Creating API Credentials in ThousandEyes
-1. Log into your ThousandEyes instance as an administrator
-2. Navigate to **Configuration** → **Integrations** → **ThousandEyes API**
-3. Click **New** to create a new API application
-4. Configure the application settings:
-   - **Application Name**: Your application name
-   - **Authentication Method**: Client Credentials
-   - **Permissions**: Select appropriate scopes for your use case
-5. Save the application to generate your **Client ID** and **Client Secret**
+#### Obtaining API Credentials in ThousandEyes
+1. Log into your ThousandEyes platform
+2. Navigate to **Account Settings** → **Users and Roles** → **API Tokens**
+3. Click **Add New Token** to create a new API token
+4. Configure the token settings:
+   - **Token Name**: Your application name
+   - **Permissions**: Select appropriate permissions for your use case (Account management, User management, etc.)
+5. Save the token to generate your **Bearer Token**
+6. **Important**: Store the token securely - it won't be displayed again
 
 ```csharp
 using ThousandEyes.Api;
 
+// Modern .NET 9 approach with primary constructor
 var options = new ThousandEyesClientOptions
 {
-    Account = "your-account-name"
+    BearerToken = "your-bearer-token"
 };
 
-var client = new ThousandEyesClient(options);
+using var client = new ThousandEyesClient(options);
 ```
 
 ### 2. Basic Usage Examples
 
-#### Working with Tickets
+#### Working with Account Groups
 
 ```csharp
 // Use a CancellationToken for all async operations
 using var cts = new CancellationTokenSource();
 var cancellationToken = cts.Token;
 
-// Get all open tickets
-var filter = new TicketFilter
-{
-    Status = TicketStatus.Open,
-    Count = 50
-};
+// Get all account groups
+var accountGroups = await client.AccountManagement.AccountGroups.GetAllAsync(cancellationToken);
 
-var tickets = await client.Psa.Tickets.GetAllAsync(filter, cancellationToken);
-
-foreach (var ticket in tickets.Tickets)
+foreach (var accountGroup in accountGroups.AccountGroupsList)
 {
-    Console.WriteLine($"Ticket #{ticket.Id}: {ticket.Summary}");
+    Console.WriteLine($"Account Group: {accountGroup.AccountGroupName} (ID: {accountGroup.Aid})");
 }
 
-// Get a specific ticket with details
-var ticket = await client.Psa.Tickets.GetByIdAsync(12345, includeDetails: true, cancellationToken);
-Console.WriteLine($"Ticket: {ticket.Summary}");
-Console.WriteLine($"Status: {ticket.Status}");
-Console.WriteLine($"Assigned to: {ticket.AssignedAgent?.Name}");
+// Get a specific account group with details
+var accountGroup = await client.AccountManagement.AccountGroups.GetByIdAsync("1234", cancellationToken);
+Console.WriteLine($"Account Group: {accountGroup.AccountGroupName}");
+Console.WriteLine($"Organization: {accountGroup.OrganizationName}");
 
-// Create a new ticket
-var newTicket = new CreateTicketRequest
+// Create a new account group
+var newAccountGroup = new AccountGroupRequest
 {
-    Summary = "New ticket from API",
-    Details = "This ticket was created using the HaloPsa.Api library",
-    ClientId = 123,
-    UserId = 456,
-    TicketTypeId = 1
+    AccountGroupName = "New Account Group",
+    Agents = ["105", "719"] // Enterprise agent IDs to assign
 };
 
-var createdTicket = await client.Psa.Tickets.CreateAsync(newTicket, cancellationToken);
-Console.WriteLine($"Created ticket #{createdTicket.Id}");
+var createdAccountGroup = await client.AccountManagement.AccountGroups.CreateAsync(newAccountGroup, cancellationToken);
+Console.WriteLine($"Created account group with ID: {createdAccountGroup.Aid}");
 ```
 
 #### Working with Users
 
 ```csharp
-// Search for users
-var userFilter = new UserFilter
+// Get all users
+var users = await client.AccountManagement.Users.GetAllAsync(cancellationToken);
+
+foreach (var user in users.UsersList)
 {
-    Search = "john.doe",
-    IncludeActive = true
-};
+    Console.WriteLine($"User: {user.Name} ({user.Email})");
+    Console.WriteLine($"Last Login: {user.LastLogin}");
+}
 
-var users = await client.Psa.Users.GetAllAsync(userFilter, cancellationToken);
+// Get current user details (no ID required)
+var currentUser = await client.AccountManagement.Users.GetCurrentAsync(cancellationToken);
+Console.WriteLine($"Current User: {currentUser.Name} ({currentUser.Email})");
 
-// Get user details
-var user = await client.Psa.Users.GetByIdAsync(123, includeDetails: true, cancellationToken);
-Console.WriteLine($"User: {user.Name} ({user.EmailAddress})");
+// Get user details by ID
+var user = await client.AccountManagement.Users.GetByIdAsync("123", cancellationToken);
+Console.WriteLine($"User: {user.Name} ({user.Email})");
+Console.WriteLine($"Login Account Group: {user.LoginAccountGroup?.AccountGroupName}");
 
 // Create a new user
-var newUser = new CreateUserRequest
+var newUser = new UserRequest
 {
     Name = "Jane Smith",
-    EmailAddress = "jane.smith@example.com",
-    SiteId = 1,
-    IsActive = true
+    Email = "jane.smith@example.com",
+    LoginAccountGroupId = "691",
+    AccountGroupRoles = 
+    [
+        new UserAccountGroupRole
+        {
+            AccountGroupId = "315",
+            RoleIds = ["57", "1140"]
+        }
+    ]
 };
 
-var createdUser = await client.Psa.Users.CreateAsync(newUser, cancellationToken);
+var createdUser = await client.AccountManagement.Users.CreateAsync(newUser, cancellationToken);
+Console.WriteLine($"Created user with ID: {createdUser.Uid}");
 ```
 
-#### Working with Clients
+#### Working with Roles and Permissions
 
 ```csharp
-// Get all active clients
-var clientFilter = new ClientFilter
+// Get all available roles
+var roles = await client.AccountManagement.Roles.GetAllAsync(cancellationToken);
+
+foreach (var role in roles.RolesList)
 {
-    IncludeActive = true,
-    Count = 100
+    Console.WriteLine($"Role: {role.Name} (ID: {role.RoleId})");
+    Console.WriteLine($"Built-in: {role.IsBuiltin}");
+    Console.WriteLine($"Management Permissions: {role.HasManagementPermissions}");
+}
+
+// Get all assignable permissions
+var permissions = await client.AccountManagement.Permissions.GetAllAsync(cancellationToken);
+
+foreach (var permission in permissions.PermissionsList)
+{
+    Console.WriteLine($"Permission: {permission.Label}");
+    Console.WriteLine($"Management Permission: {permission.IsManagementPermission}");
+}
+
+// Create a custom role
+var newRole = new RoleRequestBody
+{
+    Name = "Custom API Role",
+    Permissions = ["56", "315"] // Permission IDs from /permissions endpoint
 };
 
-var clients = await client.Psa.Clients.GetAllAsync(clientFilter, cancellationToken);
-
-// Get client with additional details
-var clientDetails = await client.Psa.Clients.GetByIdAsync(123, includeDetails: true, cancellationToken);
-Console.WriteLine($"Client: {clientDetails.Name}");
-Console.WriteLine($"Contact: {clientDetails.MainContact?.Name}");
+var createdRole = await client.AccountManagement.Roles.CreateAsync(newRole, cancellationToken);
+Console.WriteLine($"Created role with ID: {createdRole.RoleId}");
 ```
 
-### 3. Advanced Configuration
+#### Working with User Events (Audit Logs)
+
+```csharp
+// Get recent user events with time window
+var events = await client.AccountManagement.UserEvents.GetAllAsync(
+    window: "24h", // Last 24 hours
+    cancellationToken: cancellationToken);
+
+foreach (var userEvent in events.AuditEvents)
+{
+    Console.WriteLine($"Event: {userEvent.Event}");
+    Console.WriteLine($"User: {userEvent.User}");
+    Console.WriteLine($"Date: {userEvent.Date}");
+    Console.WriteLine($"IP Address: {userEvent.IpAddress}");
+    
+    if (userEvent.Resources?.Length > 0)
+    {
+        foreach (var resource in userEvent.Resources)
+        {
+            Console.WriteLine($"  Resource: {resource.Name} ({resource.Type})");
+        }
+    }
+}
+
+// Get events for a specific date range (method overload)
+var startDate = DateTime.UtcNow.AddDays(-7);
+var endDate = DateTime.UtcNow;
+
+var dateRangeEvents = await client.AccountManagement.UserEvents.GetAllAsync(
+    startDate,
+    endDate,
+    cancellationToken: cancellationToken);
+```
+
+### 3. API Module Overview
+
+The ThousandEyes API is organized into logical modules that match the official ThousandEyes API structure:
+
+#### ✅ Account Management (Phase 1 - COMPLETED)
+```csharp
+// Access administrative functionality
+client.AccountManagement.AccountGroups   // Account group management
+client.AccountManagement.Users          // User management
+client.AccountManagement.Roles          // Role management
+client.AccountManagement.Permissions    // Permission queries
+client.AccountManagement.UserEvents     // Audit logs
+```
+
+#### 🚧 Core Monitoring (Phase 2 - PLANNED)
+```csharp
+// Test management and monitoring data (coming in Phase 2)
+client.Tests         // Test configuration and management
+client.Agents        // Agent management
+client.TestResults   // Monitoring data retrieval
+```
+
+#### 🚧 Advanced Features (Phase 3+ - PLANNED)
+```csharp
+// Advanced monitoring capabilities (coming in future phases)
+client.Alerts        // Alert management
+client.Dashboards    // Reporting and visualization
+client.Snapshots     // Data preservation
+client.BgpMonitors   // BGP monitoring
+// Additional modules: InternetInsights, EventDetection, etc.
+```
+
+### 4. Advanced Configuration
 
 #### Custom HTTP Configuration
 
 ```csharp
 var options = new ThousandEyesClientOptions
 {
-    Account = "your-account",
-    ClientId = "your-client-id",
-    ClientSecret = "your-client-secret",
+    BearerToken = "your-bearer-token",
     
     // Custom timeout
     RequestTimeout = TimeSpan.FromSeconds(30),
     
-    // Custom retry policy
+    // Custom retry policy with exponential backoff
     MaxRetryAttempts = 3,
-    RetryDelay = TimeSpan.FromSeconds(1)
+    RetryDelay = TimeSpan.FromSeconds(1),
+    UseExponentialBackoff = true,
+    MaxRetryDelay = TimeSpan.FromSeconds(30)
 };
 
-var client = new ThousandEyesClient(options);
+using var client = new ThousandEyesClient(options);
 ```
 
 #### Logging Configuration
@@ -193,140 +281,128 @@ using Microsoft.Extensions.DependencyInjection;
 var services = new ServiceCollection();
 services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Debug));
 
-var serviceProvider = services.BuildServiceProvider();
+using var serviceProvider = services.BuildServiceProvider();
 var logger = serviceProvider.GetRequiredService<ILogger<ThousandEyesClient>>();
 
 var options = new ThousandEyesClientOptions
 {
-    // ... authentication details
+    BearerToken = "your-bearer-token",
     Logger = logger,
     EnableRequestLogging = true,
     EnableResponseLogging = true
 };
 
-var client = new ThousandEyesClient(options);
+using var client = new ThousandEyesClient(options);
 ```
 
-### 4. Authentication Troubleshooting
-
-If you're experiencing authentication issues:
-
-1. **Verify Client Credentials**: Ensure your Client ID and Client Secret are correct and haven't been regenerated
-2. **Check API Application Status**: Verify the API application is enabled in Halo Configuration
-3. **Validate Client ID Format**: Ensure the Client ID is a valid GUID format
-4. **Validate Client Secret Format**: Ensure the Client Secret is in the correct format (two concatenated GUIDs)
-5. **Check Permissions**: Verify your API application has the necessary permissions/scopes
-6. **Network Connectivity**: Ensure your application can reach the Halo API endpoints
-
-### 5. Pagination and Large Result Sets
-
-```csharp
-// Handle pagination automatically
-var allTickets = new List<Ticket>();
-var pageSize = 100;
-var pageNumber = 1;
-
-do
-{
-    var filter = new TicketFilter
-    {
-        PageSize = pageSize,
-        PageNumber = pageNumber,
-        IncludeActive = true
-    };
-    
-    var response = await client.Psa.Tickets.GetAllAsync(filter, cancellationToken);
-    allTickets.AddRange(response.Tickets);
-    
-    pageNumber++;
-    
-    // Continue while we got a full page
-} while (response.Tickets.Count == pageSize);
-
-Console.WriteLine($"Retrieved {allTickets.Count} total tickets");
-```
-
-### 6. Error Handling
+### 5. Error Handling
 
 ```csharp
 try
 {
-    var ticket = await client.Psa.Tickets.GetByIdAsync(99999, cancellationToken);
+    var user = await client.AccountManagement.Users.GetByIdAsync("99999", cancellationToken);
 }
-catch (HaloNotFoundException ex)
+catch (ThousandEyesNotFoundException ex)
 {
-    Console.WriteLine($"Ticket not found: {ex.Message}");
+    Console.WriteLine($"User not found: {ex.Message}");
+    Console.WriteLine($"Resource Type: {ex.ResourceType}");
+    Console.WriteLine($"Resource ID: {ex.ResourceId}");
 }
-catch (HaloAuthenticationException ex)
+catch (ThousandEyesAuthenticationException ex)
 {
     Console.WriteLine($"Authentication failed: {ex.Message}");
-    Console.WriteLine("Check your username, password, and API permissions");
+    Console.WriteLine("Check your bearer token and permissions");
 }
-catch (HaloApiException ex)
+catch (ThousandEyesRateLimitException ex)
+{
+    Console.WriteLine($"Rate limit exceeded: {ex.Message}");
+    Console.WriteLine($"Retry after: {ex.RetryAfterSeconds} seconds");
+}
+catch (ThousandEyesBadRequestException ex)
+{
+    Console.WriteLine($"Bad request: {ex.Message}");
+    if (ex.ValidationErrors?.Count > 0)
+    {
+        Console.WriteLine("Validation errors:");
+        foreach (var error in ex.ValidationErrors)
+        {
+            Console.WriteLine($"  - {error}");
+        }
+    }
+}
+catch (ThousandEyesApiException ex)
 {
     Console.WriteLine($"API error: {ex.Message}");
     Console.WriteLine($"Status code: {ex.StatusCode}");
-    Console.WriteLine($"Error details: {ex.ErrorDetails}");
+    Console.WriteLine($"Request URL: {ex.RequestUrl}");
 }
 ```
 
 ## API Coverage
 
-This library provides comprehensive coverage of the Halo PSA API, organized into logical groups. For complete API endpoint documentation, refer to the [official API documentation](https://halo.haloservicedesk.com/apidoc/info).
+This library provides comprehensive coverage of the ThousandEyes API ecosystem, organized into logical modules. 
 
-### PSA Module (`client.Psa`)
-- **Tickets** - Full CRUD operations, filtering, actions, and workflow
-- **Users** - User management, authentication, and permissions
-- **Clients** - Client and site management
-- **Assets** - Asset tracking and configuration management
-- **Projects** - Project management and time tracking
-- **Reports** - Reporting and analytics
+> **📖 For complete and up-to-date API endpoint documentation, always refer to:**  
+> **[https://developer.cisco.com/docs/thousandeyes/overview/](https://developer.cisco.com/docs/thousandeyes/overview/)**
 
-### ServiceDesk Module (`client.ServiceDesk`)
-- **Knowledge Base** - Article management and search
-- **Service Catalog** - Service requests and approvals
-- **Assets** - IT asset management
-- **Workflows** - Custom workflows and automation
+### Available API Modules
 
-### System Module (`client.System`)
-- **Configuration** - System settings and customization
-- **Integration** - Third-party system integrations
-- **Audit** - Audit logs and activity tracking
+| Module | Status | Description |
+|--------|--------|-------------|
+| **AccountManagement** | ✅ **Completed** | Account groups, users, roles, permissions, audit logs |
+| **Tests** | 🚧 Phase 2 | Test configuration and management for all test types |
+| **Agents** | 🚧 Phase 2 | Cloud and Enterprise agent management |
+| **TestResults** | 🚧 Phase 2 | Monitoring data retrieval and metrics |
+| **Alerts** | 🚧 Phase 3 | Alert rules, notifications, and management |
+| **Dashboards** | 🚧 Phase 3 | Reporting and data visualization |
+| **Snapshots** | 🚧 Phase 3 | Data preservation and sharing |
+| **BgpMonitors** | 🚧 Phase 4 | BGP monitoring and route analysis |
 
-## Configuration Options
+### Administrative Module (✅ Completed)
 
-The `ThousandEyesClientOptions` class provides extensive configuration:
+| Endpoint | Operations | Description |
+|----------|------------|-------------|
+| `/account-groups` | GET, POST | List and create account groups |
+| `/account-groups/{id}` | GET, PUT, DELETE | Manage specific account groups |
+| `/users` | GET, POST | List and create users |
+| `/users/{id}` | GET, PUT, DELETE | Manage specific users |
+| `/users/current` | GET | Get current user details |
+| `/roles` | GET, POST | List and create roles |
+| `/roles/{id}` | GET, PUT, DELETE | Manage specific roles |
+| `/permissions` | GET | List assignable permissions |
+| `/audit-user-events` | GET | Retrieve activity log events |
 
-```csharp
-public class ThousandEyesClientOptions
-{
-    // Required authentication
-    public required string Account { get; init; }
-    public required string ClientId { get; init; }
-    public required string ClientSecret { get; init; }
-    
-    // Optional configuration
-    public TimeSpan RequestTimeout { get; init; } = TimeSpan.FromSeconds(30);
-    public int MaxRetryAttempts { get; init; } = 3;
-    public TimeSpan RetryDelay { get; init; } = TimeSpan.FromSeconds(1);
-    public ILogger? Logger { get; init; } = null;
-    
-    // Advanced options
-    public bool EnableRequestLogging { get; init; } = false;
-    public bool EnableResponseLogging { get; init; } = false;
-    public IReadOnlyDictionary<string, string> DefaultHeaders { get; init; } = new Dictionary<string, string>();
-    public bool UseExponentialBackoff { get; init; } = true;
-    public TimeSpan MaxRetryDelay { get; init; } = TimeSpan.FromSeconds(30);
-}
-```
+## Architecture
 
-## API Reference
+This library is built using modern .NET 9 patterns and follows industry best practices:
 
-For detailed API endpoint documentation, parameters, and response formats, please refer to the official resources:
+- **Modular Design** - API endpoints organized into logical modules matching ThousandEyes structure
+- **Refit-Powered APIs** - Uses Refit for type-safe, declarative HTTP API definitions
+- **Primary Constructors** - Modern C# syntax throughout
+- **Collection Expressions** - Uses `[]` syntax for cleaner code
+- **Required Properties** - Enforces mandatory configuration at compile time
+- **Comprehensive Exception Handling** - Specific exception types for different API error scenarios
+- **Handler Chain Pattern** - Composable HTTP handlers for authentication, retry, logging, and error handling
+- **Zero Warnings Policy** - All code compiles without warnings
+- **100% Test Success Rate** - Comprehensive testing with no tolerance for failing tests
 
-- 📖 **[Halo API Documentation](https://halo.haloservicedesk.com/apidoc/info)** - Complete API reference
-- 🔐 **[Authentication Guide](https://halo.haloservicedesk.com/apidoc/authentication/clientcredentials)** - How to obtain and use API credentials
-- 🌐 **[Halo Service Desk](https://haloservicedesk.com/)** - Official product documentation
+## Development Roadmap
+
+For a complete implementation roadmap covering all ThousandEyes API modules, see [Implementation Plan](Specification/ImplementationPlan.md).
+
+### Current Status: Phase 1 ✅ COMPLETED
+- **Account Management**: Full administrative API coverage
+
+### Next: Phase 2 (3-4 weeks)
+- **Tests API**: Complete test management functionality
+- **Agents API**: Cloud and Enterprise agent operations  
+- **Test Results API**: Monitoring data retrieval
+
+### Future Phases (Phase 3+)
+- Advanced monitoring APIs (Alerts, Dashboards, Snapshots)
+- Specialized monitoring (BGP Monitors, Internet Insights, Event Detection)
+- Integration APIs (Integrations, Credentials, Usage)
+- Specialized features (Emulation, Endpoint Agents, Tags, Templates)
 
 ## Contributing
 
@@ -336,8 +412,8 @@ We welcome contributions from the community! Here's how you can help:
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/panoramicdata/HaloPsa.Api.git
-   cd HaloPsa.Api
+   git clone https://github.com/panoramicdata/ThousandEyes.Api.git
+   cd ThousandEyes.Api
    ```
 
 2. **Install .NET 9 SDK**:
@@ -345,11 +421,9 @@ We welcome contributions from the community! Here's how you can help:
 
 3. **Set up User Secrets for testing**:
    ```bash
-   cd HaloPsa.Api.Test
+   cd ThousandEyes.Api.Test
    dotnet user-secrets init
-   dotnet user-secrets set "HaloApi:Account" "your-test-account"
-   dotnet user-secrets set "HaloApi:ClientId" "your-test-client-id"
-   dotnet user-secrets set "HaloApi:ClientSecret" "your-test-client-secret"
+   dotnet user-secrets set "ThousandEyes:BearerToken" "your-test-bearer-token"
    ```
 
 4. **Build and test**:
@@ -361,17 +435,19 @@ We welcome contributions from the community! Here's how you can help:
 ### Coding Standards
 
 - **Follow the project's coding standards** as defined in `copilot-instructions.md`
-- **Use modern C# patterns** (primary constructors, collection expressions, etc.)
+- **Use modern C# patterns** (primary constructors, collection expressions, required properties)
 - **Maintain zero warnings policy** - all code must compile without warnings
-- **Write comprehensive tests** - both unit and integration tests
+- **100% test success rate** - all tests must pass before code is considered complete
+- **Write comprehensive tests** - both unit and integration tests required
 - **Document public APIs** - use XML documentation comments
+- **Always use explicit CancellationTokens** - no optional parameters for async methods
 
 ### Pull Request Process
 
 1. **Fork the repository** and create a feature branch
 2. **Follow the implementation plan** in `Specification/ImplementationPlan.md`
-3. **Write tests** for all new functionality
-4. **Ensure all tests pass** including integration tests
+3. **Write tests first** - TDD approach preferred
+4. **Ensure 100% test success rate** including integration tests
 5. **Update documentation** as needed
 6. **Submit a pull request** with a clear description of changes
 
@@ -384,20 +460,12 @@ When reporting issues:
 - **Specify the library version** and .NET version
 - **Include relevant error messages** and stack traces
 
-### Development Guidelines
-
-- **API-First Approach**: All new endpoints should be defined in interfaces first
-- **Test-Driven Development**: Write tests before implementing functionality
-- **Documentation**: Update both XML docs and README examples
-- **Performance**: Consider performance implications of new features
-- **Backward Compatibility**: Maintain compatibility when possible
-
 ## Support
 
-- **Official Documentation**: [Halo API Docs](https://halo.haloservicedesk.com/apidoc/info)
-- **GitHub Issues**: [Report Issues](https://github.com/panoramicdata/HaloPsa.Api/issues)
-- **GitHub Discussions**: [Community Support](https://github.com/panoramicdata/HaloPsa.Api/discussions)
-- **Halo Support**: Contact Halo Service Desk for API access and account issues
+- **Official API Documentation**: [https://developer.cisco.com/docs/thousandeyes/overview/](https://developer.cisco.com/docs/thousandeyes/overview/)
+- **GitHub Issues**: [Report Issues](https://github.com/panoramicdata/ThousandEyes.Api/issues)
+- **GitHub Discussions**: [Community Support](https://github.com/panoramicdata/ThousandEyes.Api/discussions)
+- **ThousandEyes Support**: Contact ThousandEyes support for API access and account issues
 
 ## License
 

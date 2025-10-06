@@ -1,0 +1,2462 @@
+openapi: 3.0.1
+info:
+  description: |
+    You can manage the following alert functionalities on the ThousandEyes platform using the Alerts API:
+
+    * **Alerts**: Retrieve alert details. Alerts are assigned to tests through alert rules.
+
+    * **Alert Rules**: Conditions that you configure in order to highlight or be notified of events of interest in your ThousandEyes tests. When an alert rule’s conditions are met, the associated alert is triggered and the alert becomes active. It remains active until the alert is cleared. Alert rules are reusable across multiple tests..
+
+    * **Alert Suppression Windows**: Suppress alerts for tests during periods such as planned maintenance. Windows can be one-time events or recurring events to handle periodic occurrences such as monthly downtime for maintenance.
+
+    For more information about the alerts, see [Alerts](https://docs.thousandeyes.com/product-documentation/alerts).
+  title: Alerts API
+  version: 7.0.63
+servers:
+- description: ThousandEyes API production URL
+  url: https://api.thousandeyes.com/v7
+security:
+- BearerAuth: []
+tags:
+- name: Alerts
+- name: Alert Rules
+- name: Alert Suppression Windows
+paths:
+  /alerts:
+    get:
+      description: "Returns a list of active alerts. If no alerts are active within\
+        \ the  specified time range, an empty response is returned.  Note that time\
+        \ filters (`window`, `startDate`, or `endDate`) are only applied to cleared\
+        \ alerts."
+      operationId: getAlerts
+      parameters:
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      - description: |-
+          A dynamic time interval up to the current time of the request. Specify the interval as a number followed by an optional type: `s` for seconds (default if no type is specified), `m` for minutes, `h` for hours, `d` for days, and `w` for weeks.
+          For a precise date range, use `startDate` and `endDate`.
+        in: query
+        name: window
+        schema:
+          example: 12h
+          pattern: "^\\d+(?:[smhdw]{1})?$"
+          type: string
+      - description: "Use with the `endDate` parameter. Include the complete time\
+          \ (hours, minutes, and seconds) in UTC time zone, following the ISO 8601\
+          \ date-time format. See the example for reference. Please note that this\
+          \ parameter can't be used with `window`."
+        in: query
+        name: startDate
+        schema:
+          example: 2022-07-17T22:00:54Z
+          format: date-time
+          type: string
+      - description: "Defaults to current time the request is made. Use with the `startDate`\
+          \ parameter. Include the complete time (hours, minutes, and seconds) in\
+          \ UTC time zone, following the ISO 8601 date-time format. See the example\
+          \ for reference. Please note that this parameter can't be used with `window`."
+        in: query
+        name: endDate
+        schema:
+          example: 2022-07-18T22:00:54Z
+          format: date-time
+          type: string
+      - description: (Optional) Maximum number of objects to return.
+        in: query
+        name: max
+        schema:
+          example: 5
+          type: integer
+      - description: (Optional) Opaque cursor used for pagination. Clients should
+          use `next` value from `_links` instead of this parameter.
+        in: query
+        name: cursor
+        schema:
+          type: string
+          example: null
+      - description: "Optional parameter to match a specific alert state. If not specified,\
+          \ it defaults to `trigger`."
+        explode: false
+        in: query
+        name: state
+        required: false
+        schema:
+          allOf:
+          - $ref: '#/components/schemas/State'
+          - example: trigger
+        style: form
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/Alerts'
+          description: OK
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "429":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Exhausted rate limit for the organization
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: List active alerts
+      tags:
+      - Alerts
+  /alerts/{alertId}:
+    get:
+      description: Returns detailed information about an alert using its ID.
+      operationId: getAlert
+      parameters:
+      - description: Unique alert ID.
+        example: e9c3bf02-a48c-4aa8-9e5f-898800d6f569
+        explode: false
+        in: path
+        name: alertId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/AlertDetail'
+          description: OK
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "429":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Exhausted rate limit for the organization
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Retrieve alert details
+      tags:
+      - Alerts
+  /alerts/rules:
+    get:
+      description: Returns a list of alert rules. Default rules for each test type
+        are indicated with a boolean response (true or false); these default alert
+        rules automatically apply to their respective test types.
+      operationId: getAlertsRules
+      parameters:
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/Rules'
+          description: OK
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "429":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Exhausted rate limit for the organization
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: List alert rules
+      tags:
+      - Alert Rules
+    post:
+      description: |-
+        Creates a new alert rule in your account, using the provided POST data. The `Edit alert rules` permission is required to create an alert rule.
+        Note: Assigning an alert rule to a test during creation requires the `Edit tests` permission.
+      operationId: createAlertRule
+      parameters:
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleDetailUpdate'
+        required: true
+      responses:
+        "201":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+          description: Created
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "429":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Exhausted rate limit for the organization
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Create alert rule
+      tags:
+      - Alert Rules
+  /alerts/rules/{ruleId}:
+    delete:
+      description: "Deletes an alert rule from your account. Users must have both\
+        \ `Edit alert rules` and `Edit tests` permissions,  especially if the rule\
+        \ is linked to any tests. Without these permissions, an error occurs."
+      operationId: deleteAlertRule
+      parameters:
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      - description: Unique alert rule ID.
+        example: "127094"
+        explode: false
+        in: path
+        name: ruleId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: No content
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "429":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Exhausted rate limit for the organization
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Delete alert rule
+      tags:
+      - Alert Rules
+    get:
+      description: "Returns detailed information about an alert rule using the `ruleId`.\
+        \ If the `ruleId` doesn’t exist or is inaccessible by your account, an empty\
+        \ response is returned."
+      operationId: getAlertRule
+      parameters:
+      - description: Unique alert rule ID.
+        example: "127094"
+        explode: false
+        in: path
+        name: ruleId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/RuleDetail'
+          description: OK
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "429":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Exhausted rate limit for the organization
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Retrieve alert rule
+      tags:
+      - Alert Rules
+    put:
+      description: |-
+        Modifies an existing alert rule in your account, using the provided POST data. The `Edit alert rules` permission is required to modify an alert rule.
+
+        Note: Assigning an alert rule to a test during creation requires the `Edit tests` permission.
+      operationId: updateAlertRule
+      parameters:
+      - description: Unique alert rule ID.
+        example: "127094"
+        explode: false
+        in: path
+        name: ruleId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleDetailUpdate'
+        required: true
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "429":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Exhausted rate limit for the organization
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Update alert rule
+      tags:
+      - Alert Rules
+  /alert-suppression-windows:
+    get:
+      description: Returns a list of all alert suppression windows configured in your
+        account group.
+      operationId: getAlertSuppressionWindows
+      parameters:
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/AlertSuppressionWindows'
+          description: OK
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "429":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Exhausted rate limit for the organization
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: List alert suppression windows
+      tags:
+      - Alert Suppression Windows
+    post:
+      description: "Creates a new alert suppression window in ThousandEyes, using\
+        \ the  provided POST data. Only Account Admins can create alert suppression\
+        \ windows."
+      operationId: createAlertSuppressionWindow
+      parameters:
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      - description: "Optional parameter on whether or not to expand alert related\
+          \ resources.  Without this parameter, there's no default expansion. For\
+          \ example, to expand the \"tests\" resource, use the `?expand=test` query."
+        explode: false
+        in: query
+        name: expand
+        required: false
+        schema:
+          example:
+          - test
+          items:
+            $ref: '#/components/schemas/ExpandAlertTestOptions'
+          type: array
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertSuppressionWindowRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/AlertSuppressionWindowDetail'
+          description: Created
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "429":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Exhausted rate limit for the organization
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Create alert suppression window
+      tags:
+      - Alert Suppression Windows
+  /alert-suppression-windows/{windowId}:
+    delete:
+      description: Deletes an alert suppression window.
+      operationId: deleteAlertSuppressionWindow
+      parameters:
+      - description: Unique window ID.
+        example: "2411"
+        explode: false
+        in: path
+        name: windowId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      responses:
+        "204":
+          description: No content
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "429":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Exhausted rate limit for the organization
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Delete alert suppression window
+      tags:
+      - Alert Suppression Windows
+    get:
+      description: Returns detailed information about an alert suppression window
+        configured in your account group.
+      operationId: getAlertSuppressionWindow
+      parameters:
+      - description: Unique window ID.
+        example: "2411"
+        explode: false
+        in: path
+        name: windowId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      - description: "Optional parameter on whether or not to expand alert related\
+          \ resources.  Without this parameter, there's no default expansion. For\
+          \ example, to expand the \"tests\" resource, use the `?expand=test` query."
+        explode: false
+        in: query
+        name: expand
+        required: false
+        schema:
+          example:
+          - test
+          items:
+            $ref: '#/components/schemas/ExpandAlertTestOptions'
+          type: array
+        style: form
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/AlertSuppressionWindowDetail'
+          description: OK
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "429":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Exhausted rate limit for the organization
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Retrieve alert suppression window
+      tags:
+      - Alert Suppression Windows
+    put:
+      description: "Updates an alert suppression window in ThousandEyes, using the\
+        \  provided POST data. Only Account Admins can update alert suppression windows."
+      operationId: updateAlertSuppressionWindow
+      parameters:
+      - description: Unique window ID.
+        example: "2411"
+        explode: false
+        in: path
+        name: windowId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      - description: "Optional parameter on whether or not to expand alert related\
+          \ resources.  Without this parameter, there's no default expansion. For\
+          \ example, to expand the \"tests\" resource, use the `?expand=test` query."
+        explode: false
+        in: query
+        name: expand
+        required: false
+        schema:
+          example:
+          - test
+          items:
+            $ref: '#/components/schemas/ExpandAlertTestOptions'
+          type: array
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertSuppressionWindowRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/AlertSuppressionWindowDetail'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "429":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Exhausted rate limit for the organization
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Update alert suppression window
+      tags:
+      - Alert Suppression Windows
+components:
+  headers:
+    Location:
+      description: The absolute path to created resource.
+      schema:
+        example: https://api.thousandeyes.com/v7/link/to/resource/id
+        format: uri
+        type: string
+  parameters:
+    AlertId:
+      description: Unique alert ID.
+      example: e9c3bf02-a48c-4aa8-9e5f-898800d6f569
+      explode: false
+      in: path
+      name: alertId
+      required: true
+      schema:
+        format: uuid
+        type: string
+      style: simple
+    RuleId:
+      description: Unique alert rule ID.
+      example: "127094"
+      explode: false
+      in: path
+      name: ruleId
+      required: true
+      schema:
+        type: string
+      style: simple
+    WindowId:
+      description: Unique window ID.
+      example: "2411"
+      explode: false
+      in: path
+      name: windowId
+      required: true
+      schema:
+        type: string
+      style: simple
+    ExpandAlert:
+      description: "Optional parameter on whether or not to expand alert related resources.\
+        \  Without this parameter, there's no default expansion. For example, to expand\
+        \ the \"tests\" resource, use the `?expand=test` query."
+      explode: false
+      in: query
+      name: expand
+      required: false
+      schema:
+        example:
+        - test
+        items:
+          $ref: '#/components/schemas/ExpandAlertTestOptions'
+        type: array
+      style: form
+    State:
+      description: "Optional parameter to match a specific alert state. If not specified,\
+        \ it defaults to `trigger`."
+      explode: false
+      in: query
+      name: state
+      required: false
+      schema:
+        allOf:
+        - $ref: '#/components/schemas/State'
+        - example: trigger
+      style: form
+    AccountGroupId:
+      description: A unique identifier associated with your account group. You can
+        retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note that
+        you must be assigned to the target account group. Specifying this parameter
+        without being assigned to the target account group will result in an error
+        response.
+      in: query
+      name: aid
+      required: false
+      schema:
+        example: "1234"
+        type: string
+    Window:
+      description: |-
+        A dynamic time interval up to the current time of the request. Specify the interval as a number followed by an optional type: `s` for seconds (default if no type is specified), `m` for minutes, `h` for hours, `d` for days, and `w` for weeks.
+        For a precise date range, use `startDate` and `endDate`.
+      in: query
+      name: window
+      schema:
+        example: 12h
+        pattern: "^\\d+(?:[smhdw]{1})?$"
+        type: string
+    StartDateParameter:
+      description: "Use with the `endDate` parameter. Include the complete time (hours,\
+        \ minutes, and seconds) in UTC time zone, following the ISO 8601 date-time\
+        \ format. See the example for reference. Please note that this parameter can't\
+        \ be used with `window`."
+      in: query
+      name: startDate
+      schema:
+        example: 2022-07-17T22:00:54Z
+        format: date-time
+        type: string
+    EndDateParameter:
+      description: "Defaults to current time the request is made. Use with the `startDate`\
+        \ parameter. Include the complete time (hours, minutes, and seconds) in UTC\
+        \ time zone, following the ISO 8601 date-time format. See the example for\
+        \ reference. Please note that this parameter can't be used with `window`."
+      in: query
+      name: endDate
+      schema:
+        example: 2022-07-18T22:00:54Z
+        format: date-time
+        type: string
+    PaginationMax:
+      description: (Optional) Maximum number of objects to return.
+      in: query
+      name: max
+      schema:
+        example: 5
+        type: integer
+    PaginationCursor:
+      description: (Optional) Opaque cursor used for pagination. Clients should use
+        `next` value from `_links` instead of this parameter.
+      in: query
+      name: cursor
+      schema:
+        type: string
+        example: null
+  responses:
+    "401":
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+      description: Unauthorized
+    "403":
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Insufficient permissions to query endpoint
+    "404":
+      content:
+        application/problem+json:
+          example:
+            type: about:blank
+            title: URI Resource Not Found
+            status: 404
+            detail: Details explaining if the 404 error is related to an invalid URI
+              or a wrong ID
+            instance: /v7
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Not found
+    "429":
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Exhausted rate limit for the organization
+    "500":
+      content:
+        application/problem+json:
+          example:
+            type: about:blank
+            title: Internal server error
+            status: 500
+            detail: Optional detail about the internal error message.
+            instance: /v7
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Internal server error
+    "400":
+      content:
+        application/problem+json:
+          example:
+            type: about:blank
+            title: Request validation failed. There are invalid or missing fields
+            status: 400
+            detail: Your request object contains invalid fields.
+            instance: /v7
+            errors:
+            - code: AM-5432
+              field: firstName
+              message: firstName cannot have fancy characters
+            - code: DASH-5622
+              field: password
+              message: Password cannot be blank
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+      description: Bad Request
+    "204":
+      description: No content
+  schemas:
+    AlertSimpleTest:
+      additionalProperties: true
+      description: "Each test includes additional fields depending on its `type`.\
+        \ Refer `/tests/{type}` endpoint to know the set of fields returned by a given\
+        \ `type`."
+      properties:
+        interval:
+          $ref: '#/components/schemas/TestInterval'
+        alertsEnabled:
+          description: Indicates if alerts are enabled.
+          example: true
+          type: boolean
+        enabled:
+          default: true
+          description: Test is enabled.
+          example: true
+          type: boolean
+        createdBy:
+          description: User that created the test.
+          example: user@user.com
+          readOnly: true
+          type: string
+        createdDate:
+          description: UTC created date (ISO date-time format).
+          example: 2022-07-17T22:00:54Z
+          format: date-time
+          readOnly: true
+          type: string
+        description:
+          description: A description of the test.
+          example: ThousandEyes Test
+          type: string
+        liveShare:
+          description: Indicates if the test is shared with the account group.
+          example: false
+          readOnly: true
+          type: boolean
+        modifiedBy:
+          description: User that modified the test.
+          example: user@user.com
+          readOnly: true
+          type: string
+        modifiedDate:
+          description: UTC last modification date (ISO date-time format).
+          example: 2022-07-17T22:00:54Z
+          format: date-time
+          readOnly: true
+          type: string
+        savedEvent:
+          description: |-
+            Indicates if the test is a saved event.
+            **Note**: **Saved Events** are now called **Private Snapshots** in the user interface. This change does not affect API.
+          readOnly: true
+          type: boolean
+        testId:
+          description: Each test is assigned an unique ID; this is used to access
+            test information and results from other endpoints.
+          example: "281474976710706"
+          readOnly: true
+          type: string
+        testName:
+          description: The name of the test. Test name must be unique.
+          example: ThousandEyes Test
+          type: string
+        type:
+          $ref: '#/components/schemas/AlertTestType'
+        _links:
+          $ref: '#/components/schemas/TestLinks'
+      type: object
+    AlertTestType:
+      description: Valid Alert Types for which to return test links.
+      enum:
+      - api
+      - agent-to-agent
+      - agent-to-server
+      - bgp
+      - http-server
+      - page-load
+      - web-transactions
+      - ftp-server
+      - dns-trace
+      - dns-server
+      - dnssec
+      - sip-server
+      - voice
+      - endpoint-http-server
+      - endpoint-network-server
+      - endpoint-path-trace
+      example: agent-to-server
+      readOnly: true
+      type: string
+    ExpandAlertTestOptions:
+      enum:
+      - test
+      type: string
+    Rules:
+      properties:
+        alertRules:
+          items:
+            $ref: '#/components/schemas/BaseRule'
+          type: array
+        _links:
+          $ref: '#/components/schemas/SelfLinks'
+      type: object
+    BaseRule:
+      properties:
+        ruleId:
+          description: Unique ID of the rule.
+          example: "127094"
+          readOnly: true
+          type: string
+        ruleName:
+          description: Name of the alert rule.
+          example: The End of the Internet
+          type: string
+        expression:
+          description: The expression of the alert rule.
+          example: ((hops((hopDelay >= 100 ms))))
+          type: string
+        description:
+          description: A description of the alert rule.
+          example: A rule description string
+          type: string
+        direction:
+          $ref: '#/components/schemas/AlertDirection'
+        notifyOnClear:
+          description: Send notification when alert clears.
+          example: true
+          type: boolean
+        isDefault:
+          description: "If set to `true`, this alert rule becomes the default for\
+            \ its test type and is automatically applied to newly created tests with\
+            \ relevant metrics. Only one default alert rule is allowed per test type."
+          example: true
+          type: boolean
+        alertType:
+          $ref: '#/components/schemas/AlertType'
+        alertGroupType:
+          $ref: '#/components/schemas/AlertGroupType'
+        minimumSources:
+          description: The minimum number of agents or monitors that must meet the
+            specified criteria to trigger the alert.
+          example: 10
+          type: integer
+        minimumSourcesPct:
+          description: The minimum percentage of all assigned agents or monitors that
+            must meet the specified criteria to trigger the alert.
+          example: 99
+          type: integer
+        roundsViolatingMode:
+          $ref: '#/components/schemas/AlertRoundsViolationMode'
+        roundsViolatingOutOf:
+          description: Specifies the divisor (y value) in the “X of Y times” condition.
+          example: 5
+          type: integer
+        roundsViolatingRequired:
+          description: Specifies the numerator (x value) in the “X of Y times” condition.
+          example: 2
+          type: integer
+        includeCoveredPrefixes:
+          description: Set true to include covered prefixes in the BGP alert rule.
+            Only applicable to BGP alert rules.
+          example: true
+          type: boolean
+        sensitivityLevel:
+          $ref: '#/components/schemas/SensitivityLevel'
+        severity:
+          $ref: '#/components/schemas/Severity'
+        endpointAgentIds:
+          description: An array of endpoint agent IDs associated with the rule (get
+            `id` from `/endpoint/agents` API). This is applicable when `alertGroupType`
+            is `browser-session`.
+          items:
+            description: Unique ID of the agent.
+            example: "281474976710706"
+            type: string
+          type: array
+        endpointLabelIds:
+          description: An array of label IDs used to assign specific Endpoint Agents
+            to the test (get `id` from `/endpoint/labels`). This is applicable when
+            `alertGroupType` is `browser-session`.
+          items:
+            description: An Endpoint label ID.
+            example: "123456"
+            type: string
+          type: array
+        visitedSitesFilter:
+          description: A list of website domains visited during the session. This
+            is applicable when `alertGroupType` is `browser-session`.
+          example:
+          - app.thousandeyes.com
+          items:
+            type: string
+          type: array
+      required:
+      - alertType
+      - expression
+      - roundsViolatingOutOf
+      - roundsViolatingRequired
+      - ruleName
+      type: object
+    Rule:
+      allOf:
+      - $ref: '#/components/schemas/RuleDetailUpdate'
+      - properties:
+          _links:
+            $ref: '#/components/schemas/SelfLinks'
+        type: object
+    RuleDetail:
+      allOf:
+      - $ref: '#/components/schemas/BaseRule'
+      - properties:
+          notifications:
+            $ref: '#/components/schemas/AlertNotification'
+          tests:
+            items:
+              $ref: '#/components/schemas/AlertSimpleTest'
+            readOnly: true
+            type: array
+          _links:
+            $ref: '#/components/schemas/SelfLinks'
+        type: object
+    RuleDetailUpdate:
+      allOf:
+      - $ref: '#/components/schemas/BaseRule'
+      - properties:
+          notifications:
+            $ref: '#/components/schemas/AlertNotification'
+          testIds:
+            $ref: '#/components/schemas/RuleTestIds'
+        type: object
+    AlertMeta:
+      properties:
+        version:
+          description: Indicates the number of times this alert has re-entered the
+            'trigger' state after being suppressed. It starts at 1 and increments
+            whenever a real-time ASW ends and the alert conditions remain active.
+          example: 1
+          format: int32
+          type: integer
+      type: object
+    BaseAlert:
+      properties:
+        id:
+          description: A unique ID for each individual alert occurrence.
+          example: e9c3bf02-a48c-4aa8-9e5f-898800d6f569
+          format: uuid
+          readOnly: true
+          type: string
+        alertType:
+          $ref: '#/components/schemas/AlertType'
+        startDate:
+          description: "(Optional) When passing `window` or `startDate` parameter,\
+            \  the client will also receive the `startDate` field indicating the UTC\
+            \ start date of the data's time range being retrieved  (ISO date-time\
+            \ format)."
+          example: 2022-07-17T22:00:54Z
+          format: date-time
+          readOnly: true
+          type: string
+        endDate:
+          description: "(Optional) When passing `window` or `endDate` parameter, \
+            \ the client will also receive the `endDate` field indicating the UTC\
+            \ end date of the data's time range being retrieved  (ISO date-time format)."
+          example: 2022-07-18T22:00:54Z
+          format: date-time
+          readOnly: true
+          type: string
+        violationCount:
+          description: Number of sources that meet the alert criteria.
+          example: 2
+          type: integer
+        duration:
+          description: Duration in seconds the alert was active
+          example: 60
+          format: int64
+          type: integer
+        suppressed:
+          description: Indicates whether the alert is currently suppressed by a real-time
+            ASW.
+          example: false
+          type: boolean
+        meta:
+          $ref: '#/components/schemas/AlertMeta'
+        _links:
+          $ref: '#/components/schemas/AlertLinks'
+      type: object
+    LegacyAlert:
+      deprecated: true
+      properties:
+        alertId:
+          deprecated: true
+          description: A unique ID for each individual alert occurrence.
+          example: e9c3bf02-a48c-4aa8-9e5f-898800d6f569
+          format: uuid
+          readOnly: true
+          type: string
+        dateStart:
+          deprecated: true
+          description: The start date and time for querying alerts.
+          example: 2020-04-23 13:43:16
+          readOnly: true
+          type: string
+        dateEnd:
+          deprecated: true
+          description: The end date and time for querying alerts.
+          example: 2020-04-23 13:43:16
+          readOnly: true
+          type: string
+        ruleId:
+          deprecated: true
+          description: Unique ID of the rule.
+          example: 127094
+          format: int64
+          readOnly: true
+          type: integer
+        state:
+          deprecated: true
+          description: "Current state of the alert. Possible values: clear or trigger."
+          enum:
+          - ACTIVE
+          - CLEARED
+          example: ACTIVE
+          readOnly: true
+          type: string
+        severity:
+          deprecated: true
+          description: The severity of the alert.
+          enum:
+          - INFO
+          - MAJOR
+          - MINOR
+          - CRITICAL
+          - UNKNOWN
+          example: MAJOR
+          type: string
+        permalink:
+          deprecated: true
+          description: "Hyperlink to alerts list, with row expanded"
+          example: https://app.thousandeyes.com/alerts/list?__a=75&alertId=2783&agentId=12
+          type: string
+        apiLinks:
+          deprecated: true
+          description: List of hyperlinks to other areas of the API
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+      type: object
+    Alerts:
+      properties:
+        alerts:
+          items:
+            $ref: '#/components/schemas/Alert'
+          type: array
+          x-paginated-items: true
+        _links:
+          $ref: '#/components/schemas/PaginationLinks'
+      type: object
+    Alert:
+      allOf:
+      - $ref: '#/components/schemas/BaseAlert'
+      - $ref: '#/components/schemas/LegacyAlert'
+      - properties:
+          alertRuleId:
+            $ref: '#/components/schemas/RuleId'
+          alertState:
+            $ref: '#/components/schemas/State'
+          alertSeverity:
+            $ref: '#/components/schemas/Severity'
+        type: object
+    AlertDetail:
+      allOf:
+      - $ref: '#/components/schemas/BaseAlert'
+      - $ref: '#/components/schemas/LegacyAlertDetail'
+      - properties:
+          alertState:
+            $ref: '#/components/schemas/State'
+          alertSeverity:
+            $ref: '#/components/schemas/Severity'
+          details:
+            items:
+              $ref: '#/components/schemas/AlertMetricDetail'
+            type: array
+          _embedded:
+            $ref: '#/components/schemas/AlertEmbedded'
+        type: object
+    AlertEmbedded:
+      description: Container for embedded resources in alert responses (HATEOAS).
+      properties:
+        asn:
+          $ref: '#/components/schemas/Asn'
+      type: object
+    Asn:
+      description: Autonomous System Number (ASN) information for network outage alerts.
+      properties:
+        id:
+          description: ASN identifier.
+          example: "13445"
+          type: string
+        name:
+          description: Autonomous system name.
+          example: Cisco Webex LLC
+          type: string
+        type:
+          description: Resource type.
+          example: asn
+          type: string
+      type: object
+    LegacyAlertDetail:
+      deprecated: true
+      properties:
+        state:
+          $ref: '#/components/schemas/State'
+        severity:
+          $ref: '#/components/schemas/Severity'
+      type: object
+    AlertMetricDetail:
+      properties:
+        end:
+          $ref: '#/components/schemas/EndAlertMetrics'
+        id:
+          description: Unique metric detail id.
+          example: "3379"
+          type: string
+        name:
+          description: Geolocation of the alert.
+          example: "Bucharest, Romania"
+          type: string
+        start:
+          $ref: '#/components/schemas/StartAlertMetrics'
+        state:
+          $ref: '#/components/schemas/State'
+        type:
+          description: Type of the alert metric.
+          example: cea_agent
+          type: string
+      type: object
+    StartAlertMetrics:
+      description: "String representation of the metric at the time that the source\
+        \ began alerting.   Note that the alert `start` and `startDate` for a particular\
+        \ source do not need to be the same,  as sources may change alerting status\
+        \ throughout an alert's lifecycle."
+      properties:
+        metrics:
+          type: string
+      type: object
+    EndAlertMetrics:
+      description: "String representation of the metric or metrics being considered\
+        \ in the alert rule at the point that the alert was cleared.  If the alert\
+        \ is not yet cleared, this field reflects the last round of data gathered\
+        \ from the source."
+      properties:
+        metrics:
+          type: string
+      type: object
+    State:
+      description: "Current state of the alert. Possible values: clear or trigger."
+      enum:
+      - clear
+      - trigger
+      example: trigger
+      readOnly: true
+      type: string
+    AlertNotification:
+      description: Alert notification object. See Alert notification integrations.
+      properties:
+        email:
+          $ref: '#/components/schemas/NotificationEmail'
+        thirdParty:
+          description: Third party notifications.
+          items:
+            $ref: '#/components/schemas/NotificationThirdParty'
+          type: array
+        webhook:
+          description: Webhook notifications.
+          items:
+            $ref: '#/components/schemas/NotificationWebhook'
+          type: array
+        customWebhook:
+          description: Custom webhook notifications.
+          items:
+            $ref: '#/components/schemas/NotificationCustomWebhook'
+          type: array
+      type: object
+    NotificationEmail:
+      description: Email notifications.
+      properties:
+        recipients:
+          description: An array containing the email addresses to receive notifications.
+          example:
+          - noreply@thousandeyes.com
+          items:
+            type: string
+          type: array
+        message:
+          description: Custom text included in alert email notifications sent to recipients.
+          example: Notification message
+          type: string
+      type: object
+    NotificationThirdParty:
+      description: Webhook notification.
+      properties:
+        integrationId:
+          description: Integration ID.
+          example: sl-101
+          type: string
+        integrationType:
+          $ref: '#/components/schemas/ThirdPartyIntegrationType'
+      type: object
+    ThirdPartyIntegrationType:
+      description: Integration type.
+      enum:
+      - pager-duty
+      - slack
+      - app-dynamics
+      - service-now
+      example: slack
+      type: string
+    NotificationWebhook:
+      description: Webhook notification.
+      properties:
+        integrationId:
+          description: Integration ID.
+          example: wb-201
+          type: string
+        integrationType:
+          $ref: '#/components/schemas/WebhookIntegrationType'
+        integrationName:
+          description: "Name of the integration, configured by the user."
+          example: My webhook
+          type: string
+        target:
+          description: Webhook target URL.
+          example: https://example.com/test/webhooks/notifications
+          type: string
+      type: object
+    WebhookIntegrationType:
+      description: Integration type.
+      enum:
+      - webhook
+      example: webhook
+      type: string
+    NotificationCustomWebhook:
+      description: Custom webhook notification.
+      properties:
+        integrationId:
+          description: Integration ID.
+          example: 6e069ae9-8537-4120-b988-61bf8e0d8b87
+          format: uuid
+          type: string
+        integrationType:
+          $ref: '#/components/schemas/CustomWebhookIntegrationType'
+        integrationName:
+          description: User-configured name of the integration.
+          example: My webhook
+          type: string
+        target:
+          description: Webhook target URL.
+          example: https://example.com/test/webhooks/notifications
+          type: string
+      type: object
+    CustomWebhookIntegrationType:
+      description: Integration type.
+      enum:
+      - custom-webhook
+      example: custom-webhook
+      type: string
+    AlertSuppressionWindows:
+      description: Alert suppression windows.
+      properties:
+        alertSuppressionWindows:
+          items:
+            $ref: '#/components/schemas/AlertSuppressionWindow'
+          type: array
+        _links:
+          $ref: '#/components/schemas/SelfLinks'
+      type: object
+    BaseAlertSuppressionWindow:
+      description: Alert suppression window.
+      properties:
+        alertSuppressionWindowId:
+          description: Unique ID of the alert suppression window.
+          example: "2411"
+          readOnly: true
+          type: string
+        name:
+          description: Name of the alert suppression window.
+          example: Monthly maintenance
+          type: string
+        isEnabled:
+          description: "Set to `false` for `disabled`, `true` for `enabled`."
+          example: false
+          type: boolean
+        status:
+          $ref: '#/components/schemas/AlertSuppressionWindowState'
+        startDate:
+          description: The date/time when the alert suppression window starts (ISO
+            date-time format).
+          example: 2017-07-01T05:00:00Z
+          format: date-time
+          type: string
+        duration:
+          description: Duration in seconds the suppression window is active.
+          example: 0
+          type: integer
+        repeat:
+          $ref: '#/components/schemas/Repeat'
+        endRepeat:
+          $ref: '#/components/schemas/EndRepeat'
+      type: object
+    AlertSuppressionWindow:
+      allOf:
+      - $ref: '#/components/schemas/BaseAlertSuppressionWindow'
+      - properties:
+          _links:
+            $ref: '#/components/schemas/SelfLinks'
+        type: object
+    AlertSuppressionWindowState:
+      description: Indicates the current status of the suppression window.
+      enum:
+      - active
+      - inactive
+      - ended
+      example: ended
+      readOnly: true
+      type: string
+    AlertSuppressionWindowRequest:
+      allOf:
+      - $ref: '#/components/schemas/BaseAlertSuppressionWindow'
+      - properties:
+          testIds:
+            description: List of test IDs to assign to the alert suppression window.
+            items:
+              example: "71687"
+              type: string
+            type: array
+        type: object
+    AlertSuppressionWindowDetail:
+      allOf:
+      - $ref: '#/components/schemas/AlertSuppressionWindow'
+      - properties:
+          tests:
+            description: List of tests assigned to the alert suppression window.
+            items:
+              $ref: '#/components/schemas/SimpleTest'
+            type: array
+        type: object
+    Repeat:
+      description: Repeat options.
+      properties:
+        type:
+          $ref: '#/components/schemas/RepeatType'
+        intervalType:
+          $ref: '#/components/schemas/IntervalType'
+        intervalLength:
+          description: Number of `intervalTypes` to wait before reactivating the alert
+            suppression window.
+          example: 2
+          type: integer
+        daysOfWeek:
+          items:
+            $ref: '#/components/schemas/DaysOfWeek'
+          type: array
+      type: object
+    RepeatType:
+      description: Repeat options type.
+      enum:
+      - day
+      - week
+      - month
+      - custom
+      example: week
+      type: string
+    IntervalType:
+      description: Repeat options interval type
+      enum:
+      - day
+      - week
+      - month
+      example: day
+      type: string
+    DaysOfWeek:
+      description: Specifies the day to activate the alert suppression window. Applicable
+        only when `intervalType` is set to `week`.
+      enum:
+      - sun
+      - mon
+      - tue
+      - wed
+      - thu
+      - fri
+      - sat
+      example: sun
+      type: string
+    EndRepeat:
+      description: End repeat options.
+      properties:
+        type:
+          $ref: '#/components/schemas/EndRepeatType'
+        count:
+          description: "End repeat after number of occurrences, only valid with count\
+            \ type option."
+          example: 3
+          type: integer
+        date:
+          description: "End repeat after specific date, only valid with date type\
+            \ option (ISO date format)."
+          example: 2017-07-01
+          format: date
+          type: string
+      type: object
+    EndRepeatType:
+      description: End repeat options type.
+      enum:
+      - count
+      - never
+      - date
+      example: never
+      type: string
+    RuleTestIds:
+      description: Array of test IDs to link to alert rule (get `testId` from `/tests`
+        endpoint).
+      example:
+      - "281474976710706"
+      - "271659"
+      items:
+        type: string
+      type: array
+    AlertLinks:
+      description: An object containing the alert links.
+      properties:
+        test:
+          $ref: '#/components/schemas/Link'
+        rule:
+          $ref: '#/components/schemas/Link'
+        appLink:
+          $ref: '#/components/schemas/Link'
+        self:
+          $ref: '#/components/schemas/Link'
+      readOnly: true
+      type: object
+    UnauthorizedError:
+      properties:
+        error:
+          example: invalid_token
+          type: string
+        error_description:
+          example: Invalid access token
+          type: string
+      type: object
+    Error:
+      properties:
+        type:
+          description: "A URI reference that identifies the problem type. When this\
+            \ member is not present, its value is assumed to be \"about:blank\"."
+          type: string
+        title:
+          description: "A short, human-readable summary of the problem type."
+          type: string
+        status:
+          description: The HTTP status code generated by the origin server for this
+            occurrence of the problem.
+          type: integer
+        detail:
+          description: A human-readable explanation specific to this occurrence of
+            the problem.
+          type: string
+        instance:
+          description: A URI reference that identifies the specific occurrence of
+            the problem.
+          type: string
+      type: object
+    ValidationError:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - properties:
+          errors:
+            description: "(Optional) When multiple errors occur, the details for each\
+              \ error are listed."
+            items:
+              $ref: '#/components/schemas/ValidationErrorItem'
+            nullable: true
+            type: array
+        type: object
+      type: object
+    ValidationErrorItem:
+      properties:
+        code:
+          description: (Optional) A unique error type/code that can be referenced
+            in the documentation for further details.
+          type: string
+        field:
+          description: Identifies the field that triggered this particular error.
+          type: string
+        message:
+          description: "A short, human-readable summary of the error."
+          type: string
+      type: object
+    TestInterval:
+      default: 60
+      description: Interval between test runs in seconds.
+      enum:
+      - 60
+      - 120
+      - 300
+      - 600
+      - 900
+      - 1800
+      - 3600
+      example: 60
+      type: integer
+    Enabled:
+      default: true
+      description: Test is enabled.
+      example: true
+      type: boolean
+    TestCreatedBy:
+      description: User that created the test.
+      example: user@user.com
+      readOnly: true
+      type: string
+    TestCreatedDate:
+      description: UTC created date (ISO date-time format).
+      example: 2022-07-17T22:00:54Z
+      format: date-time
+      readOnly: true
+      type: string
+    TestLinks:
+      description: A list of links that can be accessed to get more information
+      properties:
+        self:
+          $ref: '#/components/schemas/TestSelfLink'
+        testResults:
+          description: Reference to the test results.
+          example:
+          - href: https://api.thousandeyes.com/v7/test-results/281474976710706/network
+          - href: https://api.thousandeyes.com/v7/test-results/281474976710706/path-vis
+          items:
+            $ref: '#/components/schemas/Link'
+          type: array
+      readOnly: true
+      type: object
+    TestSelfLink:
+      allOf:
+      - $ref: '#/components/schemas/Link'
+      - description: Reference to the test.
+        example:
+          href: "https://api.thousandeyes.com/v7/tests/{type}/281474976710706"
+    TestResults:
+      description: Reference to the test results.
+      example:
+      - href: https://api.thousandeyes.com/v7/test-results/281474976710706/network
+      - href: https://api.thousandeyes.com/v7/test-results/281474976710706/path-vis
+      items:
+        $ref: '#/components/schemas/Link'
+      type: array
+    SelfLinks:
+      description: A links object containing the self link.
+      properties:
+        self:
+          $ref: '#/components/schemas/Link'
+      readOnly: true
+      type: object
+    Link:
+      description: A hyperlink from the containing resource to a URI.
+      properties:
+        href:
+          description: "Its value is either a URI [RFC3986] or a URI template [RFC6570]."
+          example: https://api.thousandeyes.com/v7/link/to/resource/id
+          type: string
+        templated:
+          description: Should be true when the link object's "href" property is a
+            URI template.
+          type: boolean
+        type:
+          description: Used as a hint to indicate the media type expected when dereferencing
+            the target resource.
+          type: string
+        deprecation:
+          description: Its presence indicates that the link is to be deprecated at
+            a future date. Its value is a URL that should provide further information
+            about the deprecation.
+          type: string
+        name:
+          description: Its value may be used as a secondary key for selecting link
+            objects that share the same relation type.
+          type: string
+        profile:
+          description: A URI that hints about the profile of the target resource.
+          type: string
+        title:
+          description: Intended for labelling the link with a human-readable identifier
+          type: string
+        hreflang:
+          description: Indicates the language of the target resource
+          type: string
+      required:
+      - href
+      type: object
+    RuleId:
+      description: Unique ID of the rule.
+      example: "127094"
+      readOnly: true
+      type: string
+    AlertDirection:
+      description: "Direction for applicable alert types (eg. path trace, End-to-End\
+        \ (Agent) etc.)"
+      enum:
+      - to-target
+      - from-target
+      - bidirectional
+      example: to-target
+      type: string
+    AlertType:
+      description: "Type of alert being triggered. In multi-layered tests, this value\
+        \ represents the layer the alert relates to. See [Alert Details](https://developer.cisco.com/docs/thousandeyes/retrieve-alert-details/)\
+        \ documentation for a list of possible values"
+      enum:
+      - page-load
+      - http-server
+      - end-to-end-server
+      - end-to-end-agent
+      - voice
+      - dns-server
+      - dns-trace
+      - dnssec
+      - bgp
+      - path-trace
+      - ftp
+      - sip-server
+      - transactions
+      - web-transactions
+      - agent
+      - network-outage
+      - application-outage
+      - device-device
+      - device-interface
+      - endpoint-network-server
+      - endpoint-http-server
+      - endpoint-path-trace
+      - endpoint-browser-sessions-agent
+      - endpoint-browser-sessions-application
+      - api
+      - web-transaction
+      - unknown
+      example: http-server
+      type: string
+    AlertGroupType:
+      description: Category of alert type based on the application or network layer
+        and source of the test.
+      enum:
+      - bgp
+      - browser-session
+      - cloud-enterprise
+      - endpoint
+      example: endpoint
+      type: string
+    AlertRoundsViolationMode:
+      description: '`exact` requires the same agents to meet the threshold in consecutive
+        rounds. `auto` is only enabled for CEA and Endpoint Scheduled test rules.
+        The default is `any`.'
+      enum:
+      - exact
+      - any
+      - auto
+      example: exact
+      readOnly: true
+      type: string
+    SensitivityLevel:
+      description: Used when `roundsViolatingMode` is set to `auto`. The default is
+        `medium`. Higher sensitivity increases the likelihood of triggering alerts.
+      enum:
+      - high
+      - medium
+      - low
+      example: medium
+      readOnly: true
+      type: string
+    Severity:
+      description: The severity of the alert.
+      enum:
+      - info
+      - major
+      - minor
+      - critical
+      - unknown
+      example: major
+      type: string
+    StartDate:
+      description: "(Optional) When passing `window` or `startDate` parameter,  the\
+        \ client will also receive the `startDate` field indicating the UTC start\
+        \ date of the data's time range being retrieved  (ISO date-time format)."
+      example: 2022-07-17T22:00:54Z
+      format: date-time
+      readOnly: true
+      type: string
+    EndDate:
+      description: "(Optional) When passing `window` or `endDate` parameter,  the\
+        \ client will also receive the `endDate` field indicating the UTC end date\
+        \ of the data's time range being retrieved  (ISO date-time format)."
+      example: 2022-07-18T22:00:54Z
+      format: date-time
+      readOnly: true
+      type: string
+    PaginationLinks:
+      description: A links object containing pagination related link(s).
+      properties:
+        previous:
+          $ref: '#/components/schemas/Link'
+        next:
+          $ref: '#/components/schemas/Link'
+        self:
+          $ref: '#/components/schemas/Link'
+      type: object
+    SimpleTest:
+      additionalProperties: true
+      description: "Each test includes additional fields depending on its `type`.\
+        \ Refer `/tests/{type}` endpoint to know the set of fields returned by a given\
+        \ `type`."
+      properties:
+        interval:
+          $ref: '#/components/schemas/TestInterval'
+        alertsEnabled:
+          description: Indicates if alerts are enabled.
+          example: true
+          type: boolean
+        enabled:
+          default: true
+          description: Test is enabled.
+          example: true
+          type: boolean
+        createdBy:
+          description: User that created the test.
+          example: user@user.com
+          readOnly: true
+          type: string
+        createdDate:
+          description: UTC created date (ISO date-time format).
+          example: 2022-07-17T22:00:54Z
+          format: date-time
+          readOnly: true
+          type: string
+        description:
+          description: A description of the test.
+          example: ThousandEyes Test
+          type: string
+        liveShare:
+          description: Indicates if the test is shared with the account group.
+          example: false
+          readOnly: true
+          type: boolean
+        modifiedBy:
+          description: User that modified the test.
+          example: user@user.com
+          readOnly: true
+          type: string
+        modifiedDate:
+          description: UTC last modification date (ISO date-time format).
+          example: 2022-07-17T22:00:54Z
+          format: date-time
+          readOnly: true
+          type: string
+        savedEvent:
+          description: |
+            Indicates if the test is a saved event.
+
+            **Note**: **Saved Events** are now called **Private Snapshots** in the user interface. This change does not affect API.
+          readOnly: true
+          type: boolean
+        testId:
+          description: Each test is assigned an unique ID; this is used to access
+            test information and results from other endpoints.
+          example: "281474976710706"
+          readOnly: true
+          type: string
+        testName:
+          description: The name of the test. Test name must be unique.
+          example: ThousandEyes Test
+          type: string
+        type:
+          $ref: '#/components/schemas/TestType'
+        _links:
+          $ref: '#/components/schemas/TestLinks'
+      type: object
+    TestType:
+      description: "This is a read only value, as test type is implicit in the test\
+        \ creation url."
+      enum:
+      - api
+      - agent-to-agent
+      - agent-to-server
+      - bgp
+      - http-server
+      - page-load
+      - web-transactions
+      - ftp-server
+      - dns-trace
+      - dns-server
+      - dnssec
+      - sip-server
+      - voice
+      example: agent-to-server
+      readOnly: true
+      type: string
+  securitySchemes:
+    BearerAuth:
+      description: Bearer authentication token
+      scheme: bearer
+      type: http

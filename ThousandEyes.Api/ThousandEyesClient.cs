@@ -1,11 +1,13 @@
 ﻿using Microsoft.Extensions.Logging.Abstractions;
+using Refit;
 using ThousandEyes.Api.Infrastructure;
 using ThousandEyes.Api.Interfaces;
+using ThousandEyes.Api.Modules;
 
 namespace ThousandEyes.Api;
 
 /// <summary>
-/// Client for interacting with the Halo API
+/// Client for interacting with the ThousandEyes API
 /// </summary>
 public class ThousandEyesClient : IThousandEyesClient, IDisposable
 {
@@ -25,31 +27,90 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		_options = options;
 		_httpClient = CreateHttpClient();
 
-		// Initialize API modules lazily
-		Psa = new Lazy<IPsaApi>(() => new PsaApi(_httpClient)).Value;
-		ServiceDesk = new Lazy<IServiceDeskApi>(() => new ServiceDeskApi(_httpClient)).Value;
-		System = new Lazy<ISystemApi>(() => new SystemApi(_httpClient)).Value;
+		// Create Refit settings for proper JSON serialization
+		var refitSettings = new RefitSettings
+		{
+			ContentSerializer = new SystemTextJsonContentSerializer(new System.Text.Json.JsonSerializerOptions
+			{
+				PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+				PropertyNameCaseInsensitive = true
+			})
+		};
+
+		// Initialize only the implemented API modules (Phase 1)
+		AccountManagement = new AccountManagementModule(_httpClient, refitSettings);
+		
+		// Future modules will be initialized when implemented
+		// Phase 2: Tests, Agents, TestResults
+		// Phase 3: Alerts, Dashboards, Snapshots  
+		// Phase 4+: BgpMonitors, etc.
 	}
 
 	/// <summary>
-	/// Gets the PSA (Professional Services Automation) API module
+	/// Gets the Account Management module for administrative operations
 	/// </summary>
-	public IPsaApi Psa { get; private set; }
+	public AccountManagementModule AccountManagement { get; private set; }
 
 	/// <summary>
-	/// Gets the ServiceDesk API module
+	/// Gets the Tests module for test configuration and management
 	/// </summary>
-	public IServiceDeskApi ServiceDesk { get; private set; }
+	/// <remarks>
+	/// 🚧 Phase 2 - PLANNED: Will be implemented in Phase 2
+	/// </remarks>
+	public TestsModule Tests => throw new NotImplementedException("Tests API will be implemented in Phase 2. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
 
 	/// <summary>
-	/// Gets the System API module for configuration and administration
+	/// Gets the Agents module for managing Cloud and Enterprise agents
 	/// </summary>
-	public ISystemApi System { get; private set; }
+	/// <remarks>
+	/// 🚧 Phase 2 - PLANNED: Will be implemented in Phase 2
+	/// </remarks>
+	public AgentsModule Agents => throw new NotImplementedException("Agents API will be implemented in Phase 2. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
 
 	/// <summary>
-	/// Gets the base URL for the Halo API
+	/// Gets the Test Results module for retrieving monitoring data
 	/// </summary>
-	public const string BaseUrl = "api.thousandeyes.com";
+	/// <remarks>
+	/// 🚧 Phase 2 - PLANNED: Will be implemented in Phase 2
+	/// </remarks>
+	public TestResultsModule TestResults => throw new NotImplementedException("Test Results API will be implemented in Phase 2. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
+
+	/// <summary>
+	/// Gets the Alerts module for alert management and notifications
+	/// </summary>
+	/// <remarks>
+	/// 🚧 Phase 3 - PLANNED: Will be implemented in Phase 3
+	/// </remarks>
+	public AlertsModule Alerts => throw new NotImplementedException("Alerts API will be implemented in Phase 3. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
+
+	/// <summary>
+	/// Gets the Dashboards module for reporting and data visualization
+	/// </summary>
+	/// <remarks>
+	/// 🚧 Phase 3 - PLANNED: Will be implemented in Phase 3
+	/// </remarks>
+	public DashboardsModule Dashboards => throw new NotImplementedException("Dashboards API will be implemented in Phase 3. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
+
+	/// <summary>
+	/// Gets the Snapshots module for data preservation and sharing
+	/// </summary>
+	/// <remarks>
+	/// 🚧 Phase 3 - PLANNED: Will be implemented in Phase 3
+	/// </remarks>
+	public SnapshotsModule Snapshots => throw new NotImplementedException("Snapshots API will be implemented in Phase 3. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
+
+	/// <summary>
+	/// Gets the BGP Monitors module for network infrastructure monitoring
+	/// </summary>
+	/// <remarks>
+	/// 🚧 Phase 4 - PLANNED: Will be implemented in Phase 4
+	/// </remarks>
+	public BgpMonitorsModule BgpMonitors => throw new NotImplementedException("BGP Monitors API will be implemented in Phase 4. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
+
+	/// <summary>
+	/// Gets the base URL for the ThousandEyes API
+	/// </summary>
+	public static string BaseUrl => "https://api.thousandeyes.com/v7";
 
 	private HttpClient CreateHttpClient()
 	{

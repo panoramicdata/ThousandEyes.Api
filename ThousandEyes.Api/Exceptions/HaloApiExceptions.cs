@@ -1,9 +1,18 @@
+// Legacy aliases for backward compatibility during transition
+using HaloApiException = ThousandEyes.Api.Exceptions.ThousandEyesApiException;
+using HaloBadRequestException = ThousandEyes.Api.Exceptions.ThousandEyesBadRequestException;
+using HaloAuthenticationException = ThousandEyes.Api.Exceptions.ThousandEyesAuthenticationException;
+using HaloAuthorizationException = ThousandEyes.Api.Exceptions.ThousandEyesAuthorizationException;
+using HaloNotFoundException = ThousandEyes.Api.Exceptions.ThousandEyesNotFoundException;
+using HaloRateLimitException = ThousandEyes.Api.Exceptions.ThousandEyesRateLimitException;
+using HaloServerException = ThousandEyes.Api.Exceptions.ThousandEyesServerException;
+
 namespace ThousandEyes.Api.Exceptions;
 
 /// <summary>
-/// Contains error context information for Halo API exceptions
+/// Contains error context information for ThousandEyes API exceptions
 /// </summary>
-public sealed record HaloApiErrorContext
+public sealed record ThousandEyesApiErrorContext
 {
 	/// <summary>
 	/// The HTTP status code associated with the error
@@ -37,9 +46,9 @@ public sealed record HaloApiErrorContext
 }
 
 /// <summary>
-/// Base exception for all Halo API related errors
+/// Base exception for all ThousandEyes API related errors
 /// </summary>
-public class HaloApiException : Exception
+public class ThousandEyesApiException : Exception
 {
 	/// <summary>
 	/// The HTTP status code associated with the error
@@ -67,49 +76,34 @@ public class HaloApiException : Exception
 	public string? RequestMethod { get; }
 
 	/// <summary>
-	/// Initializes a new instance of the HaloApiException class with a specified error message
+	/// Initializes a new instance of the ThousandEyesApiException class with a specified error message
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
-	public HaloApiException(string message) : base(message)
+	public ThousandEyesApiException(string message) : base(message)
 	{
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the HaloApiException class with a specified error message and inner exception
+	/// Initializes a new instance of the ThousandEyesApiException class with a specified error message and inner exception
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="innerException">The exception that is the cause of the current exception</param>
-	public HaloApiException(string message, Exception innerException) : base(message, innerException)
+	public ThousandEyesApiException(string message, Exception innerException) : base(message, innerException)
 	{
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the HaloApiException class with message and status code
+	/// Initializes a new instance of the ThousandEyesApiException class with message and status code
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="statusCode">The HTTP status code associated with the error</param>
-	public HaloApiException(string message, int statusCode) : base(message)
+	public ThousandEyesApiException(string message, int statusCode) : base(message)
 	{
 		StatusCode = statusCode;
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the HaloApiException class with detailed error information
-	/// </summary>
-	/// <param name="message">The message that describes the error</param>
-	/// <param name="errorContext">Additional error context information</param>
-	public HaloApiException(string message, HaloApiErrorContext errorContext)
-		: base(message, errorContext.InnerException)
-	{
-		StatusCode = errorContext.StatusCode;
-		ErrorCode = errorContext.ErrorCode;
-		Details = errorContext.Details;
-		RequestUrl = errorContext.RequestUrl;
-		RequestMethod = errorContext.RequestMethod;
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the HaloApiException class with detailed error information
+	/// Initializes a new instance of the ThousandEyesApiException class with detailed error information
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="statusCode">The HTTP status code associated with the error</param>
@@ -118,7 +112,7 @@ public class HaloApiException : Exception
 	/// <param name="requestUrl">The request URL that caused the error</param>
 	/// <param name="requestMethod">The request method that caused the error</param>
 	/// <param name="innerException">The exception that is the cause of the current exception</param>
-	public HaloApiException(
+	public ThousandEyesApiException(
 		string message,
 		int? statusCode,
 		string? errorCode,
@@ -139,45 +133,36 @@ public class HaloApiException : Exception
 /// <summary>
 /// Exception thrown when authentication fails
 /// </summary>
-public class HaloAuthenticationException : HaloApiException
+public class ThousandEyesAuthenticationException : ThousandEyesApiException
 {
 	/// <summary>
-	/// Initializes a new instance of the HaloAuthenticationException class with a specified error message
+	/// Initializes a new instance of the ThousandEyesAuthenticationException class with a specified error message
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
-	public HaloAuthenticationException(string message) : base(message)
+	public ThousandEyesAuthenticationException(string message) : base(message)
 	{
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the HaloAuthenticationException class with a specified error message and inner exception
+	/// Initializes a new instance of the ThousandEyesAuthenticationException class with a specified error message and inner exception
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="innerException">The exception that is the cause of the current exception</param>
-	public HaloAuthenticationException(string message, Exception innerException) : base(message, innerException)
+	public ThousandEyesAuthenticationException(string message, Exception innerException) : base(message, innerException)
 	{
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the HaloAuthenticationException class with message and status code
+	/// Initializes a new instance of the ThousandEyesAuthenticationException class with message and status code
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="statusCode">The HTTP status code associated with the error</param>
-	public HaloAuthenticationException(string message, int statusCode) : base(message, statusCode)
+	public ThousandEyesAuthenticationException(string message, int statusCode) : base(message, statusCode)
 	{
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the HaloAuthenticationException class with detailed error information
-	/// </summary>
-	/// <param name="message">The message that describes the error</param>
-	/// <param name="errorContext">Additional error context information</param>
-	public HaloAuthenticationException(string message, HaloApiErrorContext errorContext) : base(message, errorContext)
-	{
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the HaloAuthenticationException class with detailed error information
+	/// Initializes a new instance of the ThousandEyesAuthenticationException class with detailed error information
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="statusCode">The HTTP status code associated with the error</param>
@@ -186,7 +171,7 @@ public class HaloAuthenticationException : HaloApiException
 	/// <param name="requestUrl">The request URL that caused the error</param>
 	/// <param name="requestMethod">The request method that caused the error</param>
 	/// <param name="innerException">The exception that is the cause of the current exception</param>
-	public HaloAuthenticationException(
+	public ThousandEyesAuthenticationException(
 		string message,
 		int? statusCode,
 		string? errorCode,
@@ -202,45 +187,36 @@ public class HaloAuthenticationException : HaloApiException
 /// <summary>
 /// Exception thrown when authorization fails (403 Forbidden)
 /// </summary>
-public class HaloAuthorizationException : HaloApiException
+public class ThousandEyesAuthorizationException : ThousandEyesApiException
 {
 	/// <summary>
-	/// Initializes a new instance of the HaloAuthorizationException class with a specified error message
+	/// Initializes a new instance of the ThousandEyesAuthorizationException class with a specified error message
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
-	public HaloAuthorizationException(string message) : base(message)
+	public ThousandEyesAuthorizationException(string message) : base(message)
 	{
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the HaloAuthorizationException class with a specified error message and inner exception
+	/// Initializes a new instance of the ThousandEyesAuthorizationException class with a specified error message and inner exception
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="innerException">The exception that is the cause of the current exception</param>
-	public HaloAuthorizationException(string message, Exception innerException) : base(message, innerException)
+	public ThousandEyesAuthorizationException(string message, Exception innerException) : base(message, innerException)
 	{
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the HaloAuthorizationException class with message and status code
+	/// Initializes a new instance of the ThousandEyesAuthorizationException class with message and status code
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="statusCode">The HTTP status code associated with the error</param>
-	public HaloAuthorizationException(string message, int statusCode) : base(message, statusCode)
+	public ThousandEyesAuthorizationException(string message, int statusCode) : base(message, statusCode)
 	{
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the HaloAuthorizationException class with detailed error information
-	/// </summary>
-	/// <param name="message">The message that describes the error</param>
-	/// <param name="errorContext">Additional error context information</param>
-	public HaloAuthorizationException(string message, HaloApiErrorContext errorContext) : base(message, errorContext)
-	{
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the HaloAuthorizationException class with detailed error information
+	/// Initializes a new instance of the ThousandEyesAuthorizationException class with detailed error information
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="statusCode">The HTTP status code associated with the error</param>
@@ -249,7 +225,7 @@ public class HaloAuthorizationException : HaloApiException
 	/// <param name="requestUrl">The request URL that caused the error</param>
 	/// <param name="requestMethod">The request method that caused the error</param>
 	/// <param name="innerException">The exception that is the cause of the current exception</param>
-	public HaloAuthorizationException(
+	public ThousandEyesAuthorizationException(
 		string message,
 		int? statusCode,
 		string? errorCode,
@@ -265,7 +241,7 @@ public class HaloAuthorizationException : HaloApiException
 /// <summary>
 /// Exception thrown when a requested resource is not found (404 Not Found)
 /// </summary>
-public class HaloNotFoundException : HaloApiException
+public class ThousandEyesNotFoundException : ThousandEyesApiException
 {
 	/// <summary>
 	/// The type of resource that was not found
@@ -278,63 +254,27 @@ public class HaloNotFoundException : HaloApiException
 	public object? ResourceId { get; }
 
 	/// <summary>
-	/// Initializes a new instance of the HaloNotFoundException class with a specified error message
+	/// Initializes a new instance of the ThousandEyesNotFoundException class with a specified error message
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
-	public HaloNotFoundException(string message) : base(message)
+	public ThousandEyesNotFoundException(string message) : base(message)
 	{
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the HaloNotFoundException class with a specified error message and inner exception
-	/// </summary>
-	/// <param name="message">The message that describes the error</param>
-	/// <param name="innerException">The exception that is the cause of the current exception</param>
-	public HaloNotFoundException(string message, Exception innerException) : base(message, innerException)
-	{
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the HaloNotFoundException class with message and status code
-	/// </summary>
-	/// <param name="message">The message that describes the error</param>
-	/// <param name="statusCode">The HTTP status code associated with the error</param>
-	public HaloNotFoundException(string message, int statusCode) : base(message, statusCode)
-	{
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the HaloNotFoundException class with resource information
+	/// Initializes a new instance of the ThousandEyesNotFoundException class with resource information
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="resourceType">The type of resource that was not found</param>
 	/// <param name="resourceId">The ID of the resource that was not found</param>
-	public HaloNotFoundException(string message, string? resourceType, object? resourceId) : base(message)
+	public ThousandEyesNotFoundException(string message, string? resourceType, object? resourceId) : base(message)
 	{
 		ResourceType = resourceType;
 		ResourceId = resourceId;
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the HaloNotFoundException class with detailed error information
-	/// </summary>
-	/// <param name="message">The message that describes the error</param>
-	/// <param name="resourceType">The type of resource that was not found</param>
-	/// <param name="resourceId">The ID of the resource that was not found</param>
-	/// <param name="errorContext">Additional error context information</param>
-	public HaloNotFoundException(
-		string message,
-		string? resourceType,
-		object? resourceId,
-		HaloApiErrorContext errorContext)
-		: base(message, errorContext)
-	{
-		ResourceType = resourceType;
-		ResourceId = resourceId;
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the HaloNotFoundException class with detailed error information
+	/// Initializes a new instance of the ThousandEyesNotFoundException class with detailed error information
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="resourceType">The type of resource that was not found</param>
@@ -345,7 +285,7 @@ public class HaloNotFoundException : HaloApiException
 	/// <param name="requestUrl">The request URL that caused the error</param>
 	/// <param name="requestMethod">The request method that caused the error</param>
 	/// <param name="innerException">The exception that is the cause of the current exception</param>
-	public HaloNotFoundException(
+	public ThousandEyesNotFoundException(
 		string message,
 		string? resourceType,
 		object? resourceId,
@@ -365,7 +305,7 @@ public class HaloNotFoundException : HaloApiException
 /// <summary>
 /// Exception thrown when the request is malformed or invalid (400 Bad Request)
 /// </summary>
-public class HaloBadRequestException : HaloApiException
+public class ThousandEyesBadRequestException : ThousandEyesApiException
 {
 	/// <summary>
 	/// Validation errors from the API
@@ -373,43 +313,25 @@ public class HaloBadRequestException : HaloApiException
 	public IReadOnlyList<string>? ValidationErrors { get; }
 
 	/// <summary>
-	/// Initializes a new instance of the HaloBadRequestException class with a specified error message
+	/// Initializes a new instance of the ThousandEyesBadRequestException class with a specified error message
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
-	public HaloBadRequestException(string message) : base(message)
+	public ThousandEyesBadRequestException(string message) : base(message)
 	{
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the HaloBadRequestException class with a specified error message and inner exception
-	/// </summary>
-	/// <param name="message">The message that describes the error</param>
-	/// <param name="innerException">The exception that is the cause of the current exception</param>
-	public HaloBadRequestException(string message, Exception innerException) : base(message, innerException)
-	{
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the HaloBadRequestException class with message and status code
-	/// </summary>
-	/// <param name="message">The message that describes the error</param>
-	/// <param name="statusCode">The HTTP status code associated with the error</param>
-	public HaloBadRequestException(string message, int statusCode) : base(message, statusCode)
-	{
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the HaloBadRequestException class with validation errors
+	/// Initializes a new instance of the ThousandEyesBadRequestException class with validation errors
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="validationErrors">Validation errors from the API</param>
-	public HaloBadRequestException(string message, IReadOnlyList<string>? validationErrors) : base(message)
+	public ThousandEyesBadRequestException(string message, IReadOnlyList<string>? validationErrors) : base(message)
 	{
 		ValidationErrors = validationErrors;
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the HaloBadRequestException class with detailed error information
+	/// Initializes a new instance of the ThousandEyesBadRequestException class with detailed error information
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="validationErrors">Validation errors from the API</param>
@@ -419,7 +341,7 @@ public class HaloBadRequestException : HaloApiException
 	/// <param name="requestUrl">The request URL that caused the error</param>
 	/// <param name="requestMethod">The request method that caused the error</param>
 	/// <param name="innerException">The exception that is the cause of the current exception</param>
-	public HaloBadRequestException(
+	public ThousandEyesBadRequestException(
 		string message,
 		IReadOnlyList<string>? validationErrors,
 		int? statusCode,
@@ -437,7 +359,7 @@ public class HaloBadRequestException : HaloApiException
 /// <summary>
 /// Exception thrown when rate limiting is enforced (429 Too Many Requests)
 /// </summary>
-public class HaloRateLimitException : HaloApiException
+public class ThousandEyesRateLimitException : ThousandEyesApiException
 {
 	/// <summary>
 	/// Number of seconds to wait before retrying
@@ -445,148 +367,39 @@ public class HaloRateLimitException : HaloApiException
 	public int? RetryAfterSeconds { get; }
 
 	/// <summary>
-	/// The rate limit that was exceeded
-	/// </summary>
-	public int? RateLimit { get; }
-
-	/// <summary>
-	/// Remaining requests in the current rate limit window
-	/// </summary>
-	public int? RemainingRequests { get; }
-
-	/// <summary>
-	/// When the rate limit window resets
-	/// </summary>
-	public DateTime? ResetTime { get; }
-
-	/// <summary>
-	/// Initializes a new instance of the HaloRateLimitException class with a specified error message
+	/// Initializes a new instance of the ThousandEyesRateLimitException class with a specified error message
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
-	public HaloRateLimitException(string message) : base(message)
+	public ThousandEyesRateLimitException(string message) : base(message)
 	{
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the HaloRateLimitException class with a specified error message and inner exception
-	/// </summary>
-	/// <param name="message">The message that describes the error</param>
-	/// <param name="innerException">The exception that is the cause of the current exception</param>
-	public HaloRateLimitException(string message, Exception innerException) : base(message, innerException)
-	{
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the HaloRateLimitException class with message and status code
-	/// </summary>
-	/// <param name="message">The message that describes the error</param>
-	/// <param name="statusCode">The HTTP status code associated with the error</param>
-	public HaloRateLimitException(string message, int statusCode) : base(message, statusCode)
-	{
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the HaloRateLimitException class with rate limit information
+	/// Initializes a new instance of the ThousandEyesRateLimitException class with rate limit information
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="retryAfterSeconds">Number of seconds to wait before retrying</param>
-	public HaloRateLimitException(string message, int? retryAfterSeconds) : base(message)
+	public ThousandEyesRateLimitException(string message, int? retryAfterSeconds) : base(message)
 	{
 		RetryAfterSeconds = retryAfterSeconds;
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the HaloRateLimitException class with detailed rate limit information
-	/// </summary>
-	/// <param name="message">The message that describes the error</param>
-	/// <param name="retryAfterSeconds">Number of seconds to wait before retrying</param>
-	/// <param name="rateLimit">The rate limit that was exceeded</param>
-	/// <param name="remainingRequests">Remaining requests in the current rate limit window</param>
-	/// <param name="resetTime">When the rate limit window resets</param>
-	/// <param name="errorContext">Additional error context information</param>
-	public HaloRateLimitException(
-		string message,
-		int? retryAfterSeconds,
-		int? rateLimit,
-		int? remainingRequests,
-		DateTime? resetTime,
-		HaloApiErrorContext errorContext)
-		: base(message, errorContext)
-	{
-		RetryAfterSeconds = retryAfterSeconds;
-		RateLimit = rateLimit;
-		RemainingRequests = remainingRequests;
-		ResetTime = resetTime;
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the HaloRateLimitException class with detailed error information
-	/// </summary>
-	/// <param name="message">The message that describes the error</param>
-	/// <param name="retryAfterSeconds">Number of seconds to wait before retrying</param>
-	/// <param name="rateLimit">The rate limit that was exceeded</param>
-	/// <param name="remainingRequests">Remaining requests in the current rate limit window</param>
-	/// <param name="resetTime">When the rate limit window resets</param>
-	/// <param name="statusCode">The HTTP status code associated with the error</param>
-	/// <param name="errorCode">The error code from the API response</param>
-	/// <param name="details">Additional error details from the API</param>
-	/// <param name="requestUrl">The request URL that caused the error</param>
-	/// <param name="requestMethod">The request method that caused the error</param>
-	/// <param name="innerException">The exception that is the cause of the current exception</param>
-	public HaloRateLimitException(
-		string message,
-		int? retryAfterSeconds,
-		int? rateLimit,
-		int? remainingRequests,
-		DateTime? resetTime,
-		int? statusCode,
-		string? errorCode,
-		Dictionary<string, object?>? details,
-		string? requestUrl,
-		string? requestMethod,
-		Exception? innerException)
-		: base(message, statusCode, errorCode, details, requestUrl, requestMethod, innerException)
-	{
-		RetryAfterSeconds = retryAfterSeconds;
-		RateLimit = rateLimit;
-		RemainingRequests = remainingRequests;
-		ResetTime = resetTime;
 	}
 }
 
 /// <summary>
 /// Exception thrown when the server encounters an internal error (500 Internal Server Error)
 /// </summary>
-public class HaloServerException : HaloApiException
+public class ThousandEyesServerException : ThousandEyesApiException
 {
 	/// <summary>
-	/// Initializes a new instance of the HaloServerException class with a specified error message
+	/// Initializes a new instance of the ThousandEyesServerException class with a specified error message
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
-	public HaloServerException(string message) : base(message)
+	public ThousandEyesServerException(string message) : base(message)
 	{
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the HaloServerException class with a specified error message and inner exception
-	/// </summary>
-	/// <param name="message">The message that describes the error</param>
-	/// <param name="innerException">The exception that is the cause of the current exception</param>
-	public HaloServerException(string message, Exception innerException) : base(message, innerException)
-	{
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the HaloServerException class with message and status code
-	/// </summary>
-	/// <param name="message">The message that describes the error</param>
-	/// <param name="statusCode">The HTTP status code associated with the error</param>
-	public HaloServerException(string message, int statusCode) : base(message, statusCode)
-	{
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the HaloServerException class with detailed error information
+	/// Initializes a new instance of the ThousandEyesServerException class with detailed error information
 	/// </summary>
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="statusCode">The HTTP status code associated with the error</param>
@@ -595,7 +408,7 @@ public class HaloServerException : HaloApiException
 	/// <param name="requestUrl">The request URL that caused the error</param>
 	/// <param name="requestMethod">The request method that caused the error</param>
 	/// <param name="innerException">The exception that is the cause of the current exception</param>
-	public HaloServerException(
+	public ThousandEyesServerException(
 		string message,
 		int? statusCode,
 		string? errorCode,

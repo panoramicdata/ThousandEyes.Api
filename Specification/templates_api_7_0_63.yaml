@@ -1,0 +1,3711 @@
+openapi: 3.0.0
+info:
+  description: |
+    Templates provide a streamlined approach to creating multiple tests (Synthetic/CEA and Endpoint), alert rules, dashboards, labels and other assets within ThousandEyes from a single configuration file.
+    Templates make it easy to configure monitoring for even the most complex monitoring scenarios.
+    The following applies to templates:
+    * ThousandEyes provides a pre-defined set of templates for monitoring common services and applications like Office365, Webex, Atlassian, Slack, custom network, HTTP, API, and Web targets.
+    * You can easily create tests for monitoring common services and applications such as Office365, Webex, and others using the predefined set of ThousandEyes built-in templates.
+    * Users can create their own templates, which are visible to any other users in the account group the template was created in, provided they have the `View Templates Read` permission.
+    * Templates support dynamic user inputs, which are values provided by users when a template is deployed. Templates leverage Handlebars templating notation to allow dynamically configuring ThousandEyes resources based on user provided inputs.
+    * Templates can be deployed from the UI or the API.
+    * Credentials (usernames, passwords, tokens, etc.) may be included in a template only as placeholders whose value is provided by user input when deployed. Creating or updating a template that contains a credentials field in plain text will result in a bad request (ie, HTTP 400).
+    * Templates can also use Handlebars temlate notation to reference fields of other assets defined in the template. To support this, assets are created in the order below, which also determines what other assets a given asset can reference
+    (ex. Labels cannot reference other assets, Tests can only reference labels, etc.)
+      1. Labels
+      2. Tests
+      3. Endpoint Tests
+      4. Tags
+      5. Alert Rules
+      6. Dashboard Filters
+      7. Dashboards
+
+    For more information about Templates, see the [product documentation](https://docs.thousandeyes.com/product-documentation/internet-and-wan-monitoring/tests/test-templates).
+  title: Templates API
+  version: 7.0.63
+servers:
+- description: ThousandEyes API production URL
+  url: https://api.thousandeyes.com/v7
+security:
+- BearerAuth: []
+tags:
+- name: Templates
+paths:
+  /templates:
+    get:
+      description: Retrieves a list of all your templates
+      operationId: getTemplates
+      parameters:
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      - description: Optional parameter to filter Templates by certification level
+        explode: true
+        in: query
+        name: certificationLevel
+        required: false
+        schema:
+          $ref: '#/components/schemas/CertificationLevel'
+        style: form
+      - description: Optional parameter to filter Templates by module
+        explode: true
+        in: query
+        name: module
+        required: false
+        schema:
+          $ref: '#/components/schemas/TemplateModule'
+        style: form
+      - description: Optional parameter to filter the Templates by name; the search
+          is case insensitive
+        explode: true
+        in: query
+        name: name
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/TemplatesResponse'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: List templates
+      tags:
+      - Templates
+    post:
+      description: Creates a template.
+      operationId: createTemplate
+      parameters:
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Template'
+        description: The template to create or update.
+        required: true
+      responses:
+        "201":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Created
+          headers:
+            Location:
+              explode: false
+              schema:
+                example: https://api.thousandeyes.com/v7/templates/fcbb89a7-61cf-4616-9c4f-828fa3cb4684
+                type: string
+              style: simple
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Create template
+      tags:
+      - Templates
+  /templates/{id}:
+    delete:
+      description: Deletes a template using its ID.
+      operationId: deleteTemplate
+      parameters:
+      - description: The ID of the template
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: fcbb89a7-61cf-4616-9c4f-828fa3cb4684
+          format: uuid
+          maxLength: 36
+          minLength: 10
+          type: string
+        style: simple
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      responses:
+        "204":
+          description: No content
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Delete template
+      tags:
+      - Templates
+    get:
+      description: Gets a template using its ID.
+      operationId: getTemplate
+      parameters:
+      - description: The ID of the template
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: fcbb89a7-61cf-4616-9c4f-828fa3cb4684
+          format: uuid
+          maxLength: 36
+          minLength: 10
+          type: string
+        style: simple
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Get template
+      tags:
+      - Templates
+    put:
+      description: "Updates an existing template. This operation overwrites the existing\
+        \ template object with the object sent in the request. If a partial update\
+        \ is required, it is recommended that you retrieve the template and modify\
+        \ the template object before updating it."
+      operationId: updateTemplate
+      parameters:
+      - description: The ID of the template
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: fcbb89a7-61cf-4616-9c4f-828fa3cb4684
+          format: uuid
+          maxLength: 36
+          minLength: 10
+          type: string
+        style: simple
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Template'
+        description: The template to create or update.
+        required: true
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Update template
+      tags:
+      - Templates
+  /templates/{id}/deploy:
+    post:
+      description: |-
+        Deploys a template, which will result in creating any of the tests, alert rules, dashboards or other assets defined in the template.
+        You must specify any `userInputValues` required by the template in the request body. `userInputValues` enables you to specify a minimum set of user values required to configure the tests from a template. This way, you do not have to edit all the details of each test configuration. If necessary, you can edit the test details directly in the template.
+        ### Considerations
+        Consider the following when deploying a template:
+        * To deploy a template, you must first create a template or use one of ThousandEyes' built-in templates.
+        * The deployment strategy allows you to specify what should happen to a particular asset in the event that a template is redeployed.
+          When you attempt to deploy a template that has already been deployed, the API service compares any assets that have not yet been deployed with the assets that were deployed in the previous deployment (the comparison is done using the **asset key**; the asset keys are simply the object keys used in the `tests`, `labels`, `alertRules`, and `dashboards` fields). By default, if the configuration of a particular asset has not changed from the previous deployment, that asset is ignored.
+            If a change is detected:
+          * If the asset is a test, a new test is created with the new configuration.
+          * If the asset is not a test, the asset is updated.
+        * You can create new resources such as tests, alert rules, labels, dashboards, and modify existing resources defined in templates, overwriting the default configurations.
+        * You can also use existing resources (such as those created outside the template deployment flow) by adding their ID either in the raw template or using the overrides when deploying the template. See example usage below for the raw template sample.
+        **Note**: The template API does not currently track "live" configuration of assets. Any changes made to assets outside of the template API will not be considered when comparing changes during the redeployment scenario.
+        ### Example usage:
+        ```POST
+        /v7/tests/templates/fcbb89a7-61cf-4616-9c4f-828fa3cb4684/deploy
+        {
+          "userInputValues": {
+            "interval": 120,
+            "target": "https://microsoft.com",
+            "agents": [{"agentId":11}],
+            "domain": "microsoft.com"
+          },
+          "name":"Microsoft Suite",
+          "tests": {
+            "secondPageLoadTest": {
+              "httpInterval": 120,
+              "interval": 120,
+              "testId": 182481,
+              "type": "page-load",
+              "url": "https://microsoft.com",
+              "testName": "Microsoft Suite - Second Page Load",
+              "agents": [
+                {
+                  "agentId": 11
+                }
+              ]
+            }
+          }
+        }
+        ```
+        #### Raw Template Sample
+        ```
+        {
+          ...
+          "tests": {
+              "existingTest": {
+                  "testId": "123", //The API will only try to update this test; will never create it
+                  "type": "http-server",
+                  ....
+              },
+              ...
+          },
+          ...
+        }
+        ```
+      operationId: deployTemplate
+      parameters:
+      - description: The ID of the template
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: fcbb89a7-61cf-4616-9c4f-828fa3cb4684
+          format: uuid
+          maxLength: 36
+          minLength: 10
+          type: string
+        style: simple
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeployTemplate'
+        description: Deploy template
+        required: true
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Deploy template
+      tags:
+      - Templates
+  /templates/{id}/sharing-settings:
+    get:
+      operationId: getSharingSettings
+      parameters:
+      - description: The ID of the template
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: fcbb89a7-61cf-4616-9c4f-828fa3cb4684
+          format: uuid
+          maxLength: 36
+          minLength: 10
+          type: string
+        style: simple
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/SharingSettingsResponse'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Get template sharing settings
+      tags:
+      - Templates
+    put:
+      operationId: updateSharingSettings
+      parameters:
+      - description: The ID of the template
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: fcbb89a7-61cf-4616-9c4f-828fa3cb4684
+          format: uuid
+          maxLength: 36
+          minLength: 10
+          type: string
+        style: simple
+      - description: A unique identifier associated with your account group. You can
+          retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note
+          that you must be assigned to the target account group. Specifying this parameter
+          without being assigned to the target account group will result in an error
+          response.
+        in: query
+        name: aid
+        required: false
+        schema:
+          example: "1234"
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SharingSettings'
+        required: true
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/SharingSettingsResponse'
+          description: OK
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Update template sharing settings
+      tags:
+      - Templates
+components:
+  parameters:
+    IdTemplate:
+      description: The ID of the template
+      explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        example: fcbb89a7-61cf-4616-9c4f-828fa3cb4684
+        format: uuid
+        maxLength: 36
+        minLength: 10
+        type: string
+      style: simple
+    AccountGroupId:
+      description: A unique identifier associated with your account group. You can
+        retrieve your `AccountGroupId` from the `/account-groups` endpoint. Note that
+        you must be assigned to the target account group. Specifying this parameter
+        without being assigned to the target account group will result in an error
+        response.
+      in: query
+      name: aid
+      required: false
+      schema:
+        example: "1234"
+        type: string
+  responses:
+    "400":
+      content:
+        application/problem+json:
+          example:
+            type: about:blank
+            title: Request validation failed. There are invalid or missing fields
+            status: 400
+            detail: Your request object contains invalid fields.
+            instance: /v7
+            errors:
+            - code: AM-5432
+              field: firstName
+              message: firstName cannot have fancy characters
+            - code: DASH-5622
+              field: password
+              message: Password cannot be blank
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+      description: Bad Request
+    "401":
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+      description: Unauthorized
+    "403":
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Insufficient permissions to query endpoint
+    "404":
+      content:
+        application/problem+json:
+          example:
+            type: about:blank
+            title: URI Resource Not Found
+            status: 404
+            detail: Details explaining if the 404 error is related to an invalid URI
+              or a wrong ID
+            instance: /v7
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Not found
+    "500":
+      content:
+        application/problem+json:
+          example:
+            type: about:blank
+            title: Internal server error
+            status: 500
+            detail: Optional detail about the internal error message.
+            instance: /v7
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Internal server error
+    "204":
+      description: No content
+  schemas:
+    Template:
+      description: The template to create or update.
+      properties:
+        name:
+          description: The name of the template.
+          example: My Template
+          type: string
+        description:
+          description: Text that describes the template.
+          example: A description of My Template
+          type: string
+        icon:
+          description: |
+            Icon that will be used when displaying the template in UI. If none supplied, will display `thousandeyes` icon. Supported values include:
+            - `api`
+            - `custom`
+            - `server`
+            - `user-template`
+            - `thousandeyes`
+          example: server
+          type: string
+        isBuiltIn:
+          description: Indicates whether the template is a built-in template. This
+            field is read-only for normal users.
+          example: false
+          type: boolean
+        certificationLevel:
+          $ref: '#/components/schemas/CertificationLevel'
+        userInputs:
+          additionalProperties:
+            $ref: '#/components/schemas/UserInput'
+          description: |
+            A map of <key, UserInput>. User Inputs are values that the user must fill in order for
+            the Template to deploy. User Inputs are like variables that can be used for dynamically setting just
+            about any field in the Template, including fields for Tests, Labels, Dashboards, and most other template assets.
+            User Inputs are referenced using Handlebars template substitution notation. For example:
+
+            `"testName": "{{userInputs.targetDomain}} - HTTP"`
+
+            The [Handlebars Syntax](https://handlebarsjs.com/guide/builtin-helpers.html) also supports basic logic operations
+            and iterators that allow creating powerful and flexible templates.
+          example:
+            targetDomain:
+              name: Target Domain
+              description: Name of target domain that will be used for configuring
+                tests in this template.
+              type: string
+            region:
+              name: Cloud Region
+              description: The available cloud regions to target.
+              type: string
+              allowedValues:
+              - name: West
+                value: us-west-1
+              - name: East
+                value: us-east-2
+            agents:
+              name: Source Agents
+              description: The agents that will be used by the tests in this template.
+              type: agents
+          type: object
+        groupings:
+          description: "An ordered list of groupings that organize template objects,\
+            \ such as user inputs or tests."
+          example:
+          - name: personalize
+            title: Personalize your dashboard
+            description: Allow you to personalize your dashboard
+            type: user-input
+            items:
+            - dashboardTitle
+            - dashboardDescription
+            - dashboardFilterTitle
+          - name: dns-test-group
+            title: DNS Tests
+            description: Grouped by DNS test type
+            type: test
+            items:
+            - dnsTest-microsoft365
+            - dnsTest-sharepoint
+            - dnsTest-microsoftlogin
+            - dnsTest-onedrive
+            - dnsTest-outlook
+          items:
+            $ref: '#/components/schemas/TemplateGrouping'
+          type: array
+          uniqueItems: true
+        labels:
+          additionalProperties:
+            $ref: '#/components/schemas/LabelConfigurationTemplate'
+          description: "A map of <name, Label> objects. These are ThousandEyes Labels\
+            \ that will be created when the template is deployed."
+          example:
+            myLabel:
+              name: My Label
+              tests:
+              - testId: 123
+          externalDocs:
+            url: https://developer.cisco.com/docs/thousandeyes/v6/update-a-label
+          type: object
+        tests:
+          additionalProperties:
+            $ref: '#/components/schemas/TestConfigurationTemplate'
+          description: |
+            A map of <name, TestConfiguration> objects. These are the ThousandEyes CEA/Synthetic tests that will be created when the template is deployed.
+          example:
+            httpServerTest:
+              testName: "{{name}} - HTTP Server"
+              type: http-server
+              groups:
+              - groupId: "{{labels.webHealthDashLabel.groupId}}"
+              - groupId: "{{labels.templateLabel.groupId}}"
+              interval: "{{userInputs.interval}}"
+              url: "https://{{userInputs.domain}}"
+              agents: "{{userInputs.agents}}"
+            networkTest:
+              testName: "{{name}} - Network"
+              type: agent-to-server
+              server: "{{userInputs.domain}}"
+              protocol: TCP
+              port: "{{userInputs.port}}"
+              groups:
+              - groupId: "{{labels.webHealthDashLabel.groupId}}"
+              - groupId: "{{labels.templateLabel.groupId}}"
+              interval: "{{userInputs.interval}}"
+              url: "https://{{userInputs.domain}}"
+              agents: "{{userInputs.agents}}"
+            dnsTest:
+              testName: "{{name}} - DNS"
+              type: dns-server
+              domain: "{{userInputs.domain}} A"
+              groups:
+              - groupId: "{{labels.webHealthDashLabel.groupId}}"
+              - groupId: "{{labels.templateLabel.groupId}}"
+              interval: "{{userInputs.interval}}"
+              dnsServers: "{{userInputs.dnsServers}}"
+              agents: "{{userInputs.agents}}"
+          type: object
+        endpointTests:
+          additionalProperties:
+            $ref: '#/components/schemas/EndpointTestConfigTemplate'
+          description: |
+            A map of <name, EndpointTestConfiguration> objects. These are the Endpoint tests that will be created when the template is deployed. Field values support Handlebars template substitution.
+          example:
+            endpointTests:
+              scheduledHttpTest:
+                name: Scheduled HTTP Test
+                testType: Http
+                testCategory: SCHEDULED_TEST
+                genericConfig:
+                  interval: 3600
+                networkConfig:
+                  flagPing: true
+                httpConfig:
+                  url: "https://{{userInputs.tenantName}}-my.sharepoint.com"
+                machineConfig:
+                  monitoringSettingsType: ANY_AGENT
+                  agentIds: "{{userInputs.endpointAgents}}"
+          type: object
+        alertRules:
+          additionalProperties:
+            $ref: '#/components/schemas/AlertRuleConfigurationTemplate'
+          description: |
+            A map of <key, AlertRuleConfigurationTemplate> objects. These are the set of Alert Rules that will be created when the template is deployed.
+          example:
+            httpAlert:
+              alertType: HTTP Server
+              ruleName: "{{userInputs.tenantName}} - Alert Rule"
+              expression: ((totalTime >= 500 ms) && (responseTime >= 500 ms))
+              roundsViolatingRequired: 1
+              roundsViolatingOutOf: 1
+              testIds:
+              - "{{tests.pageLoadTest.testId}}"
+          type: object
+        dashboards:
+          additionalProperties:
+            $ref: '#/components/schemas/DashboardConfigurationTemplate'
+          description: |
+            A map of <key, DashboardConfiguration> objects. These are the set of dashboards that will be created when the template is deployed. Dashboard fields support Handlebars notation.
+          example:
+            myDashboard:
+              title: My Dashboard
+              widgets:
+              - filters:
+                  Test Labels: "[{{labels.templateLabel.groupId}}]"
+                type: "Bar Chart: Stacked"
+                title: "A Bar Chart: Stacked widget"
+                metricGroup: Web - HTTP Server
+                measure:
+                  type: Median
+                metric: Response Time
+                axisGroupBy: Continents
+                dataSource: Cloud & Enterprise Agents
+          type: object
+        dashboardFilters:
+          additionalProperties:
+            $ref: '#/components/schemas/DashboardFilterConfigurationTemplate'
+          description: "A map of <key, DashboardFilter> objects. These will be the\
+            \ dashboard filters created when the template is deployed."
+          example:
+            netHealthDashboardFilter:
+              name: "{{userInputs.dashboardFilterTitle}}"
+              context:
+              - dataSourceId: VIRTUAL_AGENT
+                filters:
+                - filterId: TEST_LABEL
+                  metricIds:
+                  - NET_LOSS
+                  - NET_LATENCY
+                  - NET_JITTER
+                  values:
+                  - "{{labels.testLabel.groupId}}"
+          type: object
+        deploymentStrategy:
+          additionalProperties:
+            $ref: '#/components/schemas/DeploymentStrategy'
+          description: |
+            A map of <assetKey, DeploymentStrategy> values. The `deploymentStrategy` field defines how the system behaves when an asset (test, label, dashboard) defined in the template already exists.
+            The `assetKey` identifies the asset that the deployment strategy will apply to.
+            For tests, the system uses the test type and name to determine if a test already exists. For example, if a template contains an http-server test named `Test123` and an http-server test with the same name already exists, the system assumes that this test already exists. If the test had a different type (for example, page-load), then the system would not consider the test to already exist because the types are different.
+            For Labels and Dashboards, the system uses only the name. (Note that current Templates only consider "test" Labels).
+            Alert Rules do not currently support `deploymentStrategy`.
+            Below are the possible deployment strategies and their behaviors:
+              * `create` - The system will always attempt to create the asset. If an asset of the same name and type already exists, the system will generate an error. This behavior ensures that each asset created from a template is unique. This is the default behavior.
+              * `update` - If an asset of the same type and name already exists, the existing asset is used instead of creating a new asset. If the configuration of the asset in the template is different from the existing one, the latest configuration is applied.
+              * `ignore` - If an asset of the same type and name already exists, the existing asset is used instead of creating a new asset. If the configuration of the asset in the template is different from the existing one, the configuration of the existing asset is used and the configuration in the template is ignored.
+            The `update` and `ignore` strategies essentially allow assets to be shared across templates. For example, the built-in "Custom Web Page", "Custom Web Server", and "Custom Device" templates all contain a Dashboard asset called "Health Overview". It's `deploymentStrategy` is set to `ignore`, which means that the first deployment of a template such as the "Custom Web Page" template creates the "Health Overview" dashboard. Subsequent deployments of the "Custom Web Page" template do not attempt to recreate the "Health Overview" dashboard. Instead, the existing dashboard is reused.
+            Note: Assets that were not created using a template are not included when the system searches for existing assets; they are not used with `update` or `ignore`.
+          example:
+            testVoiceLabel: update
+            testVideoLabel: update
+            testLabel: update
+            dnsTest: ignore
+            webexDashboard: ignore
+            serverTest: create
+          type: object
+        resourceInclusion:
+          additionalProperties:
+            $ref: '#/components/schemas/ResourceInclusion'
+          description: |
+            A map of `<assetKey, ResourceInclusion>` pairs. The `resourceInclusion` field specifies whether an asset (such as a test, endpoint test, label, dashboard, or alert rule) should be included in a deployment.
+            The `assetKey` identifies the specific asset to which the inclusion rule applies.
+            Possible possible resource inclusion values for each asset:
+              * `included` - The system will always create the asset.
+              * `skipped` - The system will not create the asset.
+            If an `assetKey` is not present in the `resourceInclusion` map, it defaults to `included`.
+            **Note**: The deployment payload can override the `resourceInclusion` value defined in a template.
+          example:
+            testLabel: skipped
+            dnsTest: skipped
+            webexDashboard: included
+          type: object
+        modules:
+          description: ThousandEyes modules this template belongs to. Regular users
+            can only set this to `default`.
+          example:
+          - default
+          items:
+            $ref: '#/components/schemas/TemplateModule'
+          type: array
+          uniqueItems: true
+      required:
+      - name
+      title: Template
+      type: object
+    UserInput:
+      description: |
+        A user input is a value that the user must provide when deploying a template.
+        User Input values are provided by the user in the UI under the **Global Settings** section.
+        When deploying via the API, User Inputs values are specified in the payload using the `userInputValues` field.
+      properties:
+        name:
+          description: The name of the user input field.
+          example: target
+          type: string
+        type:
+          $ref: '#/components/schemas/UserInputType'
+        title:
+          description: The title of the user input field; may be used by UI.
+          example: Test Target
+          type: string
+        description:
+          description: Description of the user input field; used by UI.
+          example: The target of the Tests
+          type: string
+        defaultValue:
+          $ref: '#/components/schemas/UserInputValue'
+        allowedValues:
+          description: "Allowed values for the User Input. An array of name/value\
+            \ pairs that specify specific values that can be used with the User Input.\
+            \ In the UI, user inputs with `allowedValues` will be displayed as a drop\
+            \ down selector; the `name` will be used as the display text."
+          items:
+            $ref: '#/components/schemas/UserInputAllowedValue'
+          type: array
+      required:
+      - name
+      - type
+      type: object
+    UserInputAllowedValue:
+      description: The list of values that the user is allowed to use as inputs.
+      properties:
+        value:
+          $ref: '#/components/schemas/UserInputValue'
+        name:
+          description: "The name of the value, which will be used for display in the\
+            \ UI and API messages."
+          example: West
+          type: string
+      type: object
+    UserInputValue:
+      anyOf:
+      - type: string
+      - type: number
+      - type: object
+      - items:
+          type: string
+        type: array
+      - items:
+          type: number
+        type: array
+      - items:
+          type: object
+        type: array
+      description: A user input value. The type of object depends on the user input
+        `type` field.
+      example: us-west-1
+    UserInputType:
+      description: |
+        The type of user input. This defines the value the user can provide as well as the UI component displayed when redering User Inputs.
+        The type is used to validate the user provided value when deploying a template.
+        - `string`: User input expects a string value; UI will be rendered as a text box.
+        - `number`: User input expects a numeric value; UI will be rendered as a text box.
+        - `boolean`: User input expects a boolean value; UI will be rendered as a check box.
+        - `string[]`: User input expects an array of string values; UI will be rendered as drop down.
+        - `number[]`: User input expects an array of numeric values; UI will be rendered as drop down.
+        - `boolean[]`: User input expects an array of boolean values; UI will be rendered as drop down.
+        - `agents`: User input expects an array of `agentId`s; UI will be rendered as an Agent Selector (CEA) drop down.
+        - `tests`: User input expects an array of `testId`s; UI will be rendered as a Test Selector (CEA) drop down.
+        - `any`: For any other user inputs that don't belong to the types listed above. These will be determined based on usage in template.
+      enum:
+      - string
+      - number
+      - boolean
+      - "string[]"
+      - "number[]"
+      - "boolean[]"
+      - agents
+      - tests
+      - any
+      example: string
+      type: string
+    TemplateGrouping:
+      description: Represents a grouping of different template resources for display
+        purposes in the UI. This grouping does not affect template deployment.
+      example:
+        name: web-page-tests
+        title: Web Page Tests
+        description: Used for testing web pages
+        type: test
+        items:
+        - dnsTest
+        - pageLoadTest
+      properties:
+        name:
+          description: The name of the grouping.
+          example: dashboard-inputs
+          type: string
+        title:
+          description: The title of the grouping.
+          example: Dashboard Inputs
+          type: string
+        type:
+          $ref: '#/components/schemas/TemplateGroupingType'
+        description:
+          description: Description of the grouping.
+          example: The target of the tests
+          type: string
+        items:
+          description: "A list of items within the group, corresponding to the keys\
+            \ in the `userInputs` or `tests` fields of the template. Each key must\
+            \ be unique within its respective group (`user-input` or `test`)."
+          example:
+          - dnsTest
+          - pageLoadTest
+          items:
+            description: The unique key for an item in this grouping.
+            example: "[\"dnsTest\",\"pageLoadTest\"]"
+            type: string
+          type: array
+          uniqueItems: true
+      required:
+      - name
+      - title
+      - type
+      type: object
+    TemplateGroupingType:
+      description: "The type of resources included in the grouping. Supported types\
+        \ are `Tests` and `User Inputs`. Grouped tests are displayed under a shared\
+        \ `title` in the template test list view, while grouped user inputs are organized\
+        \ into sections in the Global Inputs area, using the provided `title` and\
+        \ `description`."
+      enum:
+      - test
+      - user-input
+      example: user-input
+      type: string
+    DeploymentStrategy:
+      description: The deployment strategy to apply to the asset.
+      enum:
+      - create
+      - update
+      - ignore
+      example: "{\"pageLoadTest\":\"update\",\"httpAlert\":\"ignore\"}"
+      type: string
+    ResourceInclusion:
+      description: The deployment inclusion configuration for the asset.
+      enum:
+      - skipped
+      - included
+      example: included
+      type: string
+    TemplateResponse:
+      allOf:
+      - $ref: '#/components/schemas/TemplateResponseBase'
+      - $ref: '#/components/schemas/Template'
+      - properties:
+          _links:
+            $ref: '#/components/schemas/SelfLinks'
+        type: object
+    TemplateResponseBase:
+      properties:
+        id:
+          description: The ID of the template.
+          example: fcbb89a7-61cf-4616-9c4f-828fa3cb4684
+          format: uuid
+          type: string
+        dateCreated:
+          description: The date and time the template was created.
+          example: 2023-07-17T22:00:54Z
+          format: date-time
+          type: string
+      type: object
+    TemplatesResponse:
+      allOf:
+      - $ref: '#/components/schemas/Templates'
+      - properties:
+          _links:
+            $ref: '#/components/schemas/SelfLinks'
+        type: object
+    Templates:
+      properties:
+        templates:
+          items:
+            $ref: '#/components/schemas/TemplateResponse'
+          type: array
+      type: object
+    DeployTemplate:
+      example:
+        userInputValues:
+          interval: 120
+          target: https://microsoft.com
+          agents:
+          - agentId: 11
+          domain: microsoft.com
+        name: Microsoft Suite
+      properties:
+        userInputValues:
+          additionalProperties:
+            $ref: '#/components/schemas/UserInputValue'
+          description: Specifies the values to be used for all `userInputs` defined
+            in the template. User must provide a value for each User Input defined
+            in the template being deployed.
+          type: object
+        name:
+          description: "The name of the deployed template. This value will be used\
+            \ anywhere the `{{name}}` expression is used in the template being deployed."
+          type: string
+      type: object
+    CertificationLevel:
+      description: |
+        The certification level of the Template. The accepted values are:
+        - `user`: User created template; not verified by ThousandEyes
+        - `thousandeyes`: Created by ThousandEyes
+        - `partner`: Created by ThousandEyes and approved by Partner/Vendor
+        - `certified`: Created and certified by ThousandEyes using included best practice guide (see `documentation` link).
+      enum:
+      - user
+      - thousandeyes
+      - partner
+      - certified
+      example: user
+      type: string
+    TemplateModule:
+      description: A ThousandEyes module this template belongs to. Regular users can
+        only set to `default`.
+      enum:
+      - default
+      example: default
+      type: string
+    TemplateIcon:
+      description: |
+        Icon that will be used when displaying the template in UI. If none supplied, will display `thousandeyes` icon. Supported values include:
+        - `api`
+        - `custom`
+        - `server`
+        - `user-template`
+        - `thousandeyes`
+      example: server
+      type: string
+    SharingSettings:
+      description: The Template to change the sharing settings for.
+      properties:
+        scope:
+          $ref: '#/components/schemas/SharingScope'
+      required:
+      - scope
+      type: object
+    SharingScope:
+      description: |
+        The scope of the template sharing. The accepted values are:
+        - `default`: The template is visible only within the account group that owns it.
+        - `organization`: The template is visible by all the users within the organization that owns it.
+      enum:
+      - default
+      - organization
+      example: organization
+      type: string
+    SharingSettingsResponse:
+      allOf:
+      - $ref: '#/components/schemas/SharingSettings'
+      - properties:
+          _links:
+            $ref: '#/components/schemas/SharingSettingsLinks'
+        type: object
+    SharingSettingsLinks:
+      description: A list of links that can be accessed to get more information.
+      properties:
+        self:
+          $ref: '#/components/schemas/SharingSettingsLink'
+        template:
+          $ref: '#/components/schemas/TemplateLink'
+      readOnly: true
+      type: object
+    TemplateLink:
+      allOf:
+      - description: A reference to the template.
+        example:
+          href: https://api.thousandeyes.com/v7/templates/fcbb89a7-61cf-4616-9c4f-828fa3cb4684
+      - $ref: '#/components/schemas/Link'
+    SharingSettingsLink:
+      allOf:
+      - description: A reference to the sharing settings.
+        example:
+          href: https://api.thousandeyes.com/v7/templates/fcbb89a7-61cf-4616-9c4f-828fa3cb4684/sharing-settings
+      - $ref: '#/components/schemas/Link'
+    ValidationError:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - properties:
+          errors:
+            description: "(Optional) When multiple errors occur, the details for each\
+              \ error are listed."
+            items:
+              $ref: '#/components/schemas/ValidationErrorItem'
+            nullable: true
+            type: array
+        type: object
+      type: object
+    Error:
+      properties:
+        type:
+          description: "A URI reference that identifies the problem type. When this\
+            \ member is not present, its value is assumed to be \"about:blank\"."
+          type: string
+        title:
+          description: "A short, human-readable summary of the problem type."
+          type: string
+        status:
+          description: The HTTP status code generated by the origin server for this
+            occurrence of the problem.
+          type: integer
+        detail:
+          description: A human-readable explanation specific to this occurrence of
+            the problem.
+          type: string
+        instance:
+          description: A URI reference that identifies the specific occurrence of
+            the problem.
+          type: string
+      type: object
+    ValidationErrorItem:
+      properties:
+        code:
+          description: (Optional) A unique error type/code that can be referenced
+            in the documentation for further details.
+          type: string
+        field:
+          description: Identifies the field that triggered this particular error.
+          type: string
+        message:
+          description: "A short, human-readable summary of the error."
+          type: string
+      type: object
+    UnauthorizedError:
+      properties:
+        error:
+          example: invalid_token
+          type: string
+        error_description:
+          example: Invalid access token
+          type: string
+      type: object
+    LabelConfigurationTemplate:
+      description: |
+        A label object that is compatible with [ThousandEyes V6 API](https://developer.cisco.com/docs/thousandeyes/v6/create-a-label/#request).
+        All field values can be templated with Handlebars expression unless otherwise noted.
+      properties:
+        name:
+          $ref: '#/components/schemas/LabelConfigurationTemplate_name'
+        type:
+          $ref: '#/components/schemas/LabelConfigurationTemplate_type'
+        tests:
+          $ref: '#/components/schemas/Label_tests'
+        endpointTests:
+          $ref: '#/components/schemas/Label_endpointTests'
+      required:
+      - name
+      type: object
+    LabelTypeTemplate:
+      description: |
+        The type of label. Acceptable values are:
+        - `tests` - A Label that can be assigned to CEA/Synthetic tests
+        - `endpoint_tests` - A Label that can be assigned to Endpoint tests
+      enum:
+      - tests
+      - endpoint_tests
+      example: tests
+      type: string
+    TestIdTemplate:
+      description: Test identified by the test's ID.
+      properties:
+        testId:
+          $ref: '#/components/schemas/StringTemplate'
+      type: object
+    TestConfigurationTemplate:
+      description: "A ThousandEyes CEA (Synthetic) test configuration that is compatible\
+        \ with [ThousandEyes V6 API](https://developer.cisco.com/docs/thousandeyes/v6/tests-metadata/).\
+        \ \nAll field values can be templated with Handlebars expression unless otherwise\
+        \ noted.\n"
+      discriminator:
+        mapping:
+          agent-to-server: '#/components/schemas/AgentToServerTestTemplate'
+          agent-to-agent: '#/components/schemas/AgentToAgentTestTemplate'
+          dns-server: '#/components/schemas/DnsServerTestTemplate'
+          dns-trace: '#/components/schemas/DnsTraceTestTemplate'
+          http-server: '#/components/schemas/HttpServerTestTemplate'
+          page-load: '#/components/schemas/PageLoadTestTemplate'
+          web-transactions: '#/components/schemas/TransactionTestTemplate'
+          sip-server: '#/components/schemas/SipServerTestTemplate'
+          voice: '#/components/schemas/VoiceTestTemplate'
+        propertyName: type
+      externalDocs:
+        url: https://developer.cisco.com/docs/thousandeyes/v6/tests-metadata/
+      oneOf:
+      - $ref: '#/components/schemas/AgentToServerTestTemplate'
+      - $ref: '#/components/schemas/HttpServerTestTemplate'
+      - $ref: '#/components/schemas/PageLoadTestTemplate'
+      - $ref: '#/components/schemas/AgentToAgentTestTemplate'
+      - $ref: '#/components/schemas/VoiceTestTemplate'
+      - $ref: '#/components/schemas/TransactionTestTemplate'
+      - $ref: '#/components/schemas/SipServerTestTemplate'
+      - $ref: '#/components/schemas/DnsServerTestTemplate'
+      - $ref: '#/components/schemas/DnsTraceTestTemplate'
+    AgentToServerTestTemplate:
+      allOf:
+      - $ref: '#/components/schemas/TestBaseTemplate'
+      - $ref: '#/components/schemas/NetworkTestBaseTemplate'
+      - properties:
+          type:
+            $ref: '#/components/schemas/AgentToServerTestTypeTemplate'
+          server:
+            $ref: '#/components/schemas/TargetServerTemplate'
+          continuousMode:
+            $ref: '#/components/schemas/AgentToServerTestTemplate_allOf_continuousMode'
+          fixedPacketRate:
+            $ref: '#/components/schemas/AgentToServerTestTemplate_allOf_fixedPacketRate'
+        required:
+        - agents
+        - interval
+        - server
+        - type
+        type: object
+    TestBaseTemplate:
+      properties:
+        type:
+          $ref: '#/components/schemas/TestTypeTemplate'
+        testName:
+          $ref: '#/components/schemas/TestBaseTemplate_testName'
+        agents:
+          $ref: '#/components/schemas/Agents'
+        groups:
+          $ref: '#/components/schemas/TestBaseTemplate_groups'
+        description:
+          $ref: '#/components/schemas/TestBaseTemplate_description'
+      required:
+      - agents
+      - testName
+      - type
+      type: object
+    TestTypeTemplate:
+      description: The type of test. Cannot be templated with Handlebars.
+      enum:
+      - agent-to-server
+      - agent-to-agent
+      - dns-server
+      - dns-trace
+      - http-server
+      - page-load
+      - web-transactions
+      - sip-server
+      - voice
+      example: http-server
+      type: string
+    AgentAssignmentTemplate:
+      properties:
+        agentId:
+          $ref: '#/components/schemas/NumberTemplate'
+      type: object
+    LabelAssignmentTemplate:
+      description: "Label to assign to a test, identified by the ID (`groupId`)."
+      properties:
+        groupId:
+          $ref: '#/components/schemas/NumberTemplate'
+      type: object
+    NetworkTestBaseTemplate:
+      properties:
+        interval:
+          $ref: '#/components/schemas/NetworkTestBaseTemplate_interval'
+        port:
+          $ref: '#/components/schemas/PortTemplate'
+        bgpMeasurements:
+          $ref: '#/components/schemas/BgpMeasurements'
+        bandwidthMeasurements:
+          $ref: '#/components/schemas/NetworkTestBaseTemplate_bandwidthMeasurements'
+        mtuMeasurements:
+          $ref: '#/components/schemas/AgentToServerTestTemplate_allOf_fixedPacketRate'
+        numPathTraces:
+          $ref: '#/components/schemas/NumPathTraces'
+        pathTraceMode:
+          $ref: '#/components/schemas/PathTraceMode'
+        probeMode:
+          $ref: '#/components/schemas/ProbeMode'
+        protocol:
+          $ref: '#/components/schemas/TransportProtocol'
+      type: object
+    PortTemplate:
+      anyOf:
+      - type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The network port.
+    NumPathTracesTemplate:
+      default: 3
+      description: "Number of path trace probes to run. Defaults to 3, with a range\
+        \ of 3 to 10."
+      example: 3
+      maximum: 10
+      minimum: 3
+      type: integer
+    PathTraceModeTemplate:
+      default: classic
+      description: The path trace mode. Choose `inSession` to perform the path trace
+        within a TCP session. Defaults to `classic` for network path discovery.
+      enum:
+      - classic
+      - inSession
+      example: classic
+      type: string
+    ProbeModeTemplate:
+      default: AUTO
+      description: The probe mode used by the end-to-end Network test. Only valid
+        if the protocol is set to `TCP`. Defaults to `AUTO`.
+      enum:
+      - AUTO
+      - SACK
+      - SYN
+      example: AUTO
+      type: string
+    TransportProtocolTemplate:
+      description: The network transport protocol to use for the test.
+      enum:
+      - TCP
+      - UDP
+      example: TCP
+      type: string
+    AgentToServerTestTypeTemplate:
+      default: agent-to-server
+      description: The type of test. Cannot be templated with Handlebars.
+      example: agent-to-server
+      type: string
+    TargetServerTemplate:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Target host name or IP address. Example "app.thousandeyes.com".
+    HttpServerTestTemplate:
+      allOf:
+      - $ref: '#/components/schemas/TestBaseTemplate'
+      - $ref: '#/components/schemas/NetworkTestBaseTemplate'
+      - $ref: '#/components/schemas/HttpServerTestBaseTemplate'
+      - properties:
+          type:
+            $ref: '#/components/schemas/HttpServerTestTypeTemplate'
+          downloadLimit:
+            $ref: '#/components/schemas/NumberTemplate'
+          dnsOverride:
+            $ref: '#/components/schemas/StringTemplate'
+          postBody:
+            $ref: '#/components/schemas/StringTemplate'
+        required:
+        - agents
+        - interval
+        - type
+        type: object
+    HttpServerTestBaseTemplate:
+      properties:
+        networkMeasurements:
+          $ref: '#/components/schemas/NetworkMeasurements'
+        desiredStatusCode:
+          $ref: '#/components/schemas/DesiredStatusCode'
+        followRedirects:
+          $ref: '#/components/schemas/FollowRedirects'
+        httpTargetTime:
+          $ref: '#/components/schemas/HttpServerTestBaseTemplate_httpTargetTime'
+        httpTimeLimit:
+          $ref: '#/components/schemas/NumberTemplate'
+        httpVersion:
+          $ref: '#/components/schemas/HttpServerTestBaseTemplate_httpVersion'
+        authType:
+          $ref: '#/components/schemas/HttpServerTestBaseTemplate_authType'
+        username:
+          $ref: '#/components/schemas/HttpServerTestBaseTemplate_username'
+        password:
+          $ref: '#/components/schemas/HttpServerTestBaseTemplate_password'
+        useNtlm:
+          $ref: '#/components/schemas/HttpServerTestBaseTemplate_useNtlm'
+        userAgent:
+          $ref: '#/components/schemas/HttpServerTestBaseTemplate_userAgent'
+        customHeaders:
+          $ref: '#/components/schemas/HttpServerTestBaseTemplate_customHeaders'
+        verifyCertificate:
+          $ref: '#/components/schemas/AgentToServerTestTemplate_allOf_fixedPacketRate'
+        clientCertificate:
+          $ref: '#/components/schemas/HttpServerTestBaseTemplate_clientCertificate'
+        sslVersionId:
+          $ref: '#/components/schemas/HttpServerTestBaseTemplate_sslVersionId'
+      type: object
+    HttpVersionTemplate:
+      default: 2
+      description: "The HTTP Version; 2 for default (prefer HTTP/2), 1 for HTTP/1.1\
+        \ only."
+      enum:
+      - 1
+      - 2
+      example: 2
+      type: integer
+    AuthTypeTestTemplate:
+      default: NONE
+      description: Authentication type to use when establishing connection.
+      enum:
+      - NONE
+      - BASIC
+      - NTLM
+      - KERBEROS
+      example: NONE
+      type: string
+    CustomHeadersTemplate:
+      description: Custom headers to use in HTTP request.
+      properties:
+        all:
+          additionalProperties:
+            type: string
+          type: object
+        domains:
+          additionalProperties:
+            type: string
+          type: object
+        root:
+          additionalProperties:
+            type: string
+          type: object
+      type: object
+    SslVersionIdTemplate:
+      default: 0
+      description: "The SSL Version; `0` for auto, `3` for SSLv3, `4` for TLS v1.0,\
+        \ `5` for TLS v1.1, `6` for TLS v1.2."
+      enum:
+      - 0
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      example: 0
+      type: integer
+    HttpServerTestTypeTemplate:
+      default: http-server
+      description: The type of test. Cannot be templated with Handlebars.
+      example: http-server
+      type: string
+    PageLoadTestTemplate:
+      allOf:
+      - $ref: '#/components/schemas/TestBaseTemplate'
+      - $ref: '#/components/schemas/NetworkTestBaseTemplate'
+      - $ref: '#/components/schemas/HttpServerTestBaseTemplate'
+      - $ref: '#/components/schemas/BrowserTestBaseTemplate'
+      - $ref: '#/components/schemas/PageLoadTestBaseTemplate'
+    BrowserTestBaseTemplate:
+      properties:
+        url:
+          $ref: '#/components/schemas/BrowserTestBaseTemplate_url'
+        blockDomains:
+          $ref: '#/components/schemas/BrowserTestBaseTemplate_blockDomains'
+        allowMicAndCamera:
+          $ref: '#/components/schemas/AgentToServerTestTemplate_allOf_fixedPacketRate'
+        allowGeolocation:
+          $ref: '#/components/schemas/AgentToServerTestTemplate_allOf_fixedPacketRate'
+        pageLoadingStrategy:
+          $ref: '#/components/schemas/BrowserTestBaseTemplate_pageLoadingStrategy'
+        subinterval:
+          $ref: '#/components/schemas/BrowserTestBaseTemplate_subinterval'
+      type: object
+    PageLoadStrategyTemplate:
+      default: normal
+      enum:
+      - none
+      - eager
+      - normal
+      example: normal
+      type: string
+    PageLoadTestBaseTemplate:
+      properties:
+        type:
+          default: page-load
+          description: The type of test. Cannot be templated with Handlebars.
+          example: page-load
+          type: string
+        httpInterval:
+          $ref: '#/components/schemas/PageLoadTestBaseTemplate_httpInterval'
+        pageLoadTargetTime:
+          $ref: '#/components/schemas/NumberTemplate'
+        pageLoadTimeLimit:
+          $ref: '#/components/schemas/NumberTemplate'
+      required:
+      - agents
+      - interval
+      - type
+      - url
+      type: object
+    PageLoadTestTypeTemplate:
+      default: page-load
+      description: The type of test. Cannot be templated with Handlebars.
+      example: page-load
+      type: string
+    AgentToAgentTestTemplate:
+      allOf:
+      - $ref: '#/components/schemas/TestBaseTemplate'
+      - $ref: '#/components/schemas/NetworkTestBaseTemplate'
+      - properties:
+          type:
+            $ref: '#/components/schemas/AgentToAgentTestTypeTemplate'
+          direction:
+            $ref: '#/components/schemas/AgentToAgentTestTemplate_allOf_direction'
+          dscpId:
+            $ref: '#/components/schemas/NumberTemplate'
+          targetAgentId:
+            $ref: '#/components/schemas/NumberTemplate'
+          throughputMeasurements:
+            $ref: '#/components/schemas/AgentToAgentTestTemplate_allOf_throughputMeasurements'
+          throughputDuration:
+            $ref: '#/components/schemas/NumberTemplate'
+          throughputRate:
+            $ref: '#/components/schemas/NumberTemplate'
+        required:
+        - agents
+        - interval
+        - targetAgentId
+        - type
+        type: object
+    AgentToAgentTestTypeTemplate:
+      default: agent-to-agent
+      description: The type of test. Cannot be templated with Handlebars.
+      example: agent-to-agent
+      type: string
+    AgentToAgentTestDirectionTemplate:
+      default: TO_TARGET
+      description: Direction of the test (affects how results are shown). Defaults
+        to `TO_TARGET`.
+      enum:
+      - TO_TARGET
+      - FROM_TARGET
+      - BIDIRECTIONAL
+      example: TO_TARGET
+      type: string
+    VoiceTestTemplate:
+      allOf:
+      - $ref: '#/components/schemas/TestBaseTemplate'
+      - properties:
+          type:
+            $ref: '#/components/schemas/VoiceTestTypeTemplate'
+          interval:
+            $ref: '#/components/schemas/VoiceTestTemplate_allOf_interval'
+          dscpId:
+            $ref: '#/components/schemas/NumberTemplate'
+          dscp:
+            $ref: '#/components/schemas/StringTemplate'
+          port:
+            $ref: '#/components/schemas/NumberTemplate'
+          targetAgentId:
+            $ref: '#/components/schemas/NumberTemplate'
+        required:
+        - agents
+        - interval
+        - targetAgentId
+        - type
+        type: object
+    VoiceTestTypeTemplate:
+      default: voice
+      description: The type of test. Cannot be templated with Handlebars.
+      example: voice
+      type: string
+    VoiceIntervalTemplate:
+      description: Voice test interval in seconds.
+      enum:
+      - 300
+      - 600
+      - 900
+      - 1800
+      - 3600
+      example: 300
+      type: integer
+    TransactionTestTemplate:
+      allOf:
+      - $ref: '#/components/schemas/TestBaseTemplate'
+      - $ref: '#/components/schemas/NetworkTestBaseTemplate'
+      - $ref: '#/components/schemas/HttpServerTestBaseTemplate'
+      - $ref: '#/components/schemas/BrowserTestBaseTemplate'
+      - $ref: '#/components/schemas/TransactionTestBaseTemplate'
+    TransactionTestBaseTemplate:
+      properties:
+        type:
+          default: web-transactions
+          description: The type of test. Cannot be templated with Handlebars.
+          example: web-transactions
+          type: string
+        targetTime:
+          $ref: '#/components/schemas/NumberTemplate'
+        timeLimit:
+          $ref: '#/components/schemas/TransactionTestBaseTemplate_timeLimit'
+        transactionScript:
+          $ref: '#/components/schemas/TransactionScriptTemplate'
+        disableScreenshot:
+          $ref: '#/components/schemas/AgentToAgentTestTemplate_allOf_throughputMeasurements'
+      required:
+      - agents
+      - interval
+      - transactionScript
+      - type
+      - url
+      type: object
+    TransactionTestTypeTemplate:
+      default: web-transactions
+      description: The type of test. Cannot be templated with Handlebars.
+      example: web-transactions
+      type: string
+    TransactionScriptTemplate:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Transaction script for transaction test. Must be a JavaScript string
+        with escaped quotes.
+    SipServerTestTemplate:
+      allOf:
+      - $ref: '#/components/schemas/TestBaseTemplate'
+      - $ref: '#/components/schemas/SipServerTestBaseTemplate'
+    SipServerTestBaseTemplate:
+      properties:
+        type:
+          default: sip-server
+          description: The type of test. Cannot be templated with Handlebars.
+          example: sip-server
+          type: string
+        desiredStatusCode:
+          $ref: '#/components/schemas/NumberTemplate'
+        server:
+          $ref: '#/components/schemas/StringTemplate'
+        protocol:
+          $ref: '#/components/schemas/SipProtocolTemplate'
+        targetSipCredentials:
+          $ref: '#/components/schemas/TargetSipCredentialsTemplate'
+      required:
+      - agents
+      - targetSipCredentials
+      - type
+      type: object
+    SipServerTestTypeTemplate:
+      default: sip-server
+      description: The type of test. Cannot be templated with Handlebars.
+      example: sip-server
+      type: string
+    SipProtocolTemplate:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: |
+        The SIP protocol to use for SIP transport layer; defaults to TCP. When creating or updating a SIP test, set this field as part of the `targetSipCredentials` field.
+    TargetSipCredentialsTemplate:
+      properties:
+        authUser:
+          $ref: '#/components/schemas/StringTemplate'
+        password:
+          $ref: '#/components/schemas/StringTemplate'
+        port:
+          $ref: '#/components/schemas/PortTemplate'
+        protocol:
+          $ref: '#/components/schemas/SipProtocolTemplate'
+        sipRegistrar:
+          $ref: '#/components/schemas/SipRegistrarTemplate'
+      required:
+      - port
+      - sipRegistrar
+      type: object
+    SipRegistrarTemplate:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "The target SIP server, without port."
+    DnsServerTestTemplate:
+      allOf:
+      - $ref: '#/components/schemas/TestBaseTemplate'
+      - $ref: '#/components/schemas/NetworkTestBaseTemplate'
+      - properties:
+          type:
+            $ref: '#/components/schemas/DnsServerTestTypeTemplate'
+          dnsServers:
+            $ref: '#/components/schemas/DnsServerTestTemplate_allOf_dnsServers'
+          domain:
+            $ref: '#/components/schemas/DnsTargetDomainTemplate'
+        required:
+        - agents
+        - dnsServers
+        - domain
+        - interval
+        - type
+        type: object
+    DnsServerTestTypeTemplate:
+      default: dns-server
+      description: The type of test. Cannot be templated with Handlebars.
+      example: dns-server
+      type: string
+    DnsServersTemplate:
+      description: DNS Servers to target
+      items:
+        $ref: '#/components/schemas/DnsServerEntryTemplate'
+      type: array
+    DnsServerEntryTemplate:
+      description: Server host name (FQDN). Example "www.example.com".
+      properties:
+        serverName:
+          $ref: '#/components/schemas/StringTemplate'
+      required:
+      - serverName
+      type: object
+    DnsTargetDomainTemplate:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: |
+        Specifies the target DNS host name for the test, suffixed by the record type (e.g., www.thousandeyes.com CNAME). If no record type is specified, the test will default to an ANY record.
+    DnsTraceTestTemplate:
+      allOf:
+      - $ref: '#/components/schemas/TestBaseTemplate'
+      - properties:
+          type:
+            $ref: '#/components/schemas/DnsTraceTestTypeTemplate'
+          dnsTransportProtocolTemplate:
+            $ref: '#/components/schemas/TransportProtocolTemplate'
+          domain:
+            $ref: '#/components/schemas/DnsTargetDomainTemplate'
+        required:
+        - agents
+        - domain
+        - interval
+        - type
+        type: object
+    DnsTraceTestTypeTemplate:
+      default: dns-trace
+      description: The type of test. Cannot be templated with Handlebars.
+      example: dns-trace
+      type: string
+    EndpointTestConfigTemplate:
+      description: "Configuration settings for a ThousandEyes Endpoint test. All test\
+        \ fields can be templated with Handlebars \nexpression unless otherwise noted.\n"
+      properties:
+        testName:
+          $ref: '#/components/schemas/EndpointTestConfigTemplate_testName'
+        description:
+          $ref: '#/components/schemas/EndpointTestConfigTemplate_description'
+        testType:
+          $ref: '#/components/schemas/EndpointTestConfigTemplate_testType'
+        testCategory:
+          $ref: '#/components/schemas/EndpointTestCategoryTemplate'
+        flagEnabled:
+          $ref: '#/components/schemas/EndpointTestConfigTemplate_flagEnabled'
+        alertRules:
+          $ref: '#/components/schemas/EndpointTestConfigTemplate_alertRules'
+        genericConfig:
+          $ref: '#/components/schemas/EndpointTestConfigTemplate_genericConfig'
+        machineConfig:
+          $ref: '#/components/schemas/EndpointTestConfigTemplate_machineConfig'
+        networkConfig:
+          $ref: '#/components/schemas/EndpointTestConfigTemplate_networkConfig'
+        server:
+          $ref: '#/components/schemas/EndpointTestConfigTemplate_server'
+        httpConfig:
+          $ref: '#/components/schemas/EndpointTestConfigTemplate_httpConfig'
+        testLabelIds:
+          $ref: '#/components/schemas/EndpointTestConfigTemplate_testLabelIds'
+      required:
+      - genericConfig
+      - machineConfig
+      - name
+      - networkConfig
+      - testCategory
+      - testType
+      type: object
+    EndpointTestTypeTemplate:
+      anyOf:
+      - $ref: '#/components/schemas/EndpointTestTypeOptionsTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: |
+        The type of Endpoint scheduled test.
+
+        Possible values are:
+
+        - `Network` - endpoint network test
+        - `Http` - endpoint http test
+    EndpointTestTypeOptionsTemplate:
+      enum:
+      - Http
+      - Network
+      example: Http
+      type: string
+    EndpointTestCategoryTemplate:
+      anyOf:
+      - $ref: '#/components/schemas/EndpointTestCategoryOptionsTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Whether the test is `SCHEDULED_TEST` or `DYNAMIC_APP_TEST`.
+    EndpointTestCategoryOptionsTemplate:
+      enum:
+      - SCHEDULED_TEST
+      - DYNAMIC_APP_TEST
+      example: SCHEDULED_TEST
+      type: string
+    EndpointAlertRuleConfigTemplate:
+      description: Alert rules to associate with the test.
+      properties:
+        ruleId:
+          $ref: '#/components/schemas/EndpointAlertRuleConfigTemplate_ruleId'
+      required:
+      - ruleId
+      type: object
+    EndpointGenericConfigTemplate:
+      description: Settings common to HTTP and Network tests.
+      properties:
+        interval:
+          $ref: '#/components/schemas/EndpointGenericConfigTemplate_interval'
+        priority:
+          $ref: '#/components/schemas/EndpointGenericConfigTemplate_priority'
+      required:
+      - interval
+      - priority
+      type: object
+    EndpointTestIntervalTemplate:
+      description: "How often the test will run, in seconds."
+      enum:
+      - 60
+      - 120
+      - 300
+      - 600
+      - 900
+      - 1800
+      - 3600
+      example: 60
+      type: integer
+    EndpointAgentSelectionConfigTemplate:
+      description: Configration that will be used to determine what Endpoint Agents
+        to assign to a test.
+      properties:
+        monitoringSettingsType:
+          $ref: '#/components/schemas/EndpointAgentSelectionConfigTemplate_monitoringSettingsType'
+        agentIds:
+          $ref: '#/components/schemas/EndpointAgentSelectionConfigTemplate_agentIds'
+        labelIds:
+          $ref: '#/components/schemas/EndpointAgentSelectionConfigTemplate_labelIds'
+        maxMachines:
+          $ref: '#/components/schemas/EndpointAgentSelectionConfigTemplate_maxMachines'
+      required:
+      - maxMachines
+      type: object
+    EndpointMonitoringSettingsTypeTemplate:
+      description: |
+        The strategy to use for selecting Endpoint agents to include in a test. Possible values are:
+        - `SPECIFIC_AGENTS` - use `agentIds` to select a specific set of agents
+        - `ANY_AGENT` - select all agents available
+        - `LIST_OF_LABELS` - use `labelIds` to select agents based on a set of matching labels
+      enum:
+      - ANY_AGENT
+      - SPECIFIC_AGENTS
+      - LIST_OF_LABELS
+      example: ANY_AGENT
+      type: string
+    EndpointNetworkTestConfigTemplate:
+      description: Network test settings.
+      properties:
+        flagPing:
+          $ref: '#/components/schemas/EndpointNetworkTestConfigTemplate_flagPing'
+        flagTraceroute:
+          $ref: '#/components/schemas/EndpointNetworkTestConfigTemplate_flagTraceroute'
+        ipVersion:
+          $ref: '#/components/schemas/EndpointNetworkTestConfigTemplate_ipVersion'
+        networkProtocol:
+          $ref: '#/components/schemas/EndpointTestConfigProtocolTemplate'
+        pathtraceInSession:
+          description: Used in TCP mode only.
+          type: boolean
+        tcpProbeMode:
+          $ref: '#/components/schemas/EndpointTcpProbeModeTemplate'
+        tcpConnect:
+          default: false
+          description: Indicates whether to use TCP Connect when running the ICMP
+            test.
+          example: false
+          type: boolean
+      required:
+      - flagPing
+      - flagTraceroute
+      - ipVersion
+      - networkProtocol
+      - pathtraceInSession
+      - tcpConnect
+      - tcpProbeMode
+      type: object
+    EndpointIpVersionTemplate:
+      description: IP version the test should use for network tests.
+      enum:
+      - V4_ONLY
+      - V6_ONLY
+      - V6_PREFER
+      - OS_DEFAULT
+      example: V4_ONLY
+      type: string
+    EndpointTestConfigProtocolTemplate:
+      description: The protocol to use for ping/traceroute tests.
+      enum:
+      - UNKNOWN
+      - ICMP
+      - TCP
+      - UDP
+      - PREFER_TCP
+      - AUTODETECT
+      example: AUTODETECT
+      type: string
+    EndpointTcpProbeModeTemplate:
+      description: Used in TCP mode only.
+      enum:
+      - UNKNOWN
+      - AUTO
+      - SYN
+      - SACK
+      example: SACK
+      type: string
+    EndpointServerConfigTemplate:
+      description: Target server information.
+      properties:
+        serverName:
+          description: Server host name or IP.
+          example: www.example.com
+          type: string
+        port:
+          description: Server port
+          example: 80
+          maximum: 65535
+          minimum: 0
+          type: integer
+      required:
+      - port
+      - serverName
+      type: object
+    EndpointHttpTestConfigTemplate:
+      description: HTTP test settings.
+      properties:
+        url:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_url'
+        targetResponseTime:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_targetResponseTime'
+        targetFetchTime:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_targetFetchTime'
+        headers:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_headers'
+        verifyCertHostname:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_verifyCertHostname'
+        authType:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_authType'
+        bytesToDownload:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_bytesToDownload'
+        httpTimeLimit:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_httpTimeLimit'
+        username:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_username'
+        password:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_password'
+        postBody:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_postBody'
+        contentRegex:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_contentRegex'
+        sslVersion:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_sslVersion'
+        expectedResponseCode:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_expectedResponseCode'
+        targetIpOverride:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_targetIpOverride'
+        clientCert:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_clientCert'
+        userAgent:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_userAgent'
+        maxRedirects:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_maxRedirects'
+        proxyId:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_proxyId'
+        proxyDirect:
+          $ref: '#/components/schemas/EndpointHttpTestConfigTemplate_proxyDirect'
+      required:
+      - httpTimeLimit
+      - sslVersion
+      - targetFetchTime
+      - targetResponseTime
+      - url
+      - verifyCertHostname
+      type: object
+    EndpointAuthTypeTemplate:
+      anyOf:
+      - $ref: '#/components/schemas/EndpointAuthTypeEnumTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The authentication type.
+    EndpointAuthTypeEnumTemplate:
+      description: The authentication type.
+      enum:
+      - NONE
+      - BASIC
+      - NTLM
+      - KERBEROS
+      - OAUTH
+      - LEGACY
+      example: BASIC
+      type: string
+    EndpointTestLabelListTemplate:
+      description: A list of label IDs identifying label to be assigned.
+      items:
+        $ref: '#/components/schemas/NumberTemplate'
+      type: array
+    AlertRuleConfigurationTemplate:
+      description: "Alert Rule configuration. See [ThousandEyes v6 API spec](https://developer.cisco.com/docs/thousandeyes/v6/metadata/#alert-rule-metadata)\
+        \ for schema details."
+      externalDocs:
+        url: https://developer.cisco.com/docs/thousandeyes/v6/metadata/#alert-rule-metadata
+      properties:
+        ruleName:
+          $ref: '#/components/schemas/StringTemplate'
+        alertType:
+          $ref: '#/components/schemas/AlertRuleConfigurationTemplate_alertType'
+        expression:
+          $ref: '#/components/schemas/AlertRuleConfigurationTemplate_expression'
+        roundsViolatingRequired:
+          $ref: '#/components/schemas/RoundsViolatingRequired'
+        roundsViolatingOutOf:
+          $ref: '#/components/schemas/RoundsViolatingOutOf'
+        severity:
+          $ref: '#/components/schemas/AlertRuleConfigurationTemplate_severity'
+        testIds:
+          $ref: '#/components/schemas/TestIds'
+        minimumSources:
+          description: The minimum number of agents that must meet the specified criteria
+            in order to trigger an alert.
+          example: 1
+          type: number
+      required:
+      - alertType
+      - expression
+      - roundsViolatingOutOf
+      - roundsViolatingRequired
+      - ruleName
+      type: object
+    AlertRuleTypeTemplate:
+      enum:
+      - Page Load
+      - HTTP Server
+      - End-to-End (Server)
+      - End-to-End (Agent)
+      - Voice
+      - DNS Server
+      - DNS Trace
+      - DNSSEC
+      - Web Transactions
+      - BGP
+      - Path Trace
+      - FTP
+      - SIP Server
+      example: Page Load
+      type: string
+    AlertRuleSeverityTemplate:
+      enum:
+      - INFO
+      - MAJOR
+      - MINOR
+      - CRITICAL
+      example: MINOR
+      type: string
+    DashboardConfigurationTemplate:
+      description: Configuration of a dashboard that will be created when template
+        is deployed.
+      example:
+        title: My Dashboard
+        description: A dashboard for displaying test information.
+        widgets:
+        - type: "Bar Chart: Stacked"
+          title: "A Bar Chart: Stacked widget"
+          filters:
+            Test Labels: "[{{labels.templateLabel.groupId}}]"
+          metricGroup: Web - HTTP Server
+          measure:
+            type: Median
+          metric: Response Time
+          axisGroupBy: Continents
+          dataSource: Cloud & Enterprise Agents
+      externalDocs:
+        url: https://developer.thousandeyes.com/v7/dashboards/#/dashboard-detail
+      properties:
+        title:
+          $ref: '#/components/schemas/StringTemplate'
+        description:
+          $ref: '#/components/schemas/StringTemplate'
+        globalFilterId:
+          $ref: '#/components/schemas/StringTemplate'
+        widgets:
+          description: The widgets that will be included in the dashboard.
+          items:
+            $ref: '#/components/schemas/DashboardWidgetTemplate'
+          type: array
+        refreshRate:
+          $ref: '#/components/schemas/DashboardConfigurationTemplate_refreshRate'
+      type: object
+    DashboardWidgetTemplate:
+      description: Configuration of a dashboard widget.
+      properties:
+        title:
+          $ref: '#/components/schemas/DashboardWidgetTemplate_title'
+        type:
+          $ref: '#/components/schemas/DashboardWidgetTemplate_type'
+        visualMode:
+          $ref: '#/components/schemas/DashboardWidgetTemplate_visualMode'
+        metricGroup:
+          $ref: '#/components/schemas/DashboardWidgetTemplate_metricGroup'
+        direction:
+          $ref: '#/components/schemas/DashboardWidgetTemplate_direction'
+        metric:
+          $ref: '#/components/schemas/DashboardWidgetTemplate_metric'
+        filters:
+          $ref: '#/components/schemas/DashboardWidgetTemplate_filters'
+        measure:
+          $ref: '#/components/schemas/DashboardWidgetTemplate_measure'
+        fixedTimespan:
+          $ref: '#/components/schemas/DashboardWidgetTemplate_fixedTimespan'
+        shouldExcludeAlertSuppressionWindows:
+          $ref: '#/components/schemas/DashboardWidgetTemplate_shouldExcludeAlertSuppressionWindows'
+      type: object
+    ApiDurationTemplate:
+      description: Specifies a fixed timespan for data aggregation.
+      properties:
+        value:
+          description: Timespan value.
+          example: 10
+          format: int32
+          type: integer
+        unit:
+          $ref: '#/components/schemas/LegacyDurationUnit'
+      type: object
+    DashboardRefreshRateTemplate:
+      default: "false"
+      description: The refresh rate of the dashboard.
+      enum:
+      - "false"
+      - 2M
+      - 5M
+      - 10M
+      - 15M
+      - 30M
+      - 60M
+      example: "false"
+      type: string
+    DashboardFilterConfigurationTemplate:
+      description: "A dashboard filter object. See [V7 API Documentation](https://developer.cisco.com/docs/thousandeyes/v7/list-dashboard-filters/)\
+        \ for more details on dashboard filters."
+      properties:
+        name:
+          $ref: '#/components/schemas/DashboardFilterConfigurationTemplate_name'
+        description:
+          $ref: '#/components/schemas/DashboardFilterConfigurationTemplate_description'
+        context:
+          $ref: '#/components/schemas/DashboardFilterConfigurationTemplate_context'
+      type: object
+    DashboardFilterListTemplate:
+      description: List of filters to be applied to a dashboard.
+      items:
+        $ref: '#/components/schemas/DashboardFilterContextTemplate'
+      type: array
+      uniqueItems: true
+    DashboardFilterContextTemplate:
+      description: List of dashboard filter contexts.
+      properties:
+        dataSourceId:
+          $ref: '#/components/schemas/DashboardFilterContextTemplate_dataSourceId'
+        filters:
+          description: List of filter properties.
+          items:
+            $ref: '#/components/schemas/ApiDataSourceFilterTemplate'
+          type: array
+          uniqueItems: true
+      required:
+      - dataSourceId
+      - filters
+      type: object
+    FilterContextDataSourceTemplate:
+      description: Type of data source for dashboard global filter.
+      enum:
+      - ALERT
+      - APPDYNAMICS_SERVICE_HEALTH
+      - DEVICES
+      - DNSP
+      - ENDPOINT_AGENTS
+      - INTERNET_INSIGHTS
+      - ROUTING
+      - THIRD_PARTY_APPLICATIONS
+      - VIRTUAL_AGENT
+      example: VIRTUAL_AGENT
+      type: string
+    ApiDataSourceFilterTemplate:
+      description: List of different filter properties for a single datasource.
+      properties:
+        filterId:
+          $ref: '#/components/schemas/ApiDataSourceFilterTemplate_filterId'
+        values:
+          $ref: '#/components/schemas/ApiDataSourceFilterTemplate_values'
+        metricIds:
+          $ref: '#/components/schemas/ApiDataSourceFilterTemplate_metricIds'
+      required:
+      - filterId
+      - metricIds
+      - values
+      type: object
+    SelfLinks:
+      description: A links object containing the self link.
+      properties:
+        self:
+          $ref: '#/components/schemas/Link'
+      readOnly: true
+      type: object
+    Link:
+      description: A hyperlink from the containing resource to a URI.
+      properties:
+        href:
+          description: "Its value is either a URI [RFC3986] or a URI template [RFC6570]."
+          example: https://api.thousandeyes.com/v7/link/to/resource/id
+          type: string
+        templated:
+          description: Should be true when the link object's "href" property is a
+            URI template.
+          type: boolean
+        type:
+          description: Used as a hint to indicate the media type expected when dereferencing
+            the target resource.
+          type: string
+        deprecation:
+          description: Its presence indicates that the link is to be deprecated at
+            a future date. Its value is a URL that should provide further information
+            about the deprecation.
+          type: string
+        name:
+          description: Its value may be used as a secondary key for selecting link
+            objects that share the same relation type.
+          type: string
+        profile:
+          description: A URI that hints about the profile of the target resource.
+          type: string
+        title:
+          description: Intended for labelling the link with a human-readable identifier
+          type: string
+        hreflang:
+          description: Indicates the language of the target resource
+          type: string
+      required:
+      - href
+      type: object
+    HandlebarsExpression:
+      description: "A valid Handlebars expression. Can reference user inputs, such\
+        \ as `{{name}}`, or fields of other assets defined in the template.\n* `{{userInputs.<key>}}`\
+        \ - resolves to the user provided value the `userInput` identified its key.\n\
+        * `{{name}}` - resolves to the name of the deployed template.\n* `{{<asset\
+        \ key>.<field>}}` - resolves to the value of a field of another asset defined\
+        \ in the template identified by the asset key and field name. \nFor example,\
+        \ set the `testIds` field of an `alertRule` by referencing the `testId` field\
+        \ of a `tests` asset.\n  **Note**: Due to dependencies, assets can only reference\
+        \ fields of other assets based on the heiarchy below (i.e. labels cannot reference\
+        \ other assets in the template, tests can only reference labels, etc.)\n \
+        \ - Labels\n  - Tests\n  - Endpoint Tests\n  - Tags\n  - Alert Rules\n  -\
+        \ Dashboard Filters\n  - Dashboards\n"
+      example: "{{userInputs.testName}}"
+      pattern: ".*{{.*}}.*"
+      type: string
+    StringTemplate:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    BooleanNumber:
+      enum:
+      - 0
+      - 1
+      example: 0
+      type: integer
+    NumberTemplate:
+      anyOf:
+      - type: number
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    TestInterval:
+      default: 60
+      description: Interval between test runs in seconds.
+      enum:
+      - 60
+      - 120
+      - 300
+      - 600
+      - 900
+      - 1800
+      - 3600
+      example: 60
+      type: integer
+    WidgetType:
+      description: Type of the Widget
+      enum:
+      - "Bar Chart: Stacked"
+      - "Bar Chart: Grouped"
+      - "Time Series: Line"
+      - "Time Series: Stacked Area"
+      - Pie Chart
+      - Table
+      - Multi Metric Table
+      - Number
+      - Agent Status
+      - Color Grid
+      - Alert List
+      - List
+      - Test Table
+      - Map
+      - Box and Whiskers
+      type: string
+    VisualMode:
+      default: Full
+      description: Visual mode in the UI. Either full or half the width of the window.
+      enum:
+      - Full
+      - Half screen
+      example: Full
+      type: string
+    MetricGroup:
+      description: "Metric group of widget as it appears in the UI. Note: may not\
+        \ be required in some cases."
+      enum:
+      - AGENT_TO_AGENT
+      - AGENT_TO_SERVER
+      - HTTP_SERVER
+      - FTP_SERVER
+      - PAGE_LOAD
+      - TRANSACTIONS_CLASSIC
+      - TRANSACTIONS
+      - API
+      - ENDPOINT_BROWSER_SESSION_NETWORK
+      - ENDPOINT_BROWSER_SESSION_SYSTEM
+      - ENDPOINT_BROWSER_SESSION_VISITED_PAGES
+      - ENDPOINT_SCHEDULED_TEST_HTTP_SERVER
+      - ENDPOINT_SCHEDULED_TEST_NETWORK
+      - ENDPOINT_SCHEDULED_TEST_SYSTEM
+      - ENDPOINT_AST_TEST_NETWORK
+      - ENDPOINT_AST_TEST_SYSTEM
+      - ENDPOINT_LOCAL_NETWORK_GATEWAY
+      - ENDPOINT_LOCAL_NETWORK_AGENTS
+      - ENDPOINT_LOCAL_NETWORK_DNS
+      - ENDPOINT_LOCAL_NETWORK_NETWORK_ACCESS
+      - ENDPOINT_LOCAL_NETWORK_PROXY
+      - ENDPOINT_LOCAL_NETWORK_SYSTEM
+      - ENDPOINT_LOCAL_NETWORK_VPN
+      - ENDPOINT_LOCAL_NETWORK_WIRELESS
+      - BGP
+      - DEVICE
+      - VOIP
+      - SIP
+      - ALERTS
+      - DNS
+      - DOMAIN_TRACE
+      - DNSSEC
+      - DNSP
+      - NETWORK_OUTAGES
+      - APPLICATION_OUTAGES
+      - APPDYNAMICS_SERVICE_HEALTH
+      - CLOUD_NATIVE_MONITORING-TRAFFIC_FLOW
+      - CLOUD_NATIVE_MONITORING-EVENTS
+      - TRAFFIC_INSIGHTS_MONITORING-TRAFFIC_FLOW
+      example: BGP
+      type: string
+    DashboardMetricDirection:
+      description: Direction of agent to agent metric.
+      enum:
+      - TO_TARGET
+      - FROM_TARGET
+      - BIDIRECTIONAL
+      example: FROM_TARGET
+      type: string
+    DashboardMetric:
+      description: "Indicates the specific metric in the report, determined by the\
+        \ layer, test type, and metric values."
+      enum:
+      - ONE_WAY_NET_LOSS_TO_TARGET
+      - ONE_WAY_NET_LATENCY_TO_TARGET
+      - ONE_WAY_NET_JITTER_TO_TARGET
+      - ONE_WAY_NET_THROUGHPUT_TO_TARGET
+      - ONE_WAY_NET_ERROR_TO_TARGET
+      - ONE_WAY_NET_LOSS_FROM_TARGET
+      - ONE_WAY_NET_LATENCY_FROM_TARGET
+      - ONE_WAY_NET_JITTER_FROM_TARGET
+      - ONE_WAY_NET_THROUGHPUT_FROM_TARGET
+      - ONE_WAY_NET_ERROR_FROM_TARGET
+      - ONE_WAY_NET_LOSS_BIDIRECTIONAL
+      - ONE_WAY_NET_LATENCY_BIDIRECTIONAL
+      - ONE_WAY_NET_JITTER_BIDIRECTIONAL
+      - ONE_WAY_NET_THROUGHPUT_BIDIRECTIONAL
+      - ONE_WAY_NET_ERROR_BIDIRECTIONAL
+      - NET_LOSS
+      - NET_LATENCY
+      - NET_JITTER
+      - NET_BANDWIDTH
+      - NET_CAPACITY
+      - PROXY_NET_LOSS
+      - PROXY_NET_LATENCY
+      - PROXY_NET_JITTER
+      - WEB_AVAILABILITY
+      - WEB_THROUGHPUT
+      - WEB_DNS
+      - WEB_CONNECT
+      - WEB_SSL
+      - WEB_WAIT
+      - WEB_TTFB
+      - WEB_RECEIVE
+      - WEB_REDIRECT
+      - WEB_FETCH
+      - WEB_AUTHENTICATION_ERROR_COUNT
+      - WEB_DNS_ERROR_COUNT
+      - WEB_CONNECT_ERROR_COUNT
+      - WEB_SSL_ERROR_COUNT
+      - WEB_SEND_ERROR_COUNT
+      - WEB_RECEIVE_ERROR_COUNT
+      - WEB_HTTP_ERROR_COUNT
+      - WEB_CONTENT_ERROR_COUNT
+      - WEB_TOTAL_ERROR_COUNT
+      - FTP_AVAILABILITY
+      - FTP_THROUGHPUT
+      - FTP_DNS
+      - FTP_CONNECT
+      - FTP_SSL
+      - FTP_NEGOTIATION
+      - FTP_WAIT
+      - FTP_TTFB
+      - FTP_TRANSFER
+      - FTP_TOTAL
+      - FTP_DNS_ERROR_COUNT
+      - FTP_CONNECT_ERROR_COUNT
+      - FTP_SSL_ERROR_COUNT
+      - FTP_NEGOTIATION_ERROR_COUNT
+      - FTP_TRANSFER_ERROR_COUNT
+      - FTP_FTP_ERROR_COUNT
+      - FTP_CONTENT_ERROR_COUNT
+      - FTP_TOTAL_ERROR_COUNT
+      - WEB_PAGE_LOAD_DOM_TIME
+      - WEB_PAGE_LOAD
+      - WEB_PAGE_TTFB
+      - WEB_PAGE_COMPONENT_COUNT
+      - WEB_PAGE_ERROR_COUNT
+      - WEB_PAGE_LOAD_COMPLETION_RATE
+      - CLASSIC_TRANSACTION_TIME
+      - CLASSIC_TRANSACTION_COMPLETION
+      - CLASSIC_TRANSACTION_STEP_TIME
+      - CLASSIC_TRANSACTION_PAGE_TIME
+      - TRANSACTION_MARKER_TIME_DECOMPOSED
+      - TRANSACTION_PAGE_LOAD_TIME_DECOMPOSED
+      - TRANSACTION_PAGE_TIME_DECOMPOSED
+      - TRANSACTION_PAGE_LOAD_DOM_TIME_DECOMPOSED
+      - TRANSACTION_TIME
+      - TRANSACTION_TIMEOUT
+      - TRANSACTION_ASSERT_ERROR
+      - TRANSACTION_OTHER_ERROR
+      - TRANSACTION_PAGE_ERROR
+      - TRANSACTION_COMPLETION
+      - TRANSACTION_ERROR
+      - TRANSACTION_MARKER_TIME
+      - TRANSACTION_PAGE_TIME
+      - TRANSACTION_PAGE_LOAD_TIME
+      - TRANSACTION_PAGE_LOAD_DOM_TIME
+      - API_TRANSACTION_TIME
+      - API_REQUEST_CALL_TIME
+      - API_REQUEST_DNS_TIME
+      - API_REQUEST_CONNECT_TIME
+      - API_REQUEST_SSL_TIME
+      - API_REQUEST_SEND_TIME
+      - API_REQUEST_WAIT_TIME
+      - API_REQUEST_BLOCK_TIME
+      - API_REQUEST_RECEIVE_TIME
+      - API_REQUEST_ASSERT_ERROR_COUNT
+      - API_REQUEST_COMPLETION
+      - API_REQUEST_OTHER_ERROR_COUNT
+      - VOIP_DISCARDS
+      - VOIP_LATENCY
+      - VOIP_LOSS
+      - VOIP_MOS
+      - VOIP_PDV
+      - SIP_AVAILABILITY
+      - SIP_DNS
+      - SIP_CONNECT
+      - SIP_REDIRECT
+      - SIP_REGISTER
+      - SIP_OPTIONS
+      - SIP_INVITE
+      - SIP_WAIT
+      - SIP_RESPONSE_TIME
+      - SIP_TOTAL_TIME
+      - SIP_DNS_ERROR_COUNT
+      - SIP_CONNECT_ERROR_COUNT
+      - SIP_REGISTER_ERROR_COUNT
+      - SIP_OPTIONS_ERROR_COUNT
+      - SIP_INVITE_ERROR_COUNT
+      - SIP_TOTAL_ERROR_COUNT
+      - DNS_SERVER_AVAILABILITY
+      - DNS_SERVER_TIME
+      - DNS_TRACE_AVAILABILITY
+      - DNS_TRACE_QUERY_COUNT
+      - DNS_TRACE_QUERY_TIME
+      - DNSSEC_VALIDITY
+      - DNSP_AVAILABILITY
+      - DNSP_TIME
+      - DNSP_SERVER_TIME
+      - BGP_REACHABILITY
+      - BGP_PATH_CHANGES
+      - ALERT_COUNT
+      - ALERT_COUNT_AGENT
+      - ALERT_COUNT_BGP
+      - ALERT_COUNT_DNSP
+      - ENDPOINT_SAMPLE_COUNT
+      - ENDPOINT_NET_LOSS
+      - ENDPOINT_NET_LATENCY
+      - ENDPOINT_NET_JITTER
+      - ENDPOINT_NET_CONNECT_FAILURES
+      - ENDPOINT_NET_CPU_LOAD_PERCENT
+      - ENDPOINT_NET_MEMORY_LOAD_PERCENT
+      - ENDPOINT_NET_VPN_LOSS
+      - ENDPOINT_NET_VPN_LATENCY
+      - ENDPOINT_PAGE_COUNT
+      - ENDPOINT_WEB_COMPLETION
+      - ENDPOINT_WEB_RESPONSE_TIME
+      - ENDPOINT_WEB_PAGE_LOAD
+      - ENDPOINT_WEB_PAGE_LOAD_DOM_TIME
+      - ENDPOINT_WEB_EXPERIENCE_SCORE
+      - ENDPOINT_WEB_BROWSER_ERROR_COUNT
+      - ENDPOINT_GATEWAY_PROBE_COUNT
+      - ENDPOINT_GATEWAY_COMBINED_TRANSMISSION_RATE
+      - ENDPOINT_GATEWAY_SIGNAL_QUALITY
+      - ENDPOINT_GATEWAY_LOSS
+      - ENDPOINT_GATEWAY_LATENCY
+      - ENDPOINT_GATEWAY_AGENT_SCORE
+      - ENDPOINT_GATEWAY_SCORE
+      - ENDPOINT_GATEWAY_CONNECTION_SCORE
+      - ENDPOINT_GATEWAY_PROXY_LOSS
+      - ENDPOINT_GATEWAY_PROXY_LATENCY
+      - ENDPOINT_GATEWAY_PROXY_SCORE
+      - ENDPOINT_GATEWAY_VPN_LOSS
+      - ENDPOINT_GATEWAY_VPN_LATENCY
+      - ENDPOINT_GATEWAY_VPN_SCORE
+      - ENDPOINT_GATEWAY_DNS_LOSS
+      - ENDPOINT_GATEWAY_DNS_LATENCY
+      - ENDPOINT_GATEWAY_DNS_TIME
+      - ENDPOINT_GATEWAY_CPU_LOAD_PERCENT
+      - ENDPOINT_GATEWAY_MEMORY_LOAD_PERCENT
+      - EYEBROW_GATEWAY_WIRELESS_CHANNEL_SWAP_EVENTS
+      - EYEBROW_GATEWAY_WIRELESS_RETRANSMISSION_RATE
+      - EYEBROW_GATEWAY_WIRELESS_ROAMING_EVENTS
+      - EYEBROW_GATEWAY_WIRELESS_SIGNAL_QUALITY
+      - EYEBROW_GATEWAY_WIRELESS_THROUGHPUT
+      - ENDPOINT_AST_TEST_NET_LOSS
+      - ENDPOINT_AST_TEST_NET_JITTER
+      - ENDPOINT_AST_TEST_NET_LATENCY
+      - ENDPOINT_AST_TEST_NET_CPU_LOAD_PERCENT
+      - ENDPOINT_AST_TEST_NET_MEMORY_LOAD_PERCENT
+      - ENDPOINT_AST_TEST_VPN_LOSS
+      - ENDPOINT_AST_TEST_VPN_LATENCY
+      - ENDPOINT_AST_TEST_TCP_CONNECTION_ERROR_COUNT
+      - ENDPOINT_AST_TEST_APPLICATION_SCORE
+      - ENDPOINT_GATEWAY_WIRELESS_CHANNEL_SWAP_EVENTS
+      - ENDPOINT_GATEWAY_WIRELESS_RETRANSMISSION_RATE
+      - ENDPOINT_GATEWAY_WIRELESS_ROAMING_EVENTS
+      - ENDPOINT_GATEWAY_WIRELESS_SIGNAL_QUALITY
+      - ENDPOINT_GATEWAY_WIRELESS_THROUGHPUT
+      - ENDPOINT_TEST_NET_LOSS
+      - ENDPOINT_TEST_NET_JITTER
+      - ENDPOINT_TEST_NET_LATENCY
+      - ENDPOINT_TEST_NET_CPU_LOAD_PERCENT
+      - ENDPOINT_TEST_NET_MEMORY_LOAD_PERCENT
+      - ENDPOINT_TEST_VPN_LOSS
+      - ENDPOINT_TEST_VPN_LATENCY
+      - ENDPOINT_TEST_TCP_CONNECTION_ERROR_COUNT
+      - ENDPOINT_TEST_APPLICATION_SCORE
+      - ENDPOINT_TEST_HTTP_AVAILABILITY
+      - ENDPOINT_TEST_HTTP_WAIT
+      - ENDPOINT_TEST_HTTP_SSL
+      - ENDPOINT_TEST_HTTP_CONNECT
+      - ENDPOINT_TEST_HTTP_DNS_LOOKUP
+      - ENDPOINT_TEST_HTTP_RESPONSE_TIME
+      - ENDPOINT_TEST_HTTP_THROUGHPUT
+      - ENDPOINT_TEST_HTTP_APPLICATION_SCORE
+      - DEVICE_AVAILABILITY
+      - DEVICE_THROUGHPUT_INPUT
+      - DEVICE_THROUGHPUT_OUTPUT
+      - DEVICE_DISCARDS_INPUT
+      - DEVICE_DISCARDS_OUTPUT
+      - DEVICE_ERRORS_INPUT
+      - DEVICE_ERRORS_OUTPUT
+      - DEVICE_DISCARDS_AND_ERRORS_INPUT
+      - DEVICE_DISCARDS_AND_ERRORS_OUTPUT
+      - DEVICE_INTERFACES_UP
+      - DEVICE_INTERFACES_WITH_STATE_CHANGES
+      - NETWORK_OUTAGES_OUTAGES
+      - NETWORK_OUTAGES_LOCATIONS
+      - NETWORK_OUTAGES_INTERFACES
+      - NETWORK_OUTAGES_AFFECTED_TESTS
+      - APPLICATION_OUTAGES_AFFECTED_TESTS
+      - APPLICATION_OUTAGES_SERVERS
+      - APPLICATION_OUTAGES_LOCATIONS
+      - APPLICATION_OUTAGES_OUTAGES
+      - APPDYNAMICS_SERVICE_HEALTH
+      - CLOUD_NATIVE_MONITORING-ACCEPTED_TOTAL_THROUGHPUT
+      - CLOUD_NATIVE_MONITORING-ACCEPTED_OUTBOUND_THROUGHPUT
+      - CLOUD_NATIVE_MONITORING-ACCEPTED_INBOUND_THROUGHPUT
+      - CLOUD_NATIVE_MONITORING-ACCEPTED_INTERNAL_THROUGHPUT
+      - CLOUD_NATIVE_MONITORING-REJECTED_TOTAL_THROUGHPUT
+      - CLOUD_NATIVE_MONITORING-REJECTED_OUTBOUND_THROUGHPUT
+      - CLOUD_NATIVE_MONITORING-REJECTED_INBOUND_THROUGHPUT
+      - CLOUD_NATIVE_MONITORING-REJECTED_INTERNAL_THROUGHPUT
+      - CLOUD_NATIVE_MONITORING-TOTAL_CONNECTION_RATE
+      - CLOUD_NATIVE_MONITORING-CONNECTION_RATE
+      - CLOUD_NATIVE_MONITORING-INTERNAL_CONNECTION_RATE
+      - CLOUD_NATIVE_MONITORING-ALL_EVENTS
+      - CLOUD_NATIVE_MONITORING-CONFIGURATION_CHANGE_EVENTS
+      - CLOUD_NATIVE_MONITORING-AUTOSCALING_EVENTS
+      - TRAFFIC_INSIGHTS_MONITORING-TOTAL_THROUGHPUT
+      - TRAFFIC_INSIGHTS_MONITORING-DOWNSTREAM_THROUGHPUT
+      - TRAFFIC_INSIGHTS_MONITORING-UPSTREAM_THROUGHPUT
+      - TRAFFIC_INSIGHTS_MONITORING-CONNECTION_RATE
+      example: ENDPOINT_GATEWAY_CPU_LOAD_PERCENT
+      type: string
+    WidgetFilters:
+      additionalProperties:
+        items: {}
+        type: array
+        uniqueItems: true
+      description: "(Optional) Specifies the filters applied to the widget. When present,\
+        \ the `filters` property displays. Each filter object has two properties:\
+        \ `filterProperty` and `filterValue`. The `filterProperty` can be values like\
+        \ `AGENT`, `ENDPOINT_MACHINE_ID`, `TEST`, `MONITOR`, etc.  The `filterValue`\
+        \ represents an identifier array of the selected property."
+      example:
+        TEST:
+        - 5187
+        - 5227
+        ENDPOINT_MACHINE_ID:
+        - fbd0050c-07f7-43f7-9631-14b32f096962
+      type: object
+    ApiWidgetMeasure:
+      description: Determines how to aggregate the the metric.
+      properties:
+        type:
+          $ref: '#/components/schemas/WidgetMeasureType'
+        percentileValue:
+          description: The percentile value to use when `type == NTH_PERCENTILE`.
+          example: 95.0
+          format: float
+          type: number
+      type: object
+    WidgetMeasureType:
+      description: Determines how to aggregate the the metric.
+      enum:
+      - MINIMUM
+      - MAXIMUM
+      - MEAN
+      - MEDIAN
+      - NTH_PERCENTILE
+      - PERCPOSITIVE
+      - PERCZERO
+      - STDDEV
+      - TOTAL
+      - VALUES
+      - SUM
+      - CLOUD_NATIVE_MONITORING-MEAN
+      - CLOUD_NATIVE_MONITORING-SUM
+      - TRAFFIC_INSIGHTS_MONITORING-SUM
+      - TRAFFIC_INSIGHTS_MONITORING-MEAN
+      example: MEAN
+      type: string
+    LegacyDurationUnit:
+      deprecated: true
+      description: Timespan unit.
+      enum:
+      - Minutes
+      - Hours
+      - Days
+      example: Days
+      type: string
+    LabelConfigurationTemplate_name:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The name of the label.
+    LabelConfigurationTemplate_type:
+      anyOf:
+      - $ref: '#/components/schemas/LabelTypeTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    Label_tests:
+      anyOf:
+      - items:
+          $ref: '#/components/schemas/TestIdTemplate'
+        type: array
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "Array of CEA/Synthetic testId objects, if the type specified is\
+        \ `tests`."
+      title: Label_tests
+    Label_endpointTests:
+      anyOf:
+      - items:
+          $ref: '#/components/schemas/TestIdTemplate'
+        type: array
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "Array of Endpoint testId objects, if the type specified is `endpoint_tests`."
+      title: Label_endpointTests
+    AgentToServerTestTemplate_allOf_continuousMode:
+      anyOf:
+      - $ref: '#/components/schemas/BooleanNumber'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    AgentToServerTestTemplate_allOf_fixedPacketRate:
+      anyOf:
+      - $ref: '#/components/schemas/BooleanNumber'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    TestBaseTemplate_testName:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "The name of the test, must be unique."
+    Agents:
+      anyOf:
+      - items:
+          $ref: '#/components/schemas/AgentAssignmentTemplate'
+        type: array
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The agents to assign to the test identified by `agentId`.
+      title: Agents
+    TestBaseTemplate_groups:
+      anyOf:
+      - items:
+          $ref: '#/components/schemas/LabelAssignmentTemplate'
+        type: array
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The Labels to assign to the test.
+    TestBaseTemplate_description:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Description of the test.
+    NetworkTestBaseTemplate_interval:
+      anyOf:
+      - $ref: '#/components/schemas/TestInterval'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "How often the network test will run, in seconds."
+    BgpMeasurements:
+      anyOf:
+      - $ref: '#/components/schemas/BooleanNumber'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Enable/disable BGP measurements.
+      title: BgpMeasurements
+    NetworkTestBaseTemplate_bandwidthMeasurements:
+      anyOf:
+      - $ref: '#/components/schemas/BooleanNumber'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Enable/disable bandwidth measurements.
+    NumPathTraces:
+      anyOf:
+      - $ref: '#/components/schemas/NumPathTracesTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "Number of path trace probes to run. Defaults to 3, with a range\
+        \ of 3 to 10."
+      title: NumPathTraces
+    PathTraceMode:
+      anyOf:
+      - $ref: '#/components/schemas/PathTraceModeTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The path trace mode. Choose `inSession` to perform the path trace
+        within a TCP session. Defaults to `classic` for network path discovery.
+      title: PathTraceMode
+    ProbeMode:
+      anyOf:
+      - $ref: '#/components/schemas/ProbeModeTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The probe mode used by the end-to-end Network test. Only valid
+        if the protocol is set to `TCP`. Defaults to `AUTO`.
+      title: ProbeMode
+    TransportProtocol:
+      anyOf:
+      - $ref: '#/components/schemas/TransportProtocolTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The network transport protocol that will be used. Defaults to `TCP`.
+      title: TransportProtocol
+    NetworkMeasurements:
+      anyOf:
+      - type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: |
+        `1` to enable network measurements, `0` to disable.
+      title: NetworkMeasurements
+    DesiredStatusCode:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Expected HTTP status response code.
+      title: DesiredStatusCode
+    FollowRedirects:
+      anyOf:
+      - $ref: '#/components/schemas/BooleanNumber'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Whether or not transaction test should follow redirects.
+      title: FollowRedirects
+    HttpServerTestBaseTemplate_httpTargetTime:
+      anyOf:
+      - type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Target time for HTTP server completion; specified in milliseconds.
+      maximum: 5000
+      minimum: 100
+    HttpServerTestBaseTemplate_httpVersion:
+      anyOf:
+      - $ref: '#/components/schemas/HttpVersionTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "HTTP Version; 2 for default (prefer HTTP/2), 1 for HTTP/1.1 only."
+    HttpServerTestBaseTemplate_authType:
+      anyOf:
+      - $ref: '#/components/schemas/AuthTypeTestTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The Authentication type.
+    HttpServerTestBaseTemplate_username:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The username to be used for Basic/NTLM authentication.
+    HttpServerTestBaseTemplate_password:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The password to be used for Basic/NTLM authentication.
+    HttpServerTestBaseTemplate_useNtlm:
+      anyOf:
+      - $ref: '#/components/schemas/BooleanNumber'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Whether test should use NTLM during auth.
+    HttpServerTestBaseTemplate_userAgent:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The user-agent string to be provided during the test.
+    HttpServerTestBaseTemplate_customHeaders:
+      anyOf:
+      - $ref: '#/components/schemas/CustomHeadersTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    HttpServerTestBaseTemplate_clientCertificate:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "The string representation (containing newline characters) of client\
+        \ certificate, if used."
+    HttpServerTestBaseTemplate_sslVersionId:
+      anyOf:
+      - $ref: '#/components/schemas/SslVersionIdTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "The SSL Version; `0` for auto, `3` for SSLv3, `4` for TLS v1.0,\
+        \ `5` for TLS v1.1, `6` for TLS v1.2."
+    BrowserTestBaseTemplate_url:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The URL that the test will target.
+    BrowserTestBaseTemplate_blockDomains:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    BrowserTestBaseTemplate_pageLoadingStrategy:
+      anyOf:
+      - $ref: '#/components/schemas/PageLoadStrategyTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "The page loading strategy the browser should use when loading\
+        \ the target webpage.\n- `normal`: Wait for the entire page to load, meaning\
+        \ that HTML content and all resources have been downloaded and parsed before\
+        \ moving to the next action in the transaction test script. \n- `eager`: Wait\
+        \ for the `DOMContentLoaded` event, meaning that HTML content is downloaded\
+        \ and parsed, and the document readiness state is “interactive” before moving\
+        \ to the next action in the test script. \n- `none`: Wait only for HTML content\
+        \ to download. Once the HTML is downloaded, the test proceeds to the next\
+        \ action in the transaction test script. (Default is `normal`).\n"
+    BrowserTestBaseTemplate_subinterval:
+      anyOf:
+      - type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "Subinterval for round-robin testing (in seconds). Must be less\
+        \ than or equal to interval and must evenly divide interval. Defaults to null,\
+        \ which disables round-robin."
+    PageLoadTestBaseTemplate_httpInterval:
+      anyOf:
+      - $ref: '#/components/schemas/TestInterval'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "How often the HTTP test will run, in seconds."
+    AgentToAgentTestTemplate_allOf_direction:
+      anyOf:
+      - $ref: '#/components/schemas/AgentToAgentTestDirectionTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    AgentToAgentTestTemplate_allOf_throughputMeasurements:
+      anyOf:
+      - $ref: '#/components/schemas/BooleanNumber'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    VoiceTestTemplate_allOf_interval:
+      anyOf:
+      - $ref: '#/components/schemas/VoiceIntervalTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "How often the Voice test will run, in seconds."
+    TransactionTestBaseTemplate_timeLimit:
+      anyOf:
+      - type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "The time limit for a transaction test, in seconds. Defaults to\
+        \ 30."
+      example: 30
+    DnsServerTestTemplate_allOf_dnsServers:
+      anyOf:
+      - $ref: '#/components/schemas/DnsServersTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    EndpointTestConfigTemplate_testName:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The name of the test.
+    EndpointTestConfigTemplate_description:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The description of the test.
+    EndpointTestConfigTemplate_testType:
+      anyOf:
+      - $ref: '#/components/schemas/EndpointTestTypeTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: |
+        The type of Endpoint scheduled test.
+
+        Possible values are:
+
+        - `Network` - endpoint network test
+        - `Http` - endpoint http test
+    EndpointTestConfigTemplate_flagEnabled:
+      anyOf:
+      - type: boolean
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Flag indicating if the test is enabled.
+    EndpointTestConfigTemplate_alertRules:
+      anyOf:
+      - description: Alert rules associated with the test config.
+        items:
+          $ref: '#/components/schemas/EndpointAlertRuleConfigTemplate'
+        type: array
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    EndpointTestConfigTemplate_genericConfig:
+      anyOf:
+      - $ref: '#/components/schemas/EndpointGenericConfigTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    EndpointTestConfigTemplate_machineConfig:
+      anyOf:
+      - $ref: '#/components/schemas/EndpointAgentSelectionConfigTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    EndpointTestConfigTemplate_networkConfig:
+      anyOf:
+      - $ref: '#/components/schemas/EndpointNetworkTestConfigTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    EndpointTestConfigTemplate_server:
+      anyOf:
+      - $ref: '#/components/schemas/EndpointServerConfigTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    EndpointTestConfigTemplate_httpConfig:
+      anyOf:
+      - $ref: '#/components/schemas/EndpointHttpTestConfigTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    EndpointTestConfigTemplate_testLabelIds:
+      anyOf:
+      - $ref: '#/components/schemas/EndpointTestLabelListTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: |
+        A list of labels to assign to the test. Typically this value will be set using Handlebars
+        reference to a user input. Example: `"testLabelIds": "[{{labels.endpointLabel.groupId}}]"`
+    EndpointAlertRuleConfigTemplate_ruleId:
+      anyOf:
+      - type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The ID of the Alert rule to associate with test.
+    EndpointGenericConfigTemplate_interval:
+      anyOf:
+      - $ref: '#/components/schemas/EndpointTestIntervalTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Interval in seconds of when the test runs.
+    EndpointGenericConfigTemplate_priority:
+      anyOf:
+      - type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Define a priority for scheduling. Higher priority value will be
+        scheduled first.
+    EndpointAgentSelectionConfigTemplate_monitoringSettingsType:
+      anyOf:
+      - $ref: '#/components/schemas/EndpointMonitoringSettingsTypeTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    EndpointAgentSelectionConfigTemplate_agentIds:
+      anyOf:
+      - items:
+          description: Agent ID
+          type: string
+        type: array
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: An array of agent IDs used to assign specific Endpoint Agents to
+        the test. Used when `monitoringSettingsType` is `SPECIFIC_AGENTS`.
+    EndpointAgentSelectionConfigTemplate_labelIds:
+      anyOf:
+      - items:
+          description: An Endpoint label ID.
+          format: int64
+          type: integer
+        type: array
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: An array of label IDs used to assign specific Endpoint Agents to
+        the test. Used when `monitoringSettingsType` is `LIST_OF_LABELS`.
+    EndpointAgentSelectionConfigTemplate_maxMachines:
+      anyOf:
+      - type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Maximum number of machines assigned to a test.
+    EndpointNetworkTestConfigTemplate_flagPing:
+      anyOf:
+      - description: Indicates if the test should run ping.
+        example: true
+        type: boolean
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    EndpointNetworkTestConfigTemplate_flagTraceroute:
+      anyOf:
+      - description: Indicates if the test should run traceroute.
+        example: true
+        type: boolean
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    EndpointNetworkTestConfigTemplate_ipVersion:
+      anyOf:
+      - $ref: '#/components/schemas/EndpointIpVersionTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: IP version the test should use for network tests.
+    EndpointHttpTestConfigTemplate_url:
+      anyOf:
+      - example: https://meet.google.com
+        type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: URL to target for the test.
+    EndpointHttpTestConfigTemplate_targetResponseTime:
+      anyOf:
+      - format: int64
+        type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Target response time in milliseconds.
+    EndpointHttpTestConfigTemplate_targetFetchTime:
+      anyOf:
+      - format: int64
+        type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Target fetch time in milliseconds.
+    EndpointHttpTestConfigTemplate_headers:
+      anyOf:
+      - maxLength: 1024
+        type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Headers to be used in the HTTP request.
+    EndpointHttpTestConfigTemplate_verifyCertHostname:
+      anyOf:
+      - type: boolean
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Flag indicating if we are to verify the certificate.
+    EndpointHttpTestConfigTemplate_authType:
+      anyOf:
+      - $ref: '#/components/schemas/EndpointAuthTypeTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    EndpointHttpTestConfigTemplate_bytesToDownload:
+      anyOf:
+      - type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Maximum number of bytes to download on a request. If not present
+        it means no limit.
+    EndpointHttpTestConfigTemplate_httpTimeLimit:
+      anyOf:
+      - maximum: 60000
+        minimum: 5000
+        type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Maximum amount of time in milliseconds the HTTP Server test will
+        run.
+    EndpointHttpTestConfigTemplate_username:
+      anyOf:
+      - maximum: 255
+        type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Username if auth enabled.
+    EndpointHttpTestConfigTemplate_password:
+      anyOf:
+      - maximum: 255
+        type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Password if auth enabled.
+    EndpointHttpTestConfigTemplate_postBody:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Request body to be used with the POST request.
+    EndpointHttpTestConfigTemplate_contentRegex:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Regular expression used to validate the received content. Must
+        conform with the POSIX Extended Regular Expression Syntax.
+    EndpointHttpTestConfigTemplate_sslVersion:
+      anyOf:
+      - maximum: 6
+        minimum: 0
+        type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "SSL Version to be used: \n- `0` - Auto\n- `3` - SSLv3\n- `4` -\
+        \ TLSv1.0\n- `5` - TLSv1.1\n- `6` - TLSv1.2\n"
+    EndpointHttpTestConfigTemplate_expectedResponseCode:
+      anyOf:
+      - type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Expected HTTP response code. If not present 2xx or 3xx are expected.
+    EndpointHttpTestConfigTemplate_targetIpOverride:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: |
+        If set to a valid IP address, this is where the request will
+        be sent regardless of what the agent's DNS resolver says.
+    EndpointHttpTestConfigTemplate_clientCert:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Client PEM certificate used during the request.
+    EndpointHttpTestConfigTemplate_userAgent:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "The user-agent string to be used by the request. It can be any\
+        \ user-agent string. If not provided, the default implementation user-agent\
+        \ is used."
+    EndpointHttpTestConfigTemplate_maxRedirects:
+      anyOf:
+      - type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Maximum allowed redirects.
+    EndpointHttpTestConfigTemplate_proxyId:
+      anyOf:
+      - type: integer
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Proxy used by the agent to execute the test.
+    EndpointHttpTestConfigTemplate_proxyDirect:
+      anyOf:
+      - type: boolean
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Indicates if a direct proxy should be used when proxyId is not
+        set.
+    AlertRuleConfigurationTemplate_alertType:
+      anyOf:
+      - $ref: '#/components/schemas/AlertRuleTypeTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The type of the alert rule.
+    AlertRuleConfigurationTemplate_expression:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: "The alert rule expression. Must be valid JSON. See [V6 API](https://developer.cisco.com/docs/thousandeyes/v6/metadata/#expressions)\
+        \ documentation for examples."
+      example: ((totalTime >= 500 ms) && (responseTime >= 500 ms))
+    RoundsViolatingRequired:
+      anyOf:
+      - $ref: '#/components/schemas/BooleanNumber'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Specifies the numerator (X value) of the "X of Y times" condition
+        in an alert rule.
+      title: RoundsViolatingRequired
+    RoundsViolatingOutOf:
+      anyOf:
+      - $ref: '#/components/schemas/BooleanNumber'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Specifies the divisor (Y value) of the "X of Y times" condition
+        in an alert rule.
+      title: RoundsViolatingOutOf
+    AlertRuleConfigurationTemplate_severity:
+      anyOf:
+      - $ref: '#/components/schemas/AlertRuleSeverityTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The severity that will be assigned when an alert is generated by
+        this alert rule.
+    TestIds:
+      anyOf:
+      - items:
+          example: 43289
+          type: number
+        type: array
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The tests that the alert rule will be assigned to identified by
+        the test ID.
+      title: TestIds
+    DashboardConfigurationTemplate_refreshRate:
+      anyOf:
+      - $ref: '#/components/schemas/DashboardRefreshRateTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    DashboardWidgetTemplate_title:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The title of the widget.
+    DashboardWidgetTemplate_type:
+      anyOf:
+      - $ref: '#/components/schemas/WidgetType'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The type of widget.
+    DashboardWidgetTemplate_visualMode:
+      anyOf:
+      - $ref: '#/components/schemas/VisualMode'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    DashboardWidgetTemplate_metricGroup:
+      anyOf:
+      - $ref: '#/components/schemas/MetricGroup'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    DashboardWidgetTemplate_direction:
+      anyOf:
+      - $ref: '#/components/schemas/DashboardMetricDirection'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    DashboardWidgetTemplate_metric:
+      anyOf:
+      - $ref: '#/components/schemas/DashboardMetric'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    DashboardWidgetTemplate_filters:
+      anyOf:
+      - $ref: '#/components/schemas/WidgetFilters'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    DashboardWidgetTemplate_measure:
+      anyOf:
+      - $ref: '#/components/schemas/ApiWidgetMeasure'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    DashboardWidgetTemplate_fixedTimespan:
+      anyOf:
+      - $ref: '#/components/schemas/ApiDurationTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+    DashboardWidgetTemplate_shouldExcludeAlertSuppressionWindows:
+      anyOf:
+      - type: boolean
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Excludes alert suppression window data if set to `true`.
+    DashboardFilterConfigurationTemplate_name:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The name of the dashboard filter.
+    DashboardFilterConfigurationTemplate_description:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: An optional description of the filter.
+    DashboardFilterConfigurationTemplate_context:
+      anyOf:
+      - $ref: '#/components/schemas/DashboardFilterListTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: The context of the dashboard filter.
+    DashboardFilterContextTemplate_dataSourceId:
+      anyOf:
+      - $ref: '#/components/schemas/FilterContextDataSourceTemplate'
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Type of data source for dashboard global filter.
+    ApiDataSourceFilterTemplate_filterId:
+      anyOf:
+      - type: string
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Data source property to filter by. Example `TEST_LABEL`.
+      example: TEST_LABEL
+    ApiDataSourceFilterTemplate_values:
+      anyOf:
+      - example:
+        - "45862"
+        - "59749"
+        items:
+          type: string
+        type: array
+        uniqueItems: true
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Values to filter by based on the specified `filterId`.
+    ApiDataSourceFilterTemplate_metricIds:
+      anyOf:
+      - example:
+        - WEB_PAGE_LOAD_COMPLETION_RATE
+        - WEB_TTFB
+        - WEB_AVAILABILITY
+        items:
+          type: string
+        type: array
+        uniqueItems: true
+      - $ref: '#/components/schemas/HandlebarsExpression'
+      description: Dashboard metric associated with the filter property.
+  securitySchemes:
+    BearerAuth:
+      description: Bearer authentication token
+      scheme: bearer
+      type: http

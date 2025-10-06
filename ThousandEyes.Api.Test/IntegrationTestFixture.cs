@@ -8,7 +8,7 @@ public class IntegrationTestFixture : IDisposable
 	public IConfiguration Configuration { get; }
 	public ILogger Logger { get; }
 
-	private IThousandEyesClient? _ThousandEyesClient;
+	private IThousandEyesClient? _thousandEyesClient;
 
 	public IntegrationTestFixture()
 	{
@@ -31,64 +31,46 @@ public class IntegrationTestFixture : IDisposable
 
 	private void ValidateUserSecrets()
 	{
-		var haloAccount = Configuration["HaloApi:Account"];
-		var ThousandEyesClientId = Configuration["HaloApi:ClientId"];
-		var ThousandEyesClientSecret = Configuration["HaloApi:ClientSecret"];
+		var bearerToken = Configuration["ThousandEyes:BearerToken"];
 
-		if (string.IsNullOrWhiteSpace(haloAccount))
+		if (string.IsNullOrWhiteSpace(bearerToken))
 		{
 			throw new InvalidOperationException(
-				"HaloApi:Account not found in user secrets. " +
-				"Please run: dotnet user-secrets set \"HaloApi:Account\" \"your-account-name\" --project Halo.Api.Test");
+				"ThousandEyes:BearerToken not found in user secrets. " +
+				"Please run: dotnet user-secrets set \"ThousandEyes:BearerToken\" \"your-bearer-token\" --project ThousandEyes.Api.Test");
 		}
 
-		if (string.IsNullOrWhiteSpace(ThousandEyesClientId))
-		{
-			throw new InvalidOperationException(
-				"HaloApi:ClientId not found in user secrets. " +
-				"Please run: dotnet user-secrets set \"HaloApi:ClientId\" \"your-client-id\" --project Halo.Api.Test");
-		}
-
-		if (string.IsNullOrWhiteSpace(ThousandEyesClientSecret))
-		{
-			throw new InvalidOperationException(
-				"HaloApi:ClientSecret not found in user secrets. " +
-				"Please run: dotnet user-secrets set \"HaloApi:ClientSecret\" \"your-client-secret\" --project Halo.Api.Test");
-		}
-
-		Logger.LogInformation("User secrets validation passed for account: {Account}", haloAccount);
+		Logger.LogInformation("User secrets validation passed - Bearer token is configured");
 	}
 
 	public IThousandEyesClient GetThousandEyesClient()
 	{
-		if (_ThousandEyesClient == null)
+		if (_thousandEyesClient == null)
 		{
 			var options = new ThousandEyesClientOptions
 			{
-				Account = Configuration["HaloApi:Account"]!,
-				ClientId = Configuration["HaloApi:ClientId"]!,
-				ClientSecret = Configuration["HaloApi:ClientSecret"]!,
+				BearerToken = Configuration["ThousandEyes:BearerToken"]!,
 				Logger = Logger,
 				EnableRequestLogging = true,
 				EnableResponseLogging = true
 			};
 
-			_ThousandEyesClient = new ThousandEyesClient(options);
-			Logger.LogInformation("Successfully created ThousandEyesClient for account: {Account}", options.Account);
+			_thousandEyesClient = new ThousandEyesClient(options);
+			Logger.LogInformation("Successfully created ThousandEyesClient with Bearer token authentication");
 		}
 
-		return _ThousandEyesClient;
+		return _thousandEyesClient;
 	}
 
 	public void Dispose()
 	{
 		// Cleanup if needed
-		if (_ThousandEyesClient is IDisposable disposableClient)
+		if (_thousandEyesClient is IDisposable disposableClient)
 		{
 			disposableClient.Dispose();
 		}
 
-		_ThousandEyesClient = null;
+		_thousandEyesClient = null;
 		Logger.LogInformation("IntegrationTestFixture disposed");
 		GC.SuppressFinalize(this);
 	}

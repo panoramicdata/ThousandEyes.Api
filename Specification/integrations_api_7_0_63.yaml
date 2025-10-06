@@ -1,0 +1,1717 @@
+openapi: 3.0.1
+info:
+  description: Manage connectors and operations.
+  title: Integrations API
+  version: 7.0.63
+servers:
+- description: ThousandEyes API v7
+  url: https://api.thousandeyes.com/v7
+tags:
+- description: Manage the connectors assigned to an operation.
+  name: Operation Connectors
+- description: Webhook operations allow you to customize the payload of generic connectors.
+  name: Webhook Operations
+- description: A generic connector represents an instance of a third-party service
+    that you can integrate with the ThousandEyes platform.
+  name: Generic Connectors
+paths:
+  /operations/{type}/{id}/connectors:
+    get:
+      description: Returns a list of connectors assigned to a specific operation.
+      operationId: getOperationConnectors
+      parameters:
+      - description: The operation type.
+        example: webhooks
+        explode: false
+        in: path
+        name: type
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The operation ID.
+        example: cb1b8033-ea2d-4e9b-a920-fe87850693cf
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Account ID
+        example: "123456"
+        explode: true
+        in: query
+        name: aid
+        required: false
+        schema:
+          type: number
+        style: form
+      responses:
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/Assignments'
+          description: A list of assigned connectors.
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Retrieve connectors assigned to an operation
+      tags:
+      - Operation Connectors
+    put:
+      description: Assigns one or more connectors to an operation. This replaces any
+        existing assignments.
+      operationId: setOperationConnectors
+      parameters:
+      - description: The operation type.
+        example: webhooks
+        explode: false
+        in: path
+        name: type
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The operation ID.
+        example: cb1b8033-ea2d-4e9b-a920-fe87850693cf
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Account ID
+        example: "123456"
+        explode: true
+        in: query
+        name: aid
+        required: false
+        schema:
+          type: number
+        style: form
+      requestBody:
+        content:
+          application/json:
+            example:
+            - ca39314d-eb4f-496f-9435-b5d20b1bfbff
+            schema:
+              items:
+                type: string
+              maxItems: 1
+              minItems: 0
+              type: array
+        description: List of connector IDs to assign to the operation.
+        required: true
+      responses:
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/Assignments'
+          description: Operation Connectors updated successfully.
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Assign connectors to an operation
+      tags:
+      - Operation Connectors
+  /operations/webhooks/{id}:
+    delete:
+      description: Deletes the webhook operation specified by ID.
+      operationId: deleteWebhookOperation
+      parameters:
+      - description: The operation ID.
+        example: cb1b8033-ea2d-4e9b-a920-fe87850693cf
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Account ID
+        example: "123456"
+        explode: true
+        in: query
+        name: aid
+        required: false
+        schema:
+          type: number
+        style: form
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Delete webhook operation
+      tags:
+      - Webhook Operations
+    get:
+      description: Retrieves details of a webhook operation by its ID.
+      operationId: getWebhookOperation
+      parameters:
+      - description: The operation ID.
+        example: cb1b8033-ea2d-4e9b-a920-fe87850693cf
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Account ID
+        example: "123456"
+        explode: true
+        in: query
+        name: aid
+        required: false
+        schema:
+          type: number
+        style: form
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/WebhookOperation'
+          description: Webhook operation with the given id.
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Retrieve webhook operation
+      tags:
+      - Webhook Operations
+    put:
+      description: Updates the webhook operation specified by ID.
+      operationId: updateWebhookOperation
+      parameters:
+      - description: The operation ID.
+        example: cb1b8033-ea2d-4e9b-a920-fe87850693cf
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Account ID
+        example: "123456"
+        explode: true
+        in: query
+        name: aid
+        required: false
+        schema:
+          type: number
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookOperation'
+        required: true
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/WebhookOperation'
+          description: The updated webhook operation.
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Update webhook operation
+      tags:
+      - Webhook Operations
+  /connectors/generic/{id}:
+    delete:
+      description: Deletes the connector specified by ID.
+      operationId: deleteGenericConnector
+      parameters:
+      - description: The connector ID.
+        example: cb1b8033-ea2d-4e9b-a920-fe87850693cf
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Account ID
+        example: "123456"
+        explode: true
+        in: query
+        name: aid
+        required: false
+        schema:
+          type: number
+        style: form
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Delete connector
+      tags:
+      - Generic Connectors
+    get:
+      description: Retrieves details of a connector by its ID.
+      operationId: getGenericConnector
+      parameters:
+      - description: The connector ID.
+        example: cb1b8033-ea2d-4e9b-a920-fe87850693cf
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Account ID
+        example: "123456"
+        explode: true
+        in: query
+        name: aid
+        required: false
+        schema:
+          type: number
+        style: form
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/GenericConnector'
+          description: Connector details.
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Retrieve connector
+      tags:
+      - Generic Connectors
+    put:
+      description: Updates the connector specified by ID.
+      operationId: updateGenericConnector
+      parameters:
+      - description: The connector ID.
+        example: cb1b8033-ea2d-4e9b-a920-fe87850693cf
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Account ID
+        example: "123456"
+        explode: true
+        in: query
+        name: aid
+        required: false
+        schema:
+          type: number
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericConnector'
+        required: true
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/GenericConnector'
+          description: The updated connector.
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Update connector
+      tags:
+      - Generic Connectors
+  /connectors/generic/{id}/operations:
+    get:
+      description: Returns a list of operation IDs assigned to a connector.
+      operationId: listGenericConnectorOperations
+      parameters:
+      - description: The connector ID.
+        example: cb1b8033-ea2d-4e9b-a920-fe87850693cf
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Account ID
+        example: "123456"
+        explode: true
+        in: query
+        name: aid
+        required: false
+        schema:
+          type: number
+        style: form
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/Assignments'
+          description: A list of assigned operation IDs.
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: List operation IDs assigned to a connector
+      tags:
+      - Generic Connectors
+    put:
+      description: Assigns operations to a connector. This replaces any existing assignments.
+      operationId: setGenericConnectorOperations
+      parameters:
+      - description: The connector ID.
+        example: cb1b8033-ea2d-4e9b-a920-fe87850693cf
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Account ID
+        example: "123456"
+        explode: true
+        in: query
+        name: aid
+        required: false
+        schema:
+          type: number
+        style: form
+      requestBody:
+        content:
+          application/json:
+            example:
+            - ca39314d-eb4f-496f-9435-b5d20b1bfbff
+            - a32cfbab-32f6-41d8-9027-7127cba965dd
+            schema:
+              items:
+                type: string
+              type: array
+        description: List of operation IDs to assign to the connector.
+        required: true
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/Assignments'
+          description: Operations assigned successfully.
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Assign operations to a connector
+      tags:
+      - Generic Connectors
+  /operations/webhooks:
+    get:
+      description: "Returns a list of webhook operations in the specified account\
+        \ group. If no account group is specified, the user’s default account group\
+        \ is used."
+      operationId: getWebhookOperations
+      parameters:
+      - description: Account ID
+        example: "123456"
+        explode: true
+        in: query
+        name: aid
+        required: false
+        schema:
+          type: number
+        style: form
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/WebhookOperations'
+          description: A list of webhook operations.
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: List webhook operations
+      tags:
+      - Webhook Operations
+    post:
+      description: Creates a new webhook operation.
+      operationId: createWebhookOperation
+      parameters:
+      - description: Account ID
+        example: "123456"
+        explode: true
+        in: query
+        name: aid
+        required: false
+        schema:
+          type: number
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookOperation'
+        required: true
+      responses:
+        "201":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/WebhookOperation'
+          description: The created webhook operation.
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Create webhook operation
+      tags:
+      - Webhook Operations
+  /connectors/generic:
+    get:
+      description: "Returns a list of connectors in the specified account group. If\
+        \ no account group is specified, the user’s default account group is used."
+      operationId: getGenericConnectors
+      parameters:
+      - description: Account ID
+        example: "123456"
+        explode: true
+        in: query
+        name: aid
+        required: false
+        schema:
+          type: number
+        style: form
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/GenericConnectors'
+          description: A list of connectors.
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: List connectors
+      tags:
+      - Generic Connectors
+    post:
+      description: Creates a new connector.
+      operationId: createGenericConnector
+      parameters:
+      - description: Account ID
+        example: "123456"
+        explode: true
+        in: query
+        name: aid
+        required: false
+        schema:
+          type: number
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericConnector'
+        required: true
+      responses:
+        "201":
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/GenericConnector'
+          description: The created connector.
+        "400":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Request validation failed. There are invalid or missing fields
+                status: 400
+                detail: Your request object contains invalid fields.
+                instance: /v7
+                errors:
+                - code: AM-5432
+                  field: firstName
+                  message: firstName cannot have fancy characters
+                - code: DASH-5622
+                  field: password
+                  message: Password cannot be blank
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Bad Request
+        "401":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Insufficient permissions to query endpoint
+        "404":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: URI Resource Not Found
+                status: 404
+                detail: Details explaining if the 404 error is related to an invalid
+                  URI or a wrong ID
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found
+        "500":
+          content:
+            application/problem+json:
+              example:
+                type: about:blank
+                title: Internal server error
+                status: 500
+                detail: Optional detail about the internal error message.
+                instance: /v7
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal server error
+      summary: Create connector
+      tags:
+      - Generic Connectors
+components:
+  parameters:
+    aid:
+      description: Account ID
+      example: "123456"
+      explode: true
+      in: query
+      name: aid
+      required: false
+      schema:
+        type: number
+      style: form
+    operationIdPath:
+      description: The operation ID.
+      example: cb1b8033-ea2d-4e9b-a920-fe87850693cf
+      explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
+    connectorIdPath:
+      description: The connector ID.
+      example: cb1b8033-ea2d-4e9b-a920-fe87850693cf
+      explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
+  responses:
+    "404":
+      content:
+        application/problem+json:
+          example:
+            type: about:blank
+            title: URI Resource Not Found
+            status: 404
+            detail: Details explaining if the 404 error is related to an invalid URI
+              or a wrong ID
+            instance: /v7
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Not found
+    "400":
+      content:
+        application/problem+json:
+          example:
+            type: about:blank
+            title: Request validation failed. There are invalid or missing fields
+            status: 400
+            detail: Your request object contains invalid fields.
+            instance: /v7
+            errors:
+            - code: AM-5432
+              field: firstName
+              message: firstName cannot have fancy characters
+            - code: DASH-5622
+              field: password
+              message: Password cannot be blank
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+      description: Bad Request
+    "401":
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+      description: Unauthorized
+    "403":
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Insufficient permissions to query endpoint
+    "500":
+      content:
+        application/problem+json:
+          example:
+            type: about:blank
+            title: Internal server error
+            status: 500
+            detail: Optional detail about the internal error message.
+            instance: /v7
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Internal server error
+  schemas:
+    Assignments:
+      description: A list of assigned items.
+      properties:
+        items:
+          items:
+            example: ca39314d-eb4f-496f-9435-b5d20b1bfbff
+            type: string
+          type: array
+        _links:
+          $ref: '#/components/schemas/SelfLinks'
+      type: object
+    Header:
+      properties:
+        name:
+          example: Content-Type
+          type: string
+        value:
+          example: application/json
+          type: string
+      required:
+      - name
+      - value
+      type: object
+    OperationCategory:
+      enum:
+      - alerts
+      - recommendations
+      - traffic-monitoring
+      type: string
+    OperationStatus:
+      enum:
+      - pending
+      - connected
+      - failing
+      - unverified
+      type: string
+    OperationType:
+      enum:
+      - webhook
+      type: string
+    WebhookOperation:
+      properties:
+        id:
+          example: cb1b8033-ea2d-4e9b-a920-fe87850693cf
+          readOnly: true
+          type: string
+        name:
+          example: My operation
+          type: string
+        enabled:
+          type: boolean
+        category:
+          $ref: '#/components/schemas/OperationCategory'
+        status:
+          $ref: '#/components/schemas/OperationStatus'
+        path:
+          example: /custom/path
+          type: string
+        payload:
+          description: Handlebars template for the payload.
+          example: "{\"property1\": {{numericVar}}, \"property2\": \"{{stringVar}}\"\
+            }"
+          type: string
+        headers:
+          example:
+          - name: Content-Type
+            value: application/json
+          items:
+            $ref: '#/components/schemas/Header'
+          type: array
+        queryParams:
+          description: Handlebars template for the query params. Most compile into
+            a proper JSON object where each object property will define the query
+            param name and the object property value define the corresponding query
+            param value.
+          example: "{\"queryParam1\":\"{{stringVar}}\"}"
+          type: string
+        type:
+          $ref: '#/components/schemas/OperationType'
+        _links:
+          $ref: '#/components/schemas/SelfLinks'
+      required:
+      - category
+      - name
+      - status
+      type: object
+    AuthenticationType:
+      enum:
+      - basic
+      - bearer-token
+      - oauth-auth-code
+      - oauth-client-credentials
+      - other-token
+      type: string
+    BasicAuthentication:
+      properties:
+        username:
+          example: user1
+          type: string
+        password:
+          example: abc123
+          type: string
+        type:
+          $ref: '#/components/schemas/AuthenticationType'
+      required:
+      - password
+      - type
+      - username
+      type: object
+    BearerTokenAuthentication:
+      properties:
+        token:
+          type: string
+        type:
+          $ref: '#/components/schemas/AuthenticationType'
+      required:
+      - token
+      - type
+      type: object
+    ConnectorType:
+      enum:
+      - generic
+      type: string
+    GenericConnector:
+      properties:
+        id:
+          example: cb1b8033-ea2d-4e9b-a920-fe87850693cf
+          readOnly: true
+          type: string
+        type:
+          $ref: '#/components/schemas/ConnectorType'
+        name:
+          example: Cisco Slack
+          type: string
+        target:
+          example: https://hooks.slack.com/services/abc/xyz
+          type: string
+        authentication:
+          $ref: '#/components/schemas/GenericConnectorAuth'
+        lastModifiedDate:
+          description: The date when the connector was last modified.
+          example: 2023-10-01T12:00:00Z
+          format: date-time
+          readOnly: true
+          type: string
+        headers:
+          items:
+            $ref: '#/components/schemas/Header'
+          type: array
+      required:
+      - name
+      - target
+      - type
+      type: object
+    GenericConnectorAuth:
+      discriminator:
+        mapping:
+          basic: '#/components/schemas/BasicAuthentication'
+          bearer: '#/components/schemas/BearerTokenAuthentication'
+          other: '#/components/schemas/OtherTokenAuthentication'
+          oauth_code: '#/components/schemas/OauthCodeAuthentication'
+          oauth_client_credentials: '#/components/schemas/OauthClientCredentialsAuthentication'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/BasicAuthentication'
+      - $ref: '#/components/schemas/BearerTokenAuthentication'
+      - $ref: '#/components/schemas/OtherTokenAuthentication'
+      - $ref: '#/components/schemas/OauthCodeAuthentication'
+      - $ref: '#/components/schemas/OauthClientCredentialsAuthentication'
+      type: object
+    OauthClientCredentialsAuthentication:
+      properties:
+        token:
+          type: string
+        oauthClientId:
+          type: string
+        oauthTokenUrl:
+          type: string
+        oauthClientSecret:
+          type: string
+        type:
+          $ref: '#/components/schemas/AuthenticationType'
+      required:
+      - oauthClientId
+      - oauthClientSecret
+      - oauthTokenUrl
+      - type
+      type: object
+    OauthCodeAuthentication:
+      properties:
+        token:
+          type: string
+        refreshToken:
+          type: string
+        oauthClientId:
+          type: string
+        oauthAuthUrl:
+          type: string
+        oauthTokenUrl:
+          type: string
+        oauthClientSecret:
+          type: string
+        code:
+          type: string
+        redirectUri:
+          type: string
+        type:
+          $ref: '#/components/schemas/AuthenticationType'
+      required:
+      - code
+      - oauthAuthUrl
+      - oauthClientId
+      - oauthClientSecret
+      - oauthTokenUrl
+      - redirectUri
+      - type
+      type: object
+    OtherTokenAuthentication:
+      properties:
+        token:
+          type: string
+        type:
+          $ref: '#/components/schemas/AuthenticationType'
+      required:
+      - token
+      - type
+      type: object
+    WebhookOperations:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/WebhookOperation'
+          type: array
+        _links:
+          $ref: '#/components/schemas/SelfLinks'
+      type: object
+    GenericConnectors:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/GenericConnector'
+          type: array
+        _links:
+          $ref: '#/components/schemas/SelfLinks'
+      type: object
+    Error:
+      properties:
+        type:
+          description: "A URI reference that identifies the problem type. When this\
+            \ member is not present, its value is assumed to be \"about:blank\"."
+          type: string
+        title:
+          description: "A short, human-readable summary of the problem type."
+          type: string
+        status:
+          description: The HTTP status code generated by the origin server for this
+            occurrence of the problem.
+          type: integer
+        detail:
+          description: A human-readable explanation specific to this occurrence of
+            the problem.
+          type: string
+        instance:
+          description: A URI reference that identifies the specific occurrence of
+            the problem.
+          type: string
+      type: object
+    ValidationError:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - properties:
+          errors:
+            description: "(Optional) When multiple errors occur, the details for each\
+              \ error are listed."
+            items:
+              $ref: '#/components/schemas/ValidationErrorItem'
+            nullable: true
+            type: array
+        type: object
+      type: object
+    ValidationErrorItem:
+      properties:
+        code:
+          description: (Optional) A unique error type/code that can be referenced
+            in the documentation for further details.
+          type: string
+        field:
+          description: Identifies the field that triggered this particular error.
+          type: string
+        message:
+          description: "A short, human-readable summary of the error."
+          type: string
+      type: object
+    UnauthorizedError:
+      properties:
+        error:
+          example: invalid_token
+          type: string
+        error_description:
+          example: Invalid access token
+          type: string
+      type: object
+    SelfLinks:
+      description: A links object containing the self link.
+      properties:
+        self:
+          $ref: '#/components/schemas/Link'
+      readOnly: true
+      type: object
+    Link:
+      description: A hyperlink from the containing resource to a URI.
+      properties:
+        href:
+          description: "Its value is either a URI [RFC3986] or a URI template [RFC6570]."
+          example: https://api.thousandeyes.com/v7/link/to/resource/id
+          type: string
+        templated:
+          description: Should be true when the link object's "href" property is a
+            URI template.
+          type: boolean
+        type:
+          description: Used as a hint to indicate the media type expected when dereferencing
+            the target resource.
+          type: string
+        deprecation:
+          description: Its presence indicates that the link is to be deprecated at
+            a future date. Its value is a URL that should provide further information
+            about the deprecation.
+          type: string
+        name:
+          description: Its value may be used as a secondary key for selecting link
+            objects that share the same relation type.
+          type: string
+        profile:
+          description: A URI that hints about the profile of the target resource.
+          type: string
+        title:
+          description: Intended for labelling the link with a human-readable identifier
+          type: string
+        hreflang:
+          description: Indicates the language of the target resource
+          type: string
+      required:
+      - href
+      type: object

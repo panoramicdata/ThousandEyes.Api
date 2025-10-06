@@ -14,22 +14,22 @@
 - **Use primary constructors where possible** for cleaner, more concise code:
 ```csharp
 // Preferred
-public class HaloClient(HaloClientOptions options) : IHaloClient
+public class ThousandEyesClient(ThousandEyesClientOptions options) : IThousandEyesClient
 {
-    public string Account => options.HaloAccount;
+    public string BearerToken => options.BearerToken;
 }
 
 // Instead of
-public class HaloClient : IHaloClient
+public class ThousandEyesClient : IThousandEyesClient
 {
-    private readonly HaloClientOptions _options;
+    private readonly ThousandEyesClientOptions _options;
     
-    public HaloClient(HaloClientOptions options)
+    public ThousandEyesClient(ThousandEyesClientOptions options)
     {
         _options = options;
     }
     
-    public string Account => _options.HaloAccount;
+    public string BearerToken => _options.BearerToken;
 }
 ```
 
@@ -48,10 +48,9 @@ var emptyList = new List<string>();
 #### Required Properties
 - Use `required` keyword for mandatory properties:
 ```csharp
-public class HaloClientOptions
+public class ThousandEyesClientOptions
 {
-    public required string HaloAccount { get; init; }
-    public required string HaloClientId { get; init; }
+    public required string BearerToken { get; init; }
 }
 ```
 
@@ -59,16 +58,16 @@ public class HaloClientOptions
 - Always use file-scoped namespaces:
 ```csharp
 // Preferred
-namespace HaloPsa.Api;
+namespace ThousandEyes.Api;
 
-public class HaloClient
+public class ThousandEyesClient
 {
 }
 
 // Instead of
-namespace HaloPsa.Api
+namespace ThousandEyes.Api
 {
-    public class HaloClient
+    public class ThousandEyesClient
     {
     }
 }
@@ -96,7 +95,7 @@ var result = value switch
 };
 
 // Use is patterns for type checks
-if (obj is HaloClient client && client.IsValid)
+if (obj is ThousandEyesClient client && client.IsValid)
 {
     // Process client
 }
@@ -123,7 +122,7 @@ public void LogError(string message) => _logger.LogError(message);
 #### Records
 - Use records for immutable data structures:
 ```csharp
-public record HaloApiResponse(string Data, int StatusCode, DateTime Timestamp);
+public record ThousandEyesApiResponse(string Data, int StatusCode, DateTime Timestamp);
 ```
 
 #### Async/Await and CancellationTokens
@@ -135,16 +134,16 @@ public record HaloApiResponse(string Data, int StatusCode, DateTime Timestamp);
 
 ```csharp
 // Preferred - Explicit CancellationToken required
-public async Task<TicketResponse> GetByIdAsync(int id, bool includeDetails, CancellationToken cancellationToken)
+public async Task<UserDetail> GetByIdAsync(string id, CancellationToken cancellationToken)
 {
     // Implementation
 }
 
 // Call site - forces developer to be explicit
-var ticket = await client.Tickets.GetByIdAsync(123, true, cancellationToken);
+var user = await client.Users.GetByIdAsync("123", cancellationToken);
 
 // Instead of - confusing optional parameter
-public async Task<TicketResponse> GetByIdAsync(int id, bool includeDetails = false, CancellationToken cancellationToken = default)
+public async Task<UserDetail> GetByIdAsync(string id, CancellationToken cancellationToken = default)
 {
     // Implementation
 }
@@ -156,18 +155,18 @@ public async Task<TicketResponse> GetByIdAsync(int id, bool includeDetails = fal
 
 ```csharp
 // Preferred - All parameters explicit
-[Get("/Tickets/{id}")]
-Task<TicketResponse> GetByIdAsync(int id, [Query] bool includeDetails, CancellationToken cancellationToken);
+[Get("/users/{id}")]
+Task<UserDetail> GetByIdAsync(string id, [Query] string? aid, CancellationToken cancellationToken);
 
 // If you need a simpler version, use overloads
-public async Task<TicketResponse> GetByIdAsync(int id, CancellationToken cancellationToken)
+public async Task<UserDetail> GetByIdAsync(string id, CancellationToken cancellationToken)
 {
-    return await GetByIdAsync(id, includeDetails: false, cancellationToken);
+    return await GetByIdAsync(id, aid: null, cancellationToken);
 }
 
 // Instead of - confusing optional behavior
-[Get("/Tickets/{id}")]
-Task<TicketResponse> GetByIdAsync(int id, [Query] bool includeDetails = false, CancellationToken cancellationToken = default);
+[Get("/users/{id}")]
+Task<UserDetail> GetByIdAsync(string id, [Query] string? aid = null, CancellationToken cancellationToken = default);
 ```
 
 ### Code Organization
@@ -223,21 +222,19 @@ Task<TicketResponse> GetByIdAsync(int id, [Query] bool includeDetails = false, C
 #### Test Quality Standards
 ```csharp
 [Fact]
-public async Task GetTickets_WithValidFilter_ReturnsFilteredResults()
+public async Task GetUsers_WithValidRequest_ReturnsUsers()
 {
     // Arrange - Set up test data and dependencies
-    var client = _fixture.GetHaloClient();
-    var filter = new TicketFilter { Status = TicketStatus.Open, Count = 10 };
+    var client = _fixture.GetThousandEyesClient();
     var cancellationToken = new CancellationToken();
     
     // Act - Execute the operation being tested
-    var result = await client.Psa.Tickets.GetAllAsync(filter, cancellationToken);
+    var result = await client.Users.GetAllAsync(cancellationToken);
     
     // Assert - Verify behavior and state
     result.Should().NotBeNull();
-    result.Tickets.Should().NotBeEmpty();
-    result.Tickets.Should().OnlyContain(t => t.Status == TicketStatus.Open);
-    result.Tickets.Count.Should().BeLessThanOrEqualTo(10);
+    result.Users.Should().NotBeEmpty();
+    result.Users.Should().OnlyContain(u => !string.IsNullOrEmpty(u.Name));
 }
 ```
 
@@ -281,6 +278,14 @@ public async Task GetTickets_WithValidFilter_ReturnsFilteredResults()
 ### Testing Infrastructure Notes
 - Integration tests use `IntegrationTestFixture` with User Secrets
 - Test collection: `[Collection("Integration Tests")]`
-- Sandbox environment credentials for testing (safe to create/destroy test data)
+- ThousandEyes test environment credentials for testing (safe to create/destroy test data)
 - Always clean up test data to leave system in original state
 - **Always pass CancellationToken.None or a real CancellationToken** in tests - never rely on default values
+
+### ThousandEyes API Specific Guidelines
+- **Administrative API v7.0.63**: Complete coverage of account management, user management, roles, permissions, and audit logs
+- **Bearer Token Authentication**: Simple token-based authentication
+- **Account Group Context**: Many operations support `aid` parameter for account group context
+- **Expand Parameters**: Support for expanding related resources (users, agents)
+- **Pagination**: Cursor-based pagination for large result sets
+- **Time Filtering**: Advanced time-based filtering for audit events

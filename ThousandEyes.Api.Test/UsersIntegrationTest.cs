@@ -1,6 +1,4 @@
 using AwesomeAssertions;
-using ThousandEyes.Api.Models.Users;
-using Xunit;
 
 namespace ThousandEyes.Api.Test;
 
@@ -8,21 +6,35 @@ namespace ThousandEyes.Api.Test;
 public class UsersIntegrationTest(IntegrationTestFixture fixture) : TestBase(fixture)
 {
 	[Fact]
-	public async Task GetUsers_ShouldReturnUsers()
+	public async Task GetUsers_WithValidRequest_ReturnsUsers()
 	{
-		// Act - Use the proper ThousandEyesClient API
-		var result = await ThousandEyesClient.Psa.Users.GetAllAsync(CancellationToken);
+		// Act
+		var result = await ThousandEyesClient.AccountManagement.Users.GetAllAsync(aid: null, CancellationToken);
 
 		// Assert
 		_ = result.Should().NotBeNull();
-		_ = result.Should().BeAssignableTo<IReadOnlyList<User>>();
+		_ = result.UsersList.Should().NotBeNull();
 
 		// If there are users, verify the structure
-		if (result.Count > 0)
+		if (result.UsersList.Length > 0)
 		{
-			var firstUser = result[0];
-			_ = firstUser.Id.Should().BePositive();
+			var firstUser = result.UsersList[0];
+			_ = firstUser.Uid.Should().NotBeNullOrEmpty();
 			_ = firstUser.Name.Should().NotBeNullOrEmpty();
+			_ = firstUser.Email.Should().NotBeNullOrEmpty();
 		}
+	}
+
+	[Fact]
+	public async Task GetCurrentUser_WithValidRequest_ReturnsCurrentUser()
+	{
+		// Act
+		var result = await ThousandEyesClient.AccountManagement.Users.GetCurrentAsync(CancellationToken);
+
+		// Assert
+		_ = result.Should().NotBeNull();
+		_ = result.Uid.Should().NotBeNullOrEmpty();
+		_ = result.Name.Should().NotBeNullOrEmpty();
+		_ = result.Email.Should().NotBeNullOrEmpty();
 	}
 }

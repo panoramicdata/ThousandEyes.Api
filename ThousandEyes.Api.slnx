@@ -15,8 +15,23 @@
     <File Path="version.json" />
   </Folder>
   <Folder Name="/Specification/">
+    <File Path="Specification/administrative_api_7_0_63.yaml" />
+    <File Path="Specification/agents_api_7_0_63.yaml" />
+    <File Path="Specification/alerts_api_7_0_63.yaml" />
+    <File Path="Specification/bgp_monitors_api_7_0_63.yaml" />
+    <File Path="Specification/credentials_api_7_0_63.yaml" />
+    <File Path="Specification/dashboards_api_7_0_63.yaml" />
+    <File Path="Specification/emulation_api_7_0_63.yaml" />
+    <File Path="Specification/endpoint_agents_api_7_0_63.yaml" />
+    <File Path="Specification/event_detection_api_7_0_63.yaml" />
     <File Path="Specification/ImplementationPlan.md" />
-    <File Path="Specification/swagger.json" />
+    <File Path="Specification/integrations_api_7_0_63.yaml" />
+    <File Path="Specification/internet_insights_api_7_0_63.yaml" />
+    <File Path="Specification/tags_api_7_0_63.yaml" />
+    <File Path="Specification/templates_api_7_0_63.yaml" />
+    <File Path="Specification/tests_api_7_0_63.yaml" />
+    <File Path="Specification/test_snapshots_api_7_0_63.yaml" />
+    <File Path="Specification/thousand_eyes_for_open_telemetry_api_7_0_63.yaml" />
   </Folder>
   <Project Path="ThousandEyes.Api.Test/ThousandEyes.Api.Test.csproj" />
   <Project Path="ThousandEyes.Api/ThousandEyes.Api.csproj" />

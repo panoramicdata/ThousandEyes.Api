@@ -5,14 +5,12 @@ namespace ThousandEyes.Api.Test.Infrastructure;
 public class AuthenticationTests
 {
 	[Fact]
-	public void ThousandEyesClientOptions_WithValidCredentials_ValidatesSuccessfully()
+	public void ThousandEyesClientOptions_WithValidBearerToken_ValidatesSuccessfully()
 	{
 		// Arrange
 		var options = new ThousandEyesClientOptions
 		{
-			Account = "testaccount",
-			ClientId = "550e8400-e29b-41d4-a716-446655440000",
-			ClientSecret = "550e8400-e29b-41d4-a716-446655440000-123e4567-e89b-12d3-a456-426614174000"
+			BearerToken = "test-bearer-token-12345"
 		};
 
 		// Act & Assert - Should not throw
@@ -20,39 +18,112 @@ public class AuthenticationTests
 	}
 
 	[Fact]
-	public void ThousandEyesClientOptions_WithInvalidClientId_ThrowsFormatException()
+	public void ThousandEyesClientOptions_WithNullBearerToken_ThrowsFormatException()
 	{
 		// Arrange
 		var options = new ThousandEyesClientOptions
 		{
-			Account = "testaccount",
-			ClientId = "invalid-guid",
-			ClientSecret = "550e8400-e29b-41d4-a716-446655440000-123e4567-e89b-12d3-a456-426614174000"
+			BearerToken = null!
 		};
 
 		// Act & Assert
 		var act = options.Validate;
 		_ = act.Should().Throw<FormatException>()
-			.WithMessage("*ClientId must be a valid GUID format*");
+			.WithMessage("BearerToken must be set.");
 	}
 
 	[Fact]
-	public void AuthenticationHandler_WithValidCredentials_ShouldValidateOptions()
+	public void ThousandEyesClientOptions_WithEmptyBearerToken_ThrowsFormatException()
+	{
+		// Arrange
+		var options = new ThousandEyesClientOptions
+		{
+			BearerToken = ""
+		};
+
+		// Act & Assert
+		var act = options.Validate;
+		_ = act.Should().Throw<FormatException>()
+			.WithMessage("BearerToken must be set.");
+	}
+
+	[Fact]
+	public void ThousandEyesClientOptions_WithWhitespaceBearerToken_ThrowsFormatException()
+	{
+		// Arrange
+		var options = new ThousandEyesClientOptions
+		{
+			BearerToken = "   "
+		};
+
+		// Act & Assert
+		var act = options.Validate;
+		_ = act.Should().Throw<FormatException>()
+			.WithMessage("BearerToken must be set.");
+	}
+
+	[Fact]
+	public void ThousandEyesClientOptions_WithValidBearerToken_ShouldValidateOptions()
 	{
 		// Arrange
 		var logger = new TestLogger();
 		var options = new ThousandEyesClientOptions
 		{
-			Account = "testaccount",
-			ClientId = "550e8400-e29b-41d4-a716-446655440000",
-			ClientSecret = "550e8400-e29b-41d4-a716-446655440000-123e4567-e89b-12d3-a456-426614174000",
+			BearerToken = "test-bearer-token-abc123",
 			Logger = logger
 		};
 
 		// Act & Assert - Verify the options are valid
 		options.Validate();
 		_ = options.Should().NotBeNull();
-		_ = options.Account.Should().Be("testaccount");
+		_ = options.BearerToken.Should().Be("test-bearer-token-abc123");
+	}
+
+	[Fact]
+	public void ThousandEyesClientOptions_WithTimeout_ShouldRespectTimeout()
+	{
+		// Arrange
+		var options = new ThousandEyesClientOptions
+		{
+			BearerToken = "test-bearer-token",
+			RequestTimeout = TimeSpan.FromSeconds(60)
+		};
+
+		// Act & Assert
+		options.Validate();
+		_ = options.RequestTimeout.Should().Be(TimeSpan.FromSeconds(60));
+	}
+
+	[Fact]
+	public void ThousandEyesClientOptions_WithInvalidTimeout_ThrowsArgumentException()
+	{
+		// Arrange
+		var options = new ThousandEyesClientOptions
+		{
+			BearerToken = "test-bearer-token",
+			RequestTimeout = TimeSpan.Zero
+		};
+
+		// Act & Assert
+		var act = options.Validate;
+		_ = act.Should().Throw<ArgumentException>()
+			.WithMessage("RequestTimeout must be greater than zero. (Parameter 'RequestTimeout')");
+	}
+
+	[Fact]
+	public void ThousandEyesClientOptions_WithNegativeRetryAttempts_ThrowsArgumentException()
+	{
+		// Arrange
+		var options = new ThousandEyesClientOptions
+		{
+			BearerToken = "test-bearer-token",
+			MaxRetryAttempts = -1
+		};
+
+		// Act & Assert
+		var act = options.Validate;
+		_ = act.Should().Throw<ArgumentException>()
+			.WithMessage("MaxRetryAttempts cannot be negative. (Parameter 'MaxRetryAttempts')");
 	}
 
 	private class TestLogger : ILogger
