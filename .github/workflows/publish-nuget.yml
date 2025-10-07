@@ -12,6 +12,11 @@ env:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    
+    permissions:
+      id-token: write  # Required for OIDC token
+      contents: write  # Required for creating releases
+      packages: write  # Required for publishing packages
 
     steps:
     - name: Checkout code
@@ -49,10 +54,10 @@ jobs:
         path: ./artifacts/*.snupkg
 
     - name: Publish to NuGet.org
-      run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      run: dotnet nuget push ./artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate
 
     - name: Publish symbols to NuGet.org
-      run: dotnet nuget push ./artifacts/*.snupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      run: dotnet nuget push ./artifacts/*.snupkg --source https://api.nuget.org/v3/index.json --skip-duplicate
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
@@ -81,7 +86,7 @@ jobs:
           });
 
           // Account Management
-          var users = await client.AccountManagement.Users.GetAllAsync(cancellationToken);
+          var users = await client.AccountManagement.Users.GetAllAsync(aid: null, cancellationToken);
           var currentUser = await client.AccountManagement.Users.GetCurrentAsync(cancellationToken);
 
           // Tests Management
