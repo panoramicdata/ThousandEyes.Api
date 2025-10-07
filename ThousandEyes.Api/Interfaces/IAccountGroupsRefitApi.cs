@@ -13,8 +13,8 @@ internal interface IAccountGroupsRefitApi
 	/// <summary>Get a specific account group by ID</summary>
 	[Get("/account-groups/{id}")]
 	Task<AccountGroupDetail> GetByIdAsync(
-		string id, 
-		[Query] string? expand, 
+		string id,
+		[Query] string? expand,
 		CancellationToken cancellationToken);
 
 	/// <summary>Create a new account group</summary>

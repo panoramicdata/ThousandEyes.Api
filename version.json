@@ -1,5 +1,5 @@
 {
-	"version": "7.0",
+	"version": "7.0-alpha",
 	"versionHeightOffset": 26,
 	"publicReleaseRefSpec": [
 		"^refs/heads/main$",

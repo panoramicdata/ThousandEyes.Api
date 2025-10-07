@@ -23,10 +23,16 @@ public interface IThousandEyesClient
 	/// Gets the Tests module for test configuration and management
 	/// </summary>
 	/// <remarks>
-	/// 🚧 Phase 2 - PLANNED: Core monitoring APIs including:
-	/// - All test types (HTTP, Page Load, Web Transaction, etc.)
-	/// - Test creation, update, and deletion
-	/// - Test configuration and settings
+	/// ✅ Phase 2 - IMPLEMENTED: Core monitoring APIs including:
+	/// - General Tests API (list all tests, version history)
+	/// - HTTP Server Tests (full CRUD operations)
+	/// - Page Load Tests (basic implementation)
+	/// - Web Transaction Tests (basic implementation)
+	/// - Agent to Server Tests (basic implementation)
+	/// - Agent to Agent Tests (basic implementation)
+	/// - DNS Server Tests (basic implementation)
+	/// - BGP Tests (basic implementation)
+	/// 🚧 Remaining Phase 2: Agents API, Test Results API
 	/// </remarks>
 	TestsModule Tests { get; }
 

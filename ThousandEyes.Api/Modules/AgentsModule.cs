@@ -1,4 +1,5 @@
 using Refit;
+using ThousandEyes.Api.Interfaces;
 
 namespace ThousandEyes.Api.Modules;
 
@@ -6,11 +7,16 @@ namespace ThousandEyes.Api.Modules;
 /// Agents API module for managing Cloud and Enterprise agents
 /// </summary>
 /// <remarks>
-/// Planned for Phase 2 implementation
+/// Phase 2 implementation - Complete agent management functionality
 /// Essential for test configuration and agent management
 /// </remarks>
 public class AgentsModule
 {
+	/// <summary>
+	/// Gets the Agents API for managing Cloud and Enterprise agents
+	/// </summary>
+	public IAgentsApi Agents { get; }
+
 	/// <summary>
 	/// Initializes a new instance of the AgentsModule
 	/// </summary>
@@ -18,13 +24,10 @@ public class AgentsModule
 	/// <param name="refitSettings">Refit settings for JSON serialization</param>
 	public AgentsModule(HttpClient httpClient, RefitSettings refitSettings)
 	{
-		// TODO: Phase 2 - Implement Agents API
-		// Will include:
-		// - Cloud Agents
-		// - Enterprise Agents
-		// - Enterprise Agent Clusters
-		// - Agent capabilities and supported tests
-		// - Agent location and network information
-		throw new NotImplementedException("Agents API will be implemented in Phase 2");
+		// Create Refit API interfaces
+		var agentsRefitApi = RestService.For<IAgentsRefitApi>(httpClient, refitSettings);
+
+		// Initialize API implementations
+		Agents = new AgentsApi(agentsRefitApi);
 	}
 }

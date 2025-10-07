@@ -13,6 +13,7 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 {
 	private readonly ThousandEyesClientOptions _options;
 	private readonly HttpClient _httpClient;
+	private readonly RefitSettings _refitSettings;
 	private bool _disposed;
 
 	/// <summary>
@@ -28,7 +29,7 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		_httpClient = CreateHttpClient();
 
 		// Create Refit settings for proper JSON serialization
-		var refitSettings = new RefitSettings
+		_refitSettings = new RefitSettings
 		{
 			ContentSerializer = new SystemTextJsonContentSerializer(new System.Text.Json.JsonSerializerOptions
 			{
@@ -37,11 +38,13 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 			})
 		};
 
-		// Initialize only the implemented API modules (Phase 1)
-		AccountManagement = new AccountManagementModule(_httpClient, refitSettings);
+		// Initialize Phase 1 & 2 API modules - ALL COMPLETE
+		AccountManagement = new AccountManagementModule(_httpClient, _refitSettings);
+		Tests = new TestsModule(_httpClient, _refitSettings);
+		Agents = new AgentsModule(_httpClient, _refitSettings);
+		TestResults = new TestResultsModule(_httpClient, _refitSettings);
 		
 		// Future modules will be initialized when implemented
-		// Phase 2: Tests, Agents, TestResults
 		// Phase 3: Alerts, Dashboards, Snapshots  
 		// Phase 4+: BgpMonitors, etc.
 	}
@@ -54,26 +57,17 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 	/// <summary>
 	/// Gets the Tests module for test configuration and management
 	/// </summary>
-	/// <remarks>
-	/// 🚧 Phase 2 - PLANNED: Will be implemented in Phase 2
-	/// </remarks>
-	public TestsModule Tests => throw new NotImplementedException("Tests API will be implemented in Phase 2. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
+	public TestsModule Tests { get; private set; }
 
 	/// <summary>
 	/// Gets the Agents module for managing Cloud and Enterprise agents
 	/// </summary>
-	/// <remarks>
-	/// 🚧 Phase 2 - PLANNED: Will be implemented in Phase 2
-	/// </remarks>
-	public AgentsModule Agents => throw new NotImplementedException("Agents API will be implemented in Phase 2. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
+	public AgentsModule Agents { get; private set; }
 
 	/// <summary>
 	/// Gets the Test Results module for retrieving monitoring data
 	/// </summary>
-	/// <remarks>
-	/// 🚧 Phase 2 - PLANNED: Will be implemented in Phase 2
-	/// </remarks>
-	public TestResultsModule TestResults => throw new NotImplementedException("Test Results API will be implemented in Phase 2. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
+	public TestResultsModule TestResults { get; private set; }
 
 	/// <summary>
 	/// Gets the Alerts module for alert management and notifications
