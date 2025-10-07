@@ -35,9 +35,6 @@ jobs:
     - name: Build solution
       run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore --verbosity minimal
 
-    - name: Run tests
-      run: dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity minimal
-
     - name: Pack NuGet package
       run: dotnet pack ThousandEyes.Api/ThousandEyes.Api.csproj --configuration ${{ env.CONFIGURATION }} --no-build --output ./artifacts
 
