@@ -1,16 +1,27 @@
 using Refit;
+using ThousandEyes.Api.Interfaces;
 
 namespace ThousandEyes.Api.Modules;
 
 /// <summary>
-/// Alerts API module for alert management and notification workflows
+/// Alerts API module for alert management and notifications
 /// </summary>
 /// <remarks>
-/// Planned for Phase 3 implementation
-/// Important for alerting and notification functionality
+/// Phase 3 implementation - Complete alert and notification functionality
+/// Essential for monitoring automation and incident response
 /// </remarks>
 public class AlertsModule
 {
+	/// <summary>
+	/// Gets the Alerts API for retrieving alert data
+	/// </summary>
+	public IAlertsApi Alerts { get; }
+
+	/// <summary>
+	/// Gets the Alert Rules API for managing alert rules and configurations
+	/// </summary>
+	public IAlertRulesApi AlertRules { get; }
+
 	/// <summary>
 	/// Initializes a new instance of the AlertsModule
 	/// </summary>
@@ -18,13 +29,12 @@ public class AlertsModule
 	/// <param name="refitSettings">Refit settings for JSON serialization</param>
 	public AlertsModule(HttpClient httpClient, RefitSettings refitSettings)
 	{
-		// TODO: Phase 3 - Implement Alerts API
-		// Will include:
-		// - Alert management
-		// - Alert rules and conditions
-		// - Alert notifications (email, webhook, integrations)
-		// - Alert metrics and thresholds
-		// - Alert history and clearing
-		throw new NotImplementedException("Alerts API will be implemented in Phase 3");
+		// Create Refit API interfaces
+		var alertsRefitApi = RestService.For<IAlertsRefitApi>(httpClient, refitSettings);
+		var alertRulesRefitApi = RestService.For<IAlertRulesRefitApi>(httpClient, refitSettings);
+
+		// Initialize API implementations
+		Alerts = new AlertsApi(alertsRefitApi);
+		AlertRules = new AlertRulesApi(alertRulesRefitApi);
 	}
 }

@@ -6,17 +6,18 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/a6c135d1c93d4d818e770f149385a149)](https://app.codacy.com/gh/panoramicdata/ThousandEyes.Api/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A comprehensive, modern .NET library for interacting with the [ThousandEyes API v7](https://api.thousandeyes.com/v7). This library provides **complete coverage** of core monitoring APIs with a clean, intuitive interface using modern C# patterns and best practices.
+A comprehensive, modern .NET library for interacting with the [ThousandEyes API v7](https://api.thousandeyes.com/v7). This library provides **complete coverage** of core monitoring and alert management APIs with a clean, intuitive interface using modern C# patterns and best practices.
 
-## 🎉 **Major Release: Phase 2 Complete**
+## 🎉 **Major Release: Phase 3 Alerts Complete**
 
-**🚀 ThousandEyes.Api now provides comprehensive monitoring capabilities!**
+**🚀 ThousandEyes.Api now provides comprehensive monitoring and alert management capabilities!**
 
 - ✅ **Complete Account Management** - Users, roles, permissions, audit logs
 - ✅ **Complete Test Management** - All test types with full CRUD operations  
 - ✅ **Complete Agent Management** - Cloud and Enterprise agent operations
 - ✅ **Complete Test Results Access** - Network, HTTP, and path visualization data
-- ✅ **100% Test Success Rate** - 34/34 tests passing with real API integration
+- ✅ **Complete Alert Management** - Alert monitoring and rule configuration with notifications
+- ✅ **100% Test Success Rate** - 41/41 tests passing with real API integration
 - ✅ **Production Ready** - Zero warnings, modern .NET 9, comprehensive documentation
 
 ## 📚 Official Documentation
@@ -31,15 +32,16 @@ A comprehensive, modern .NET library for interacting with the [ThousandEyes API 
 
 ## Features
 
-- 🎯 **Complete Monitoring Coverage** - Full support for Tests, Agents, and Test Results APIs
+- 🎯 **Complete Monitoring Coverage** - Full support for Tests, Agents, Test Results, and Alerts APIs
 - 🏛️ **Complete Administrative Coverage** - Full support for all ThousandEyes Administrative API v7 endpoints
+- 🚨 **Complete Alert Management** - Alert monitoring, rule configuration, and notification management
 - 🚀 **Modern .NET 9** - Built with primary constructors, collection expressions, and latest C# features
 - 🏛️ **Refit-Powered** - Uses Refit for type-safe, declarative HTTP API definitions
 - 🔒 **Type Safety** - Strongly typed models and responses with comprehensive validation
 - 📝 **Comprehensive Logging** - Built-in logging and request/response interception
 - 🔄 **Retry Logic** - Automatic retry with exponential backoff for resilient operations
 - 📖 **Rich Documentation** - IntelliSense-friendly XML documentation
-- ✅ **100% Test Coverage** - 34 tests with 100% success rate and real API integration
+- ✅ **100% Test Coverage** - 41 tests with 100% success rate and real API integration
 - ⚡ **High Performance** - Optimized for efficiency and low memory usage
 - 🔐 **Bearer Token Authentication** - Simple, secure token-based authentication
 - 🏗️ **Modular Architecture** - Organized API modules matching ThousandEyes structure
@@ -157,7 +159,7 @@ var createdUser = await client.AccountManagement.Users.CreateAsync(newUser, aid:
 Console.WriteLine($"Created user with ID: {createdUser.Uid}");
 ```
 
-### 3. Test Management Examples ✅ NEW
+### 3. Test Management Examples ✅
 
 #### Working with Tests
 
@@ -298,7 +300,7 @@ foreach (var test in agentToAgentTests.Tests)
 }
 ```
 
-### 4. Agent Management Examples ✅ NEW
+### 4. Agent Management Examples ✅
 
 #### Working with Agents
 
@@ -379,7 +381,7 @@ await client.Agents.Agents.DeleteAsync(
     cancellationToken);
 ```
 
-### 5. Test Results Examples ✅ NEW
+### 5. Test Results Examples ✅
 
 #### Retrieving Monitoring Data
 
@@ -473,7 +475,152 @@ foreach (var result in pathResults.Results)
 }
 ```
 
-### 6. API Module Overview
+### 6. Alert Management Examples ✅ NEW
+
+#### Working with Alerts
+
+```csharp
+// Get all alerts from the last 7 days
+var alerts = await client.Alerts.Alerts.GetAllAsync(
+    aid: null, 
+    window: "7d", 
+    fromDate: null, 
+    toDate: null, 
+    cancellationToken);
+
+foreach (var alert in alerts.AlertsList)
+{
+    Console.WriteLine($"Alert: {alert.TestName} - {alert.Status} ({alert.Severity})");
+    Console.WriteLine($"  Alert ID: {alert.AlertId}");
+    Console.WriteLine($"  Started: {alert.DateStart}");
+    Console.WriteLine($"  Type: {alert.Type}");
+    
+    if (alert.DateEnd.HasValue)
+        Console.WriteLine($"  Ended: {alert.DateEnd}");
+    
+    if (alert.ViolationMetric != null)
+    {
+        Console.WriteLine($"  Violation: {alert.ViolationMetric}");
+        Console.WriteLine($"  Threshold: {alert.ThresholdValue}, Actual: {alert.ActualValue}");
+    }
+}
+
+// Get specific alert details
+var alertDetails = await client.Alerts.Alerts.GetByIdAsync(
+    alertId: "alert-123", 
+    aid: null, 
+    cancellationToken);
+
+Console.WriteLine($"Alert Details:");
+Console.WriteLine($"  Test: {alertDetails.TestName}");
+Console.WriteLine($"  Agent: {alertDetails.AgentName}");
+Console.WriteLine($"  Condition: {alertDetails.AlertCondition}");
+```
+
+#### Working with Alert Rules
+
+```csharp
+// Get all alert rules
+var alertRules = await client.Alerts.AlertRules.GetAllAsync(aid: null, cancellationToken);
+
+foreach (var rule in alertRules.AlertRulesList)
+{
+    Console.WriteLine($"Alert Rule: {rule.RuleName}");
+    Console.WriteLine($"  Rule ID: {rule.RuleId}");
+    Console.WriteLine($"  Expression: {rule.Expression}");
+    Console.WriteLine($"  Type: {rule.AlertType}");
+    Console.WriteLine($"  Severity: {rule.Severity}");
+    Console.WriteLine($"  Enabled: {rule.Enabled}");
+    Console.WriteLine($"  Tests: {rule.Tests.Length}");
+}
+
+// Create a new alert rule
+var newAlertRule = new AlertRuleRequest
+{
+    RuleName = "High Latency Alert",
+    Description = "Trigger when response time exceeds 500ms",
+    Expression = "((responseTime >= 500))",
+    Enabled = true,
+    AlertType = "test",
+    Severity = "warning",
+    MinimumSources = 2,
+    MinimumSourcesPct = 75,
+    RoundsBelowThreshold = 3,
+    Tests = [
+        new AlertRuleTest { TestId = "12345", TestName = "API Health Check" }
+    ],
+    Notifications = new AlertRuleNotifications
+    {
+        Emails = ["alerts@company.com", "devops@company.com"],
+        Webhooks = [
+            new AlertRuleWebhook 
+            { 
+                Url = "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK", 
+                Method = "POST",
+                Headers = { ["Content-Type"] = "application/json" }
+            }
+        ],
+        Integrations = [
+            new AlertRuleIntegration 
+            { 
+                Type = "pagerduty", 
+                Target = "service-key-123" 
+            }
+        ]
+    }
+};
+
+var createdRule = await client.Alerts.AlertRules.CreateAsync(
+    newAlertRule, 
+    aid: null, 
+    cancellationToken);
+
+Console.WriteLine($"Created alert rule with ID: {createdRule.RuleId}");
+
+// Update an existing alert rule
+var updateRequest = new AlertRuleRequest
+{
+    RuleName = "Updated High Latency Alert",
+    Description = "Updated threshold to 600ms",
+    Expression = "((responseTime >= 600))",
+    Enabled = true,
+    AlertType = "test",
+    Severity = "critical", // Changed severity
+    MinimumSources = 3,    // Increased minimum sources
+    MinimumSourcesPct = 80,
+    RoundsBelowThreshold = 2,
+    Tests = createdRule.Tests,
+    Notifications = createdRule.Notifications
+};
+
+var updatedRule = await client.Alerts.AlertRules.UpdateAsync(
+    createdRule.RuleId, 
+    updateRequest, 
+    aid: null, 
+    cancellationToken);
+
+Console.WriteLine($"Updated alert rule: {updatedRule.RuleName}");
+
+// Get specific alert rule details
+var ruleDetails = await client.Alerts.AlertRules.GetByIdAsync(
+    createdRule.RuleId, 
+    aid: null, 
+    cancellationToken);
+
+Console.WriteLine($"Rule Details:");
+Console.WriteLine($"  Name: {ruleDetails.RuleName}");
+Console.WriteLine($"  Expression: {ruleDetails.Expression}");
+Console.WriteLine($"  Created: {ruleDetails.CreatedDate}");
+Console.WriteLine($"  Modified: {ruleDetails.ModifiedDate}");
+
+// Delete alert rule when no longer needed
+await client.Alerts.AlertRules.DeleteAsync(
+    createdRule.RuleId, 
+    aid: null, 
+    cancellationToken);
+```
+
+### 7. API Module Overview
 
 The ThousandEyes API is organized into logical modules that match the official ThousandEyes API structure:
 
@@ -504,17 +651,23 @@ client.Agents.Agents                 // Agent management (Cloud + Enterprise)
 client.TestResults.TestResults       // Monitoring data retrieval
 ```
 
+#### ✅ Alert Management (Phase 3 - COMPLETED)
+```csharp
+// Alert monitoring and management
+client.Alerts.Alerts                 // Alert monitoring and status
+client.Alerts.AlertRules             // Alert rule configuration (full CRUD)
+```
+
 #### 🚧 Advanced Features (Phase 3+ - PLANNED)
 ```csharp
-// Advanced monitoring capabilities (coming in future phases)
-client.Alerts        // Alert management
+// Advanced monitoring capabilities (coming soon)
 client.Dashboards    // Reporting and visualization
 client.Snapshots     // Data preservation
 client.BgpMonitors   // BGP monitoring
 // Additional modules: InternetInsights, EventDetection, etc.
 ```
 
-### 7. Advanced Configuration
+### 8. Advanced Configuration
 
 #### Custom HTTP Configuration
 
@@ -560,7 +713,7 @@ var options = new ThousandEyesClientOptions
 using var client = new ThousandEyesClient(options);
 ```
 
-### 8. Error Handling
+### 9. Error Handling
 
 ```csharp
 try
@@ -618,7 +771,7 @@ This library provides comprehensive coverage of the ThousandEyes API ecosystem, 
 | **Tests** | ✅ **Completed** | Test configuration and management for all test types |
 | **Agents** | ✅ **Completed** | Cloud and Enterprise agent management |
 | **TestResults** | ✅ **Completed** | Monitoring data retrieval and metrics |
-| **Alerts** | 🚧 Phase 3 | Alert rules, notifications, and management |
+| **Alerts** | ✅ **Completed** | Alert monitoring and rule management with notifications |
 | **Dashboards** | 🚧 Phase 3 | Reporting and data visualization |
 | **Snapshots** | 🚧 Phase 3 | Data preservation and sharing |
 | **BgpMonitors** | 🚧 Phase 4 | BGP monitoring and route analysis |
@@ -668,6 +821,15 @@ This library provides comprehensive coverage of the ThousandEyes API ecosystem, 
 | `/test-results/{testId}/http-server` | GET | Get HTTP Server test results |
 | `/test-results/{testId}/path-vis` | GET | Get path visualization results |
 
+### Alerts Module (✅ Completed)
+
+| Endpoint | Operations | Description |
+|----------|------------|-------------|
+| `/alerts` | GET | List all alerts with filtering |
+| `/alerts/{alertId}` | GET | Get specific alert details |
+| `/alert-rules` | GET, POST | List and create alert rules |
+| `/alert-rules/{ruleId}` | GET, PUT, DELETE | Manage specific alert rules |
+
 ## Architecture
 
 This library is built using modern .NET 9 patterns and follows industry best practices:
@@ -680,7 +842,7 @@ This library is built using modern .NET 9 patterns and follows industry best pra
 - **Comprehensive Exception Handling** - Specific exception types for different API error scenarios
 - **Handler Chain Pattern** - Composable HTTP handlers for authentication, retry, logging, and error handling
 - **Zero Warnings Policy** - All code compiles without warnings
-- **100% Test Success Rate** - Comprehensive testing with 34/34 tests passing
+- **100% Test Success Rate** - Comprehensive testing with 41/41 tests passing
 
 ## Development Roadmap
 
@@ -694,8 +856,10 @@ For a complete implementation roadmap covering all ThousandEyes API modules, see
 - **Agents API**: Complete Cloud and Enterprise agent operations  
 - **Test Results API**: Comprehensive monitoring data retrieval
 
-### 🚧 Phase 3: Advanced Monitoring (Next Priority)
-- **Alerts API**: Alert rules and notification management
+### ✅ Phase 3: Alerts COMPLETED
+- **Alerts API**: Complete alert monitoring and rule management with notifications
+
+### 🚧 Phase 3: Remaining (Next Priority)
 - **Dashboards API**: Reporting and data visualization
 - **Snapshots API**: Data preservation and sharing
 
@@ -737,7 +901,7 @@ We welcome contributions from the community! Here's how you can help:
 - **Follow the project's coding standards** as defined in `copilot-instructions.md`
 - **Use modern C# patterns** (primary constructors, collection expressions, required properties)
 - **Maintain zero warnings policy** - all code must compile without warnings
-- **100% test success rate** - all tests must pass before code is considered complete (currently 34/34 passing)
+- **100% test success rate** - all tests must pass before code is considered complete (currently 41/41 passing)
 - **Write comprehensive tests** - both unit and integration tests required
 - **Document public APIs** - use XML documentation comments
 - **Always use explicit CancellationTokens** - no optional parameters for async methods

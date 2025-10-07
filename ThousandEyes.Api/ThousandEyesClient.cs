@@ -38,14 +38,15 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 			})
 		};
 
-		// Initialize Phase 1 & 2 API modules - ALL COMPLETE
+		// Initialize Phase 1, 2 & 3 API modules
 		AccountManagement = new AccountManagementModule(_httpClient, _refitSettings);
 		Tests = new TestsModule(_httpClient, _refitSettings);
 		Agents = new AgentsModule(_httpClient, _refitSettings);
 		TestResults = new TestResultsModule(_httpClient, _refitSettings);
+		Alerts = new AlertsModule(_httpClient, _refitSettings);
 		
 		// Future modules will be initialized when implemented
-		// Phase 3: Alerts, Dashboards, Snapshots  
+		// Phase 3: Dashboards, Snapshots (remaining)
 		// Phase 4+: BgpMonitors, etc.
 	}
 
@@ -72,26 +73,23 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 	/// <summary>
 	/// Gets the Alerts module for alert management and notifications
 	/// </summary>
-	/// <remarks>
-	/// 🚧 Phase 3 - PLANNED: Will be implemented in Phase 3
-	/// </remarks>
-	public AlertsModule Alerts => throw new NotImplementedException("Alerts API will be implemented in Phase 3. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
+	public AlertsModule Alerts { get; private set; }
 
 	/// <summary>
 	/// Gets the Dashboards module for reporting and data visualization
 	/// </summary>
 	/// <remarks>
-	/// 🚧 Phase 3 - PLANNED: Will be implemented in Phase 3
+	/// 🚧 Phase 3 - PLANNED: Will be implemented to complete Phase 3
 	/// </remarks>
-	public DashboardsModule Dashboards => throw new NotImplementedException("Dashboards API will be implemented in Phase 3. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
+	public DashboardsModule Dashboards => throw new NotImplementedException("Dashboards API will be implemented to complete Phase 3. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
 
 	/// <summary>
 	/// Gets the Snapshots module for data preservation and sharing
 	/// </summary>
 	/// <remarks>
-	/// 🚧 Phase 3 - PLANNED: Will be implemented in Phase 3
+	/// 🚧 Phase 3 - PLANNED: Will be implemented to complete Phase 3
 	/// </remarks>
-	public SnapshotsModule Snapshots => throw new NotImplementedException("Snapshots API will be implemented in Phase 3. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
+	public SnapshotsModule Snapshots => throw new NotImplementedException("Snapshots API will be implemented to complete Phase 3. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
 
 	/// <summary>
 	/// Gets the BGP Monitors module for network infrastructure monitoring
