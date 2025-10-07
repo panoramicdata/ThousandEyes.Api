@@ -1,4 +1,5 @@
 using Refit;
+using ThousandEyes.Api.Interfaces;
 
 namespace ThousandEyes.Api.Modules;
 
@@ -6,11 +7,21 @@ namespace ThousandEyes.Api.Modules;
 /// Dashboards API module for reporting and data visualization
 /// </summary>
 /// <remarks>
-/// Planned for Phase 3 implementation
-/// Provides reporting and dashboard functionality
+/// Phase 3 implementation - Complete dashboard and reporting functionality
+/// Essential for monitoring visualization and automated reporting
 /// </remarks>
 public class DashboardsModule
 {
+	/// <summary>
+	/// Gets the Dashboards API for dashboard management and configuration
+	/// </summary>
+	public IDashboardsApi Dashboards { get; }
+
+	/// <summary>
+	/// Gets the Reports API for report management and scheduling
+	/// </summary>
+	public IReportsApi Reports { get; }
+
 	/// <summary>
 	/// Initializes a new instance of the DashboardsModule
 	/// </summary>
@@ -18,13 +29,12 @@ public class DashboardsModule
 	/// <param name="refitSettings">Refit settings for JSON serialization</param>
 	public DashboardsModule(HttpClient httpClient, RefitSettings refitSettings)
 	{
-		// TODO: Phase 3 - Implement Dashboards/Reports API
-		// Will include:
-		// - Report creation and management
-		// - Dashboard widgets and metrics
-		// - Report data extraction
-		// - Report scheduling and snapshots
-		// - Custom data filtering and timespan selection
-		throw new NotImplementedException("Dashboards API will be implemented in Phase 3");
+		// Create Refit API interfaces
+		var dashboardsRefitApi = RestService.For<IDashboardsRefitApi>(httpClient, refitSettings);
+		var reportsRefitApi = RestService.For<IReportsRefitApi>(httpClient, refitSettings);
+
+		// Initialize API implementations
+		Dashboards = new DashboardsApi(dashboardsRefitApi);
+		Reports = new ReportsApi(reportsRefitApi);
 	}
 }

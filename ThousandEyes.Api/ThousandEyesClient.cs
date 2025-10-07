@@ -44,9 +44,10 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		Agents = new AgentsModule(_httpClient, _refitSettings);
 		TestResults = new TestResultsModule(_httpClient, _refitSettings);
 		Alerts = new AlertsModule(_httpClient, _refitSettings);
+		Dashboards = new DashboardsModule(_httpClient, _refitSettings);
 		
 		// Future modules will be initialized when implemented
-		// Phase 3: Dashboards, Snapshots (remaining)
+		// Phase 3: Snapshots (remaining)
 		// Phase 4+: BgpMonitors, etc.
 	}
 
@@ -78,10 +79,7 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 	/// <summary>
 	/// Gets the Dashboards module for reporting and data visualization
 	/// </summary>
-	/// <remarks>
-	/// 🚧 Phase 3 - PLANNED: Will be implemented to complete Phase 3
-	/// </remarks>
-	public DashboardsModule Dashboards => throw new NotImplementedException("Dashboards API will be implemented to complete Phase 3. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
+	public DashboardsModule Dashboards { get; private set; }
 
 	/// <summary>
 	/// Gets the Snapshots module for data preservation and sharing
