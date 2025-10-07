@@ -29,6 +29,12 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
+    - name: Configure NuGet for trusted publishing
+      run: |
+        dotnet nuget remove source nuget.org || true
+        dotnet nuget add source https://api.nuget.org/v3/index.json --name nuget.org
+        echo "NuGet sources configured for trusted publishing"
+
     - name: Restore dependencies
       run: dotnet restore
 
@@ -55,12 +61,14 @@ jobs:
         echo "Publishing packages with trusted publishing (OIDC)..."
         echo "Package files to publish:"
         ls -la ./artifacts/
-        dotnet nuget push ./artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate
+        echo "NuGet sources:"
+        dotnet nuget list source
+        dotnet nuget push ./artifacts/*.nupkg --source nuget.org --skip-duplicate --no-symbols
 
     - name: Publish symbols to NuGet.org (Trusted Publishing)
       run: |
         echo "Publishing symbol packages with trusted publishing (OIDC)..."
-        dotnet nuget push ./artifacts/*.snupkg --source https://api.nuget.org/v3/index.json --skip-duplicate
+        dotnet nuget push ./artifacts/*.snupkg --source nuget.org --skip-duplicate
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
