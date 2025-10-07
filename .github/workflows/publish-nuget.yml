@@ -30,8 +30,11 @@ jobs:
     - name: Build solution
       run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore --verbosity minimal
 
+    - name: Run tests
+      run: dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity minimal
+
     - name: Pack NuGet package
-      run: dotnet pack HaloPsa.Api/HaloPsa.Api.csproj --configuration ${{ env.CONFIGURATION }} --no-build --output ./artifacts
+      run: dotnet pack ThousandEyes.Api/ThousandEyes.Api.csproj --configuration ${{ env.CONFIGURATION }} --no-build --output ./artifacts
 
     - name: Upload NuGet package artifacts
       uses: actions/upload-artifact@v4
@@ -62,34 +65,48 @@ jobs:
           - See commit history for detailed changes
 
           ### NuGet Package
-          This release is available on NuGet.org as `HaloPsa.Api` version ${{ github.ref_name }}
+          This release is available on NuGet.org as `ThousandEyes.Api` version ${{ github.ref_name }}
 
           ```bash
-          dotnet add package HaloPsa.Api --version ${{ github.ref_name }}
+          dotnet add package ThousandEyes.Api --version ${{ github.ref_name }}
           ```
 
           ### Installation
           ```csharp
-          using HaloPsa.Api;
+          using ThousandEyes.Api;
 
-          var client = new HaloClient(new HaloClientOptions
+          var client = new ThousandEyesClient(new ThousandEyesClientOptions
           {
-              HaloAccount = "your-account",
-              HaloClientId = "your-client-id",
-              HaloClientSecret = "your-client-secret"
+              BearerToken = "your-bearer-token-here"
           });
 
-          // Use the client
-          var tickets = await client.Psa.Tickets.GetAllAsync(cancellationToken);
+          // Account Management
+          var users = await client.AccountManagement.Users.GetAllAsync(cancellationToken);
+          var currentUser = await client.AccountManagement.Users.GetCurrentAsync(cancellationToken);
+
+          // Tests Management
+          var tests = await client.Tests.Tests.GetAllAsync(aid: null, cancellationToken);
+          var httpTests = await client.Tests.HttpServerTests.GetAllAsync(aid: null, cancellationToken);
+
+          // Agents Management
+          var agents = await client.Agents.Agents.GetAllAsync(aid: null, cancellationToken);
+
+          // Test Results
+          var results = await client.TestResults.TestResults.GetNetworkResultsAsync(
+              testId: "12345",
+              fromDate: DateTime.UtcNow.AddHours(-24),
+              toDate: DateTime.UtcNow,
+              aid: null,
+              cancellationToken);
           ```
 
           ### Download
-          - **NuGet Package**: Available on [NuGet.org](https://www.nuget.org/packages/HaloPsa.Api/)
+          - **NuGet Package**: Available on [NuGet.org](https://www.nuget.org/packages/ThousandEyes.Api/)
           - **Symbol Package**: Debugging symbols included for enhanced development experience
         files: |
           ./artifacts/*.nupkg
           ./artifacts/*.snupkg
         draft: false
-        prerelease: false
+        prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
