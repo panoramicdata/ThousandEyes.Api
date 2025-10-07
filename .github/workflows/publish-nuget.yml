@@ -12,6 +12,7 @@ env:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    environment: Production  # Match the trusted publishing environment
     
     permissions:
       id-token: write  # Required for OIDC token
