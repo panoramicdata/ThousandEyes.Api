@@ -29,11 +29,11 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Configure NuGet for trusted publishing
+    - name: Configure NuGet sources
       run: |
+        echo "Configuring NuGet sources..."
         dotnet nuget remove source nuget.org || true
         dotnet nuget add source https://api.nuget.org/v3/index.json --name nuget.org
-        echo "NuGet sources configured for trusted publishing"
 
     - name: Restore dependencies
       run: dotnet restore
@@ -56,19 +56,33 @@ jobs:
         name: symbol-packages
         path: ./artifacts/*.snupkg
 
-    - name: Publish to NuGet.org (Trusted Publishing)
+    - name: Publish to NuGet.org (Trusted Publishing or API Key)
       run: |
-        echo "Publishing packages with trusted publishing (OIDC)..."
+        echo "Publishing packages..."
         echo "Package files to publish:"
         ls -la ./artifacts/
         echo "NuGet sources:"
         dotnet nuget list source
-        dotnet nuget push ./artifacts/*.nupkg --source nuget.org --skip-duplicate --no-symbols
+        
+        # Try trusted publishing first, fallback to API key if available
+        if [[ -n "${{ secrets.NUGET_API_KEY }}" ]]; then
+          echo "Using API Key for publishing..."
+          dotnet nuget push ./artifacts/*.nupkg --source nuget.org --api-key "${{ secrets.NUGET_API_KEY }}" --skip-duplicate --no-symbols
+        else
+          echo "Using trusted publishing (OIDC)..."
+          dotnet nuget push ./artifacts/*.nupkg --source nuget.org --skip-duplicate --no-symbols
+        fi
 
-    - name: Publish symbols to NuGet.org (Trusted Publishing)
+    - name: Publish symbols to NuGet.org
       run: |
-        echo "Publishing symbol packages with trusted publishing (OIDC)..."
-        dotnet nuget push ./artifacts/*.snupkg --source nuget.org --skip-duplicate
+        echo "Publishing symbol packages..."
+        if [[ -n "${{ secrets.NUGET_API_KEY }}" ]]; then
+          echo "Using API Key for symbols..."
+          dotnet nuget push ./artifacts/*.snupkg --source nuget.org --api-key "${{ secrets.NUGET_API_KEY }}" --skip-duplicate
+        else
+          echo "Using trusted publishing for symbols..."
+          dotnet nuget push ./artifacts/*.snupkg --source nuget.org --skip-duplicate
+        fi
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
@@ -90,7 +104,7 @@ jobs:
           ### ?? Installation
 
           ```bash
-          dotnet add package ThousandEyes.Api --version ${{ github.ref_name }}
+          dotnet add package ThousandEyes.Api
           ```
 
           ### ?? Quick Start
@@ -103,29 +117,11 @@ jobs:
               BearerToken = "your-bearer-token-here"
           });
 
-          // Account Management
+          // Complete API access for ThousandEyes monitoring automation
           var users = await client.AccountManagement.Users.GetAllAsync(aid: null, cancellationToken);
-          var currentUser = await client.AccountManagement.Users.GetCurrentAsync(cancellationToken);
-
-          // Tests Management
           var tests = await client.Tests.Tests.GetAllAsync(aid: null, cancellationToken);
-          var httpTests = await client.Tests.HttpServerTests.GetAllAsync(aid: null, cancellationToken);
-
-          // Agents Management
           var agents = await client.Agents.Agents.GetAllAsync(aid: null, cancellationToken);
-
-          // Test Results
-          var results = await client.TestResults.TestResults.GetNetworkResultsAsync(
-              testId: "12345",
-              fromDate: DateTime.UtcNow.AddHours(-24),
-              toDate: DateTime.UtcNow,
-              aid: null,
-              cancellationToken);
-
-          // Alert Management
-          var alerts = await client.Alerts.Alerts.GetAllAsync(
-              aid: null, window: "7d", fromDate: null, toDate: null, cancellationToken);
-          var alertRules = await client.Alerts.AlertRules.GetAllAsync(aid: null, cancellationToken);
+          var alerts = await client.Alerts.Alerts.GetAllAsync(aid: null, window: "7d", fromDate: null, toDate: null, cancellationToken);
           ```
 
           ### ?? Current API Coverage
@@ -137,11 +133,6 @@ jobs:
           ### ?? Documentation
           - **Complete README**: [GitHub Repository](https://github.com/panoramicdata/ThousandEyes.Api)
           - **API Reference**: [ThousandEyes Developer Portal](https://developer.cisco.com/docs/thousandeyes/overview/)
-          - **Implementation Plan**: [Detailed Roadmap](https://github.com/panoramicdata/ThousandEyes.Api/blob/main/Specification/ImplementationPlan.md)
-
-          ### ?? Download
-          - **NuGet Package**: Available on [NuGet.org](https://www.nuget.org/packages/ThousandEyes.Api/)
-          - **Symbol Package**: Debugging symbols included for enhanced development experience
 
           ### ?? Production Ready Features
           - Complete ThousandEyes monitoring automation
