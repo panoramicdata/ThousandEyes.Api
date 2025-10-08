@@ -1,17 +1,20 @@
+using System.Text.Json.Serialization;
+
 namespace ThousandEyes.Api.Models.Agents;
 
 /// <summary>
-/// Agents response wrapper
+/// List of agents
 /// </summary>
 public class Agents
 {
 	/// <summary>
-	/// List of agents
+	/// Agents
 	/// </summary>
 	public Agent[] AgentsList { get; set; } = [];
 
 	/// <summary>
 	/// Navigation links
 	/// </summary>
-	public AgentLinks? Links { get; set; }
+	[JsonPropertyName("_links")]
+	public Links? Links { get; set; }
 }

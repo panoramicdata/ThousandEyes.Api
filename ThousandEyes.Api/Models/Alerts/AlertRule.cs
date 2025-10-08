@@ -5,8 +5,10 @@ namespace ThousandEyes.Api.Models.Alerts;
 /// <summary>
 /// Alert rule configuration
 /// </summary>
-public class AlertRule
+public class AlertRule : AuditableResource
 {
+	// Inherited from AuditableResource: Aid, Links, CreatedDate, ModifiedDate, CreatedBy, ModifiedBy
+
 	/// <summary>
 	/// Unique alert rule ID
 	/// </summary>
@@ -79,29 +81,4 @@ public class AlertRule
 	/// Notification settings
 	/// </summary>
 	public AlertRuleNotifications? Notifications { get; set; }
-
-	/// <summary>
-	/// When this rule was created
-	/// </summary>
-	public DateTime? CreatedDate { get; set; }
-
-	/// <summary>
-	/// When this rule was last modified
-	/// </summary>
-	public DateTime? ModifiedDate { get; set; }
-
-	/// <summary>
-	/// User who created this rule
-	/// </summary>
-	public string? CreatedBy { get; set; }
-
-	/// <summary>
-	/// User who last modified this rule
-	/// </summary>
-	public string? ModifiedBy { get; set; }
-
-	/// <summary>
-	/// Navigation links
-	/// </summary>
-	public AlertLinks? Links { get; set; }
 }

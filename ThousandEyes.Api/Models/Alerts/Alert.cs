@@ -110,5 +110,6 @@ public class Alert
 	/// <summary>
 	/// Navigation links
 	/// </summary>
-	public AlertLinks? Links { get; set; }
+	[JsonPropertyName("_links")]
+	public Links? Links { get; set; }
 }

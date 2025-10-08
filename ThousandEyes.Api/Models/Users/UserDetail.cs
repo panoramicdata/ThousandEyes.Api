@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using ThousandEyes.Api.Models.Roles;
 
 namespace ThousandEyes.Api.Models.Users;
@@ -20,5 +21,6 @@ public class UserDetail : ExtendedUser
 	/// <summary>
 	/// Navigation links
 	/// </summary>
-	public SelfLinks? Links { get; set; }
+	[JsonPropertyName("_links")]
+	public Links? Links { get; set; }
 }

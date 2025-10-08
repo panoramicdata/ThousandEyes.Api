@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ThousandEyes.Api.Models.Roles;
 
 /// <summary>
@@ -13,5 +15,6 @@ public class RoleDetail : Role
 	/// <summary>
 	/// Navigation links
 	/// </summary>
-	public SelfLinks? Links { get; set; }
+	[JsonPropertyName("_links")]
+	public Links? Links { get; set; }
 }

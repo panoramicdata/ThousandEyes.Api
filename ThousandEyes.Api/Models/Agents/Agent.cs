@@ -139,5 +139,6 @@ public class Agent
 	/// <summary>
 	/// Navigation links
 	/// </summary>
-	public AgentLinks? Links { get; set; }
+	[JsonPropertyName("_links")]
+	public Links? Links { get; set; }
 }

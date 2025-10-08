@@ -2,11 +2,15 @@
 
 ## Code Style Guidelines
 
-### Zero Warnings Policy
-- **Always aim for zero warnings and messages on every build**
-- Address all compiler warnings before considering code complete
-- Use `#pragma warning disable` only in exceptional cases with clear justification
+### Zero Tolerance Policy - NO Errors, Warnings, or Messages
+- **ZERO TOLERANCE**: No errors, no warnings, no messages - EVER
+- **Always check Roslyn diagnostics** before attempting any build
+- Use Visual Studio's Roslyn analyzer to detect issues in real-time
+- **Address ALL compiler diagnostics** before considering code complete
+- Use `#pragma warning disable` only in exceptional cases with clear justification and documentation
+- Add new words to the custom dictionary file (`ThousandEyes.Api\CustomDictionary.xml`) instead of suppressing spelling warnings
 - Enable "Treat warnings as errors" where appropriate
+- **Every commit must have zero diagnostics** - no exceptions
 
 ### Modern C# Practices (.NET 9)
 

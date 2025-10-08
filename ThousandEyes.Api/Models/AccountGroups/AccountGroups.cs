@@ -1,17 +1,20 @@
+using System.Text.Json.Serialization;
+
 namespace ThousandEyes.Api.Models.AccountGroups;
 
 /// <summary>
-/// Account Groups response wrapper
+/// List of account groups
 /// </summary>
 public class AccountGroups
 {
 	/// <summary>
-	/// List of account groups
+	/// Account groups
 	/// </summary>
 	public AccountGroupInfo[] AccountGroupsList { get; set; } = [];
 
 	/// <summary>
 	/// Navigation links
 	/// </summary>
-	public SelfLinks? Links { get; set; }
+	[JsonPropertyName("_links")]
+	public Links? Links { get; set; }
 }

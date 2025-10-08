@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ThousandEyes.Api.Models.AccountGroups;
 
 /// <summary>
@@ -23,5 +25,6 @@ public class AccountGroupDetail : AccountGroupInfo
 	/// <summary>
 	/// Navigation links
 	/// </summary>
-	public SelfLinks? Links { get; set; }
+	[JsonPropertyName("_links")]
+	public Links? Links { get; set; }
 }

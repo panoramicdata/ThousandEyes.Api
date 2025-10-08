@@ -1,17 +1,20 @@
+using System.Text.Json.Serialization;
+
 namespace ThousandEyes.Api.Models.Roles;
 
 /// <summary>
-/// Roles response wrapper
+/// List of roles
 /// </summary>
 public class Roles
 {
 	/// <summary>
-	/// List of roles
+	/// Roles
 	/// </summary>
 	public Role[] RolesList { get; set; } = [];
 
 	/// <summary>
 	/// Navigation links
 	/// </summary>
-	public SelfLinks? Links { get; set; }
+	[JsonPropertyName("_links")]
+	public Links? Links { get; set; }
 }

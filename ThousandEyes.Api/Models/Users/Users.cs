@@ -1,17 +1,20 @@
+using System.Text.Json.Serialization;
+
 namespace ThousandEyes.Api.Models.Users;
 
 /// <summary>
-/// Users response wrapper
+/// List of users
 /// </summary>
 public class Users
 {
 	/// <summary>
-	/// List of users
+	/// Users
 	/// </summary>
-	public ExtendedUser[] UsersList { get; set; } = [];
+	public User[] UsersList { get; set; } = [];
 
 	/// <summary>
 	/// Navigation links
 	/// </summary>
-	public SelfLinks? Links { get; set; }
+	[JsonPropertyName("_links")]
+	public Links? Links { get; set; }
 }
