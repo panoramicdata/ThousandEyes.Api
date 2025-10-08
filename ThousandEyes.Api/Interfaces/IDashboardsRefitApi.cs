@@ -9,10 +9,10 @@ namespace ThousandEyes.Api.Interfaces;
 internal interface IDashboardsRefitApi
 {
 	/// <summary>
-	/// Get all dashboards
+	/// Get all dashboards (returns array directly)
 	/// </summary>
 	[Get("/dashboards")]
-	Task<Dashboards> GetAllAsync([Query] string? aid, CancellationToken cancellationToken);
+	Task<Dashboard[]> GetAllAsync([Query] string? aid, CancellationToken cancellationToken);
 
 	/// <summary>
 	/// Get dashboard by ID

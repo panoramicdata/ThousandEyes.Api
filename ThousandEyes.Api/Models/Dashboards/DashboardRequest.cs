@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ThousandEyes.Api.Models.Dashboards;
 
 /// <summary>
@@ -6,19 +8,14 @@ namespace ThousandEyes.Api.Models.Dashboards;
 public class DashboardRequest
 {
 	/// <summary>
-	/// Dashboard name
+	/// Dashboard title
 	/// </summary>
-	public required string DashboardName { get; set; }
+	public required string Title { get; set; }
 
 	/// <summary>
 	/// Dashboard description
 	/// </summary>
 	public string? Description { get; set; }
-
-	/// <summary>
-	/// Dashboard type (global, personal, shared)
-	/// </summary>
-	public required string DashboardType { get; set; }
 
 	/// <summary>
 	/// Whether the dashboard is private
@@ -28,7 +25,12 @@ public class DashboardRequest
 	/// <summary>
 	/// Whether the dashboard is default for the user
 	/// </summary>
-	public bool IsDefault { get; set; }
+	public bool IsDefaultForUser { get; set; }
+
+	/// <summary>
+	/// Whether the dashboard is default for the account
+	/// </summary>
+	public bool IsDefaultForAccount { get; set; }
 
 	/// <summary>
 	/// Dashboard widgets configuration
@@ -36,17 +38,12 @@ public class DashboardRequest
 	public DashboardWidget[] Widgets { get; set; } = [];
 
 	/// <summary>
-	/// Dashboard layout configuration
+	/// Default time span for the dashboard
 	/// </summary>
-	public DashboardLayout? Layout { get; set; }
+	public DashboardTimeSpan? DefaultTimespan { get; set; }
 
 	/// <summary>
-	/// Dashboard filters
+	/// Whether global override is enabled
 	/// </summary>
-	public DashboardFilter[] Filters { get; set; } = [];
-
-	/// <summary>
-	/// Dashboard time span configuration
-	/// </summary>
-	public DashboardTimeSpan? TimeSpan { get; set; }
+	public bool IsGlobalOverride { get; set; }
 }

@@ -78,7 +78,7 @@ public class DashboardTimeSpan
 	/// <summary>
 	/// Time span type (relative, absolute)
 	/// </summary>
-	public required string Type { get; set; }
+	public string? Type { get; set; }
 
 	/// <summary>
 	/// Relative time span (1h, 24h, 7d, etc.) for relative type

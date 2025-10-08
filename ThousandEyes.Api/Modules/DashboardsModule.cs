@@ -18,9 +18,14 @@ public class DashboardsModule
 	public IDashboardsApi Dashboards { get; }
 
 	/// <summary>
-	/// Gets the Reports API for report management and scheduling
+	/// Gets the Dashboard Snapshots API for snapshot management
 	/// </summary>
-	public IReportsApi Reports { get; }
+	public IDashboardSnapshotsApi Snapshots { get; }
+
+	/// <summary>
+	/// Gets the Dashboard Filters API for filter management
+	/// </summary>
+	public IDashboardFiltersApi Filters { get; }
 
 	/// <summary>
 	/// Initializes a new instance of the DashboardsModule
@@ -31,10 +36,12 @@ public class DashboardsModule
 	{
 		// Create Refit API interfaces
 		var dashboardsRefitApi = RestService.For<IDashboardsRefitApi>(httpClient, refitSettings);
-		var reportsRefitApi = RestService.For<IReportsRefitApi>(httpClient, refitSettings);
+		var snapshotsRefitApi = RestService.For<IDashboardSnapshotsRefitApi>(httpClient, refitSettings);
+		var filtersRefitApi = RestService.For<IDashboardFiltersRefitApi>(httpClient, refitSettings);
 
 		// Initialize API implementations
 		Dashboards = new DashboardsApi(dashboardsRefitApi);
-		Reports = new ReportsApi(reportsRefitApi);
+		Snapshots = new DashboardSnapshotsApi(snapshotsRefitApi);
+		Filters = new DashboardFiltersApi(filtersRefitApi);
 	}
 }

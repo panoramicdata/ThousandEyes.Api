@@ -11,7 +11,7 @@ internal class DashboardsApi(IDashboardsRefitApi refitApi) : IDashboardsApi
 	private readonly IDashboardsRefitApi _refitApi = refitApi;
 
 	/// <inheritdoc />
-	public Task<Dashboards> GetAllAsync(string? aid, CancellationToken cancellationToken) =>
+	public Task<Dashboard[]> GetAllAsync(string? aid, CancellationToken cancellationToken) =>
 		_refitApi.GetAllAsync(aid, cancellationToken);
 
 	/// <inheritdoc />

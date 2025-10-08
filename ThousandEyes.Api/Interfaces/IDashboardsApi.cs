@@ -15,8 +15,8 @@ public interface IDashboardsApi
 	/// </summary>
 	/// <param name="aid">Account group ID (optional)</param>
 	/// <param name="cancellationToken">Cancellation token</param>
-	/// <returns>List of dashboards</returns>
-	Task<Dashboards> GetAllAsync(string? aid, CancellationToken cancellationToken);
+	/// <returns>Array of dashboards</returns>
+	Task<Dashboard[]> GetAllAsync(string? aid, CancellationToken cancellationToken);
 
 	/// <summary>
 	/// Get a specific dashboard by ID
