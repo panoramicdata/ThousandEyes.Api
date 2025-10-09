@@ -58,8 +58,4 @@
 		<InternalsVisibleTo Include="ThousandEyes.Api.Test" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<AdditionalFiles Include="CustomDictionary.xml" />
-	</ItemGroup>
-
 </Project>

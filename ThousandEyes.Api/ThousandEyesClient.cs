@@ -47,10 +47,11 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		Dashboards = new DashboardsModule(_httpClient, _refitSettings);
 		BgpMonitors = new BgpMonitorsModule(_httpClient, _refitSettings);
 		InternetInsights = new InternetInsightsModule(_httpClient, _refitSettings);
+		EventDetection = new EventDetectionModule(_httpClient, _refitSettings);
 		
 		// Future modules will be initialized when implemented
 		// Phase 3: Snapshots (remaining)
-		// Phase 4+: EventDetection, etc.
+		// Phase 5+: Integrations, Credentials, Usage, etc.
 	}
 
 	/// <summary>
@@ -100,6 +101,11 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 	/// Gets the Internet Insights module for global internet health monitoring
 	/// </summary>
 	public InternetInsightsModule InternetInsights { get; private set; }
+
+	/// <summary>
+	/// Gets the Event Detection module for automated anomaly detection
+	/// </summary>
+	public EventDetectionModule EventDetection { get; private set; }
 
 	/// <summary>
 	/// Gets the base URL for the ThousandEyes API

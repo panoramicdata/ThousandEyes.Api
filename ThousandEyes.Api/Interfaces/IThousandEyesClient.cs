@@ -114,8 +114,19 @@ public interface IThousandEyesClient
 	/// </remarks>
 	InternetInsightsModule InternetInsights { get; }
 
+	/// <summary>
+	/// Gets the Event Detection module for automated anomaly detection
+	/// </summary>
+	/// <remarks>
+	/// ✅ Phase 4.3 - IMPLEMENTED: Event detection including:
+	/// - Automated anomaly detection
+	/// - Event list retrieval with filtering
+	/// - Detailed event information
+	/// - Affected tests, targets, and agents tracking
+	/// </remarks>
+	EventDetectionModule EventDetection { get; }
+
 	// Additional modules will be added in future phases:
-	// Phase 4.3: EventDetection (if available)
 	// Phase 5: Integrations, Credentials, Usage
 	// Phase 6: Emulation, Tags, Templates
 	// Phase 7: OpenTelemetry (future)
