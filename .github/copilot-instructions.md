@@ -2,6 +2,21 @@
 
 ## Code Style Guidelines
 
+### One File Per Type Policy ? **MANDATORY**
+- **Each type (class, interface, enum, record) MUST be in its own separate file**
+- **File name MUST match the type name exactly** (e.g., `UserDetail.cs` for `class UserDetail`)
+- **No exceptions** - this rule applies to:
+  - Classes (models, implementations, modules)
+  - Interfaces (public and internal Refit interfaces)
+  - Enums (all enumerations)
+  - Records (all record types)
+- **Nested types are the ONLY exception** - keep nested private types within their parent file
+- **Benefits**:
+  - ?? Easy navigation (type name = file name)
+  - ?? Better source control (fewer merge conflicts)
+  - ?? Clear responsibilities (one concept per file)
+  - ?? Easier testing and maintenance
+
 ### Zero Tolerance Policy - NO Errors, Warnings, or Messages
 - **ZERO TOLERANCE**: No errors, no warnings, no messages - EVER
 - **Always check Roslyn diagnostics** before attempting any build

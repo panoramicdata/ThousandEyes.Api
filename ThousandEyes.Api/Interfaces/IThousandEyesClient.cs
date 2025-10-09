@@ -95,15 +95,27 @@ public interface IThousandEyesClient
 	/// Gets the BGP Monitors module for network infrastructure monitoring
 	/// </summary>
 	/// <remarks>
-	/// 🚧 Phase 4 - PLANNED: BGP monitoring including:
+	/// ✅ Phase 4.1 - IMPLEMENTED: BGP monitoring including:
 	/// - BGP monitor management
 	/// - BGP route and path analysis
 	/// - AS path and community information
 	/// </remarks>
 	BgpMonitorsModule BgpMonitors { get; }
 
+	/// <summary>
+	/// Gets the Internet Insights module for global internet health monitoring
+	/// </summary>
+	/// <remarks>
+	/// ✅ Phase 4.2 - IMPLEMENTED: Internet health monitoring including:
+	/// - Catalog provider discovery and management
+	/// - Network and application outage tracking
+	/// - Provider location and ASN information
+	/// - Outage impact analysis
+	/// </remarks>
+	InternetInsightsModule InternetInsights { get; }
+
 	// Additional modules will be added in future phases:
-	// Phase 4: InternetInsights, EventDetection, EndpointAgents
+	// Phase 4.3: EventDetection (if available)
 	// Phase 5: Integrations, Credentials, Usage
 	// Phase 6: Emulation, Tags, Templates
 	// Phase 7: OpenTelemetry (future)

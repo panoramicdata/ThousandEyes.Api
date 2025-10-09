@@ -38,17 +38,19 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 			})
 		};
 
-		// Initialize Phase 1, 2 & 3 API modules
+		// Initialize Phase 1, 2, 3 & 4 API modules
 		AccountManagement = new AccountManagementModule(_httpClient, _refitSettings);
 		Tests = new TestsModule(_httpClient, _refitSettings);
 		Agents = new AgentsModule(_httpClient, _refitSettings);
 		TestResults = new TestResultsModule(_httpClient, _refitSettings);
 		Alerts = new AlertsModule(_httpClient, _refitSettings);
 		Dashboards = new DashboardsModule(_httpClient, _refitSettings);
+		BgpMonitors = new BgpMonitorsModule(_httpClient, _refitSettings);
+		InternetInsights = new InternetInsightsModule(_httpClient, _refitSettings);
 		
 		// Future modules will be initialized when implemented
 		// Phase 3: Snapshots (remaining)
-		// Phase 4+: BgpMonitors, etc.
+		// Phase 4+: EventDetection, etc.
 	}
 
 	/// <summary>
@@ -92,10 +94,12 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 	/// <summary>
 	/// Gets the BGP Monitors module for network infrastructure monitoring
 	/// </summary>
-	/// <remarks>
-	/// 🚧 Phase 4 - PLANNED: Will be implemented in Phase 4
-	/// </remarks>
-	public BgpMonitorsModule BgpMonitors => throw new NotImplementedException("BGP Monitors API will be implemented in Phase 4. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
+	public BgpMonitorsModule BgpMonitors { get; private set; }
+
+	/// <summary>
+	/// Gets the Internet Insights module for global internet health monitoring
+	/// </summary>
+	public InternetInsightsModule InternetInsights { get; private set; }
 
 	/// <summary>
 	/// Gets the base URL for the ThousandEyes API

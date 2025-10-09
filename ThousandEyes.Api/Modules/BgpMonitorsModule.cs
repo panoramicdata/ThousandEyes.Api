@@ -1,4 +1,7 @@
 using Refit;
+using ThousandEyes.Api.Implementations.BgpMonitors;
+using ThousandEyes.Api.Interfaces.BgpMonitors;
+using ThousandEyes.Api.Refit.BgpMonitors;
 
 namespace ThousandEyes.Api.Modules;
 
@@ -6,11 +9,20 @@ namespace ThousandEyes.Api.Modules;
 /// BGP Monitors API module for network infrastructure monitoring
 /// </summary>
 /// <remarks>
-/// Planned for Phase 4 implementation
-/// Specialized monitoring for BGP routing information
+/// ? Phase 4 - IMPLEMENTED
+/// Specialized monitoring for BGP routing information including:
+/// - Public BGP monitors (global routing visibility)
+/// - Private BGP monitors (custom/internal routing)
+/// - Monitor location and network information
+/// - AS (Autonomous System) information
 /// </remarks>
 public class BgpMonitorsModule
 {
+	/// <summary>
+	/// Gets the BGP Monitors interface for monitor operations
+	/// </summary>
+	public IBgpMonitors BgpMonitors { get; }
+
 	/// <summary>
 	/// Initializes a new instance of the BgpMonitorsModule
 	/// </summary>
@@ -18,13 +30,7 @@ public class BgpMonitorsModule
 	/// <param name="refitSettings">Refit settings for JSON serialization</param>
 	public BgpMonitorsModule(HttpClient httpClient, RefitSettings refitSettings)
 	{
-		// TODO: Phase 4 - Implement BGP Monitors API
-		// Will include:
-		// - BGP monitor management
-		// - BGP route information
-		// - BGP path analysis
-		// - AS path information
-		// - BGP community data
-		throw new NotImplementedException("BGP Monitors API will be implemented in Phase 4");
+		var refitApi = RestService.For<IBgpMonitorsRefitApi>(httpClient, refitSettings);
+		BgpMonitors = new BgpMonitorsImpl(refitApi);
 	}
 }
