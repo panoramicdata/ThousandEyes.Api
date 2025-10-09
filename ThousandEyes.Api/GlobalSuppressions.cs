@@ -8,7 +8,29 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage(
 	"Performance",
 	"CA1848:Use the LoggerMessage delegates",
-	Justification = "implementation cost not worth the development effort",
-	Scope = "namespaceanddescendants",
-	Target = "~N:Halo.Api)"
+	Justification = "implementation cost not worth the development effort"
+)]
+
+[assembly: SuppressMessage(
+	"Naming",
+	"CA1711:Identifiers should not have incorrect suffix",
+	Justification = "Stream is the actual API resource name from ThousandEyes OpenTelemetry API",
+	Scope = "type",
+	Target = "~T:ThousandEyes.Api.Models.OpenTelemetry.Stream"
+)]
+
+[assembly: SuppressMessage(
+	"Naming",
+	"CA1711:Identifiers should not have incorrect suffix",
+	Justification = "PutStream is the actual API request name from ThousandEyes OpenTelemetry API",
+	Scope = "type",
+	Target = "~T:ThousandEyes.Api.Models.OpenTelemetry.PutStream"
+)]
+
+[assembly: SuppressMessage(
+	"Naming",
+	"CA1711:Identifiers should not have incorrect suffix",
+	Justification = "StreamCollection is the actual API response wrapper from ThousandEyes OpenTelemetry API",
+	Scope = "type",
+	Target = "~T:ThousandEyes.Api.Models.OpenTelemetry.StreamCollection"
 )]

@@ -1,6 +1,6 @@
 using AwesomeAssertions;
-using ThousandEyes.Api.Models.EndpointAgents;
 using Refit;
+using ThousandEyes.Api.Models.EndpointAgents;
 
 namespace ThousandEyes.Api.Test;
 
@@ -238,7 +238,7 @@ public class EndpointAgentsIntegrationTest(IntegrationTestFixture fixture) : Tes
 			try
 			{
 				var restoreRequest = new EndpointAgentUpdate { Name = originalName };
-				await ThousandEyesClient.EndpointAgents.EndpointAgents.UpdateAsync(
+				_ = await ThousandEyesClient.EndpointAgents.EndpointAgents.UpdateAsync(
 					agentId: agent.Id!,
 					request: restoreRequest,
 					aid: null,
@@ -297,7 +297,7 @@ public class EndpointAgentsIntegrationTest(IntegrationTestFixture fixture) : Tes
 				_ = result.Status.Should().Be(AgentStatus.Disabled);
 
 				// Restore - Re-enable the agent
-				await ThousandEyesClient.EndpointAgents.EndpointAgents.EnableAsync(
+				_ = await ThousandEyesClient.EndpointAgents.EndpointAgents.EnableAsync(
 					agentId: agent.Id!,
 					aid: null,
 					cancellationToken: CancellationToken);
@@ -314,7 +314,7 @@ public class EndpointAgentsIntegrationTest(IntegrationTestFixture fixture) : Tes
 				_ = result.Status.Should().Be(AgentStatus.Enabled);
 
 				// Restore - Disable the agent
-				await ThousandEyesClient.EndpointAgents.EndpointAgents.DisableAsync(
+				_ = await ThousandEyesClient.EndpointAgents.EndpointAgents.DisableAsync(
 					agentId: agent.Id!,
 					aid: null,
 					cancellationToken: CancellationToken);

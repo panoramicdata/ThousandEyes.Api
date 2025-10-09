@@ -17,8 +17,8 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 		var result = await ThousandEyesClient.Tags.GetAllAsync(aid: null, expand: null, CancellationToken);
 
 		// Assert
-		result.Should().NotBeNull();
-		result.Items.Should().NotBeNull();
+		_ = result.Should().NotBeNull();
+		_ = result.Items.Should().NotBeNull();
 	}
 
 	[Fact]
@@ -41,10 +41,10 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 			var result = await ThousandEyesClient.Tags.CreateAsync(request, aid: null, CancellationToken);
 
 			// Assert
-			result.Should().NotBeNull();
-			result.Id.Should().NotBeNullOrEmpty();
-			result.Key.Should().Be(request.Key);
-			result.Value.Should().Be(request.Value);
+			_ = result.Should().NotBeNull();
+			_ = result.Id.Should().NotBeNullOrEmpty();
+			_ = result.Key.Should().Be(request.Key);
+			_ = result.Value.Should().Be(request.Value);
 
 			// Cleanup
 			await ThousandEyesClient.Tags.DeleteAsync(result.Id!, aid: null, CancellationToken);
@@ -79,10 +79,10 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 			var result = await ThousandEyesClient.Tags.GetByIdAsync(created.Id!, aid: null, expand: null, CancellationToken);
 
 			// Assert
-			result.Should().NotBeNull();
-			result.Id.Should().Be(created.Id);
-			result.Key.Should().Be(request.Key);
-			result.Value.Should().Be(request.Value);
+			_ = result.Should().NotBeNull();
+			_ = result.Id.Should().Be(created.Id);
+			_ = result.Key.Should().Be(request.Key);
+			_ = result.Value.Should().Be(request.Value);
 		}
 		finally
 		{
@@ -122,14 +122,14 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 			var result = await ThousandEyesClient.Tags.UpdateAsync(created.Id!, updateRequest, aid: null, CancellationToken);
 
 			// Assert
-			result.Should().NotBeNull();
-			result.Id.Should().Be(created.Id);
-			result.Value.Should().Be(updateRequest.Value);
-			result.Color.Should().Be(updateRequest.Color);
+			_ = result.Should().NotBeNull();
+			_ = result.Id.Should().Be(created.Id);
+			_ = result.Value.Should().Be(updateRequest.Value);
+			_ = result.Color.Should().Be(updateRequest.Color);
 
 			// Verify update by getting the tag
 			var retrieved = await ThousandEyesClient.Tags.GetByIdAsync(created.Id!, aid: null, expand: null, CancellationToken);
-			retrieved.Value.Should().Be(updateRequest.Value);
+			_ = retrieved.Value.Should().Be(updateRequest.Value);
 		}
 		finally
 		{
@@ -161,7 +161,7 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 		// Assert - verify deletion by attempting to get the tag
 		// This should throw an exception (404 Not Found)
 		var act = async () => await ThousandEyesClient.Tags.GetByIdAsync(created.Id!, aid: null, expand: null, CancellationToken);
-		await act.Should().ThrowAsync<Exception>(); // Refit will throw an exception for 404
+		_ = await act.Should().ThrowAsync<Exception>(); // Refit will throw an exception for 404
 	}
 
 	[Fact]
@@ -200,10 +200,10 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 			var result = await ThousandEyesClient.Tags.CreateBulkAsync(request, aid: null, CancellationToken);
 
 			// Assert
-			result.Should().NotBeNull();
-			result.Tags.Should().NotBeEmpty();
-			result.Tags.Should().HaveCount(2);
-			
+			_ = result.Should().NotBeNull();
+			_ = result.Tags.Should().NotBeEmpty();
+			_ = result.Tags.Should().HaveCount(2);
+
 			// Track IDs for cleanup
 			createdIds.AddRange(result.Tags.Select(t => t.Id!).Where(id => id != null));
 		}
@@ -245,16 +245,16 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 		{
 			// Act
 			var result = await ThousandEyesClient.Tags.GetByIdAsync(
-				created.Id!, 
-				aid: null, 
-				expand: ["assignments"], 
+				created.Id!,
+				aid: null,
+				expand: ["assignments"],
 				CancellationToken
 			);
 
 			// Assert
-			result.Should().NotBeNull();
-			result.Id.Should().Be(created.Id);
-			result.Assignments.Should().NotBeNull(); // Should be populated with expand
+			_ = result.Should().NotBeNull();
+			_ = result.Id.Should().Be(created.Id);
+			_ = result.Assignments.Should().NotBeNull(); // Should be populated with expand
 		}
 		finally
 		{
@@ -284,10 +284,10 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 			var created = await ThousandEyesClient.Tags.CreateAsync(request, aid: null, CancellationToken);
 
 			// Assert - Create
-			created.Should().NotBeNull();
-			created.Color.Should().Be(request.Color);
-			created.Icon.Should().Be(request.Icon);
-			created.ObjectType.Should().Be(ObjectType.Dashboard);
+			_ = created.Should().NotBeNull();
+			_ = created.Color.Should().Be(request.Color);
+			_ = created.Icon.Should().Be(request.Icon);
+			_ = created.ObjectType.Should().Be(ObjectType.Dashboard);
 
 			// Cleanup
 			await ThousandEyesClient.Tags.DeleteAsync(created.Id!, aid: null, CancellationToken);

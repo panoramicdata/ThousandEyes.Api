@@ -11,10 +11,10 @@ public class AlertsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fi
 	{
 		// Act
 		var result = await ThousandEyesClient.Alerts.Alerts.GetAllAsync(
-			aid: null, 
-			window: null, 
-			fromDate: null, 
-			toDate: null, 
+			aid: null,
+			window: null,
+			fromDate: null,
+			toDate: null,
 			cancellationToken: CancellationToken);
 
 		// Assert
@@ -41,10 +41,10 @@ public class AlertsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fi
 	{
 		// Act
 		var result = await ThousandEyesClient.Alerts.Alerts.GetAllAsync(
-			aid: null, 
-			window: "7d", 
-			fromDate: null, 
-			toDate: null, 
+			aid: null,
+			window: "7d",
+			fromDate: null,
+			toDate: null,
 			cancellationToken: CancellationToken);
 
 		// Assert
@@ -69,10 +69,10 @@ public class AlertsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fi
 
 		// Act
 		var result = await ThousandEyesClient.Alerts.Alerts.GetAllAsync(
-			aid: null, 
-			window: null, 
-			fromDate: fromDate, 
-			toDate: toDate, 
+			aid: null,
+			window: null,
+			fromDate: fromDate,
+			toDate: toDate,
 			cancellationToken: CancellationToken);
 
 		// Assert
@@ -93,12 +93,12 @@ public class AlertsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fi
 	{
 		// Arrange - First get list of alerts to find a valid alert ID
 		var alerts = await ThousandEyesClient.Alerts.Alerts.GetAllAsync(
-			aid: null, 
-			window: "30d", 
-			fromDate: null, 
-			toDate: null, 
+			aid: null,
+			window: "30d",
+			fromDate: null,
+			toDate: null,
 			cancellationToken: CancellationToken);
-		
+
 		// Skip test if no alerts are available
 		if (alerts.AlertsList.Length == 0)
 		{
@@ -109,8 +109,8 @@ public class AlertsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fi
 
 		// Act
 		var result = await ThousandEyesClient.Alerts.Alerts.GetByIdAsync(
-			alertId, 
-			aid: null, 
+			alertId,
+			aid: null,
 			cancellationToken: CancellationToken);
 
 		// Assert
@@ -130,7 +130,7 @@ public class AlertsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fi
 	{
 		// Act
 		var result = await ThousandEyesClient.Alerts.AlertRules.GetAllAsync(
-			aid: null, 
+			aid: null,
 			cancellationToken: CancellationToken);
 
 		// Assert
@@ -154,9 +154,9 @@ public class AlertsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fi
 	{
 		// Arrange - First get list of alert rules to find a valid rule ID
 		var rules = await ThousandEyesClient.Alerts.AlertRules.GetAllAsync(
-			aid: null, 
+			aid: null,
 			cancellationToken: CancellationToken);
-		
+
 		// Skip test if no alert rules are available
 		if (rules.AlertRulesList.Length == 0)
 		{
@@ -167,8 +167,8 @@ public class AlertsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fi
 
 		// Act
 		var result = await ThousandEyesClient.Alerts.AlertRules.GetByIdAsync(
-			ruleId, 
-			aid: null, 
+			ruleId,
+			aid: null,
 			cancellationToken: CancellationToken);
 
 		// Assert
@@ -185,7 +185,7 @@ public class AlertsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fi
 	{
 		// Arrange - First get a test to use in the alert rule
 		var tests = await ThousandEyesClient.Tests.Tests.GetAllAsync(aid: null, cancellationToken: CancellationToken);
-		
+
 		// Skip test if no tests are available
 		if (tests.TestsList.Length == 0)
 		{
@@ -217,8 +217,8 @@ public class AlertsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fi
 
 		// Act
 		var result = await ThousandEyesClient.Alerts.AlertRules.CreateAsync(
-			alertRuleRequest, 
-			aid: null, 
+			alertRuleRequest,
+			aid: null,
 			cancellationToken: CancellationToken);
 
 		// Assert
@@ -234,8 +234,8 @@ public class AlertsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fi
 		try
 		{
 			await ThousandEyesClient.Alerts.AlertRules.DeleteAsync(
-				result.RuleId, 
-				aid: null, 
+				result.RuleId,
+				aid: null,
 				cancellationToken: CancellationToken);
 		}
 		catch

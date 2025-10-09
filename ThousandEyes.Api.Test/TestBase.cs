@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ThousandEyes.Api.Interfaces;
 
 namespace ThousandEyes.Api.Test;
@@ -7,6 +8,8 @@ namespace ThousandEyes.Api.Test;
 /// </summary>
 public abstract class TestBase(IntegrationTestFixture fixture)
 {
+	protected JsonSerializerOptions JsonSerializerOptions = new() { WriteIndented = true };
+
 	/// <summary>
 	/// Gets the test fixture for creating fresh client instances
 	/// </summary>

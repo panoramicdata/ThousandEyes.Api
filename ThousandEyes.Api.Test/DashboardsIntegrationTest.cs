@@ -1,7 +1,7 @@
 using AwesomeAssertions;
-using ThousandEyes.Api.Models.Dashboards;
 using Refit;
-using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using ThousandEyes.Api.Models.Dashboards;
 
 namespace ThousandEyes.Api.Test;
 
@@ -21,7 +21,7 @@ public class DashboardsIntegrationTest(IntegrationTestFixture fixture) : TestBas
 
 			// If we get here, serialization worked!
 			Logger.LogInformation("Successfully retrieved {Count} dashboards", result.Length);
-			
+
 			if (result.Length > 0)
 			{
 				var firstDashboard = result[0];
@@ -32,10 +32,9 @@ public class DashboardsIntegrationTest(IntegrationTestFixture fixture) : TestBas
 				Logger.LogInformation("IsPrivate: {IsPrivate}", firstDashboard.IsPrivate);
 				Logger.LogInformation("DashboardCreatedBy: {CreatedBy}", firstDashboard.DashboardCreatedBy);
 				Logger.LogInformation("DashboardModifiedDate: {ModifiedDate}", firstDashboard.DashboardModifiedDate);
-				
+
 				// Log all properties to understand the structure
-				var json = System.Text.Json.JsonSerializer.Serialize(firstDashboard, 
-					new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+				var json = JsonSerializer.Serialize(firstDashboard, JsonSerializerOptions);
 				Logger.LogInformation("Full JSON of first dashboard:\n{Json}", json);
 			}
 		}
@@ -279,7 +278,7 @@ public class DashboardsIntegrationTest(IntegrationTestFixture fixture) : TestBas
 		{
 			// Arrange - First get real test IDs to use in the filter
 			var tests = await ThousandEyesClient.Tests.Tests.GetAllAsync(aid: null, CancellationToken);
-			
+
 			// Skip if no tests available to create filter with
 			if (tests.TestsList.Length == 0)
 			{

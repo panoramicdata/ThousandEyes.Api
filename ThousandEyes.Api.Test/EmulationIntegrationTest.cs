@@ -1,6 +1,6 @@
 using AwesomeAssertions;
-using ThousandEyes.Api.Models.Emulation;
 using Refit;
+using ThousandEyes.Api.Models.Emulation;
 
 namespace ThousandEyes.Api.Test;
 
@@ -57,8 +57,8 @@ public class EmulationIntegrationTest(IntegrationTestFixture fixture) : TestBase
 				_ = firstDevice.Id.Should().NotBeNullOrEmpty();
 				_ = firstDevice.Name.Should().NotBeNullOrEmpty();
 				_ = firstDevice.Category.Should().BeDefined();
-				_ = firstDevice.Width.Should().BeGreaterThan(0);
-				_ = firstDevice.Height.Should().BeGreaterThan(0);
+				_ = firstDevice.Width.Should().BePositive();
+				_ = firstDevice.Height.Should().BePositive();
 			}
 		}
 		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -88,7 +88,7 @@ public class EmulationIntegrationTest(IntegrationTestFixture fixture) : TestBase
 				var firstDevice = result.EmulatedDevicesList[0];
 				_ = firstDevice.Id.Should().NotBeNullOrEmpty();
 				_ = firstDevice.Name.Should().NotBeNullOrEmpty();
-				
+
 				// When expand=user-agent is used, devices should have user agent info
 				if (firstDevice.AvailableUserAgents.Length > 0)
 				{

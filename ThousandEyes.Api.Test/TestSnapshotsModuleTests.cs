@@ -77,9 +77,9 @@ public class TestSnapshotsModuleTests(IntegrationTestFixture fixture) : TestBase
 			result.Should().NotBeNull();
 			result.Id.Should().NotBeNullOrEmpty();
 			result.StartRoundId.Should().NotBeNull();
-			result.StartRoundId!.Value.Should().BeGreaterThan(0);
+			result.StartRoundId!.Value.Should().BePositive();
 			result.EndRoundId.Should().NotBeNull();
-			result.EndRoundId!.Value.Should().BeGreaterThan(0);
+			result.EndRoundId!.Value.Should().BePositive();
 			result.EndRoundId.Value.Should().BeGreaterThan(result.StartRoundId.Value);
 		}
 		catch (Exception)

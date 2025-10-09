@@ -84,7 +84,7 @@ public class TestResultsIntegrationTest(IntegrationTestFixture fixture) : TestBa
 			_ = firstResult.AgentName.Should().NotBeNullOrEmpty();
 			_ = firstResult.RoundId.Should().NotBeNullOrEmpty();
 			_ = firstResult.Date.Should().BeAfter(fromDate);
-			_ = firstResult.ResponseCode.Should().BeGreaterThan(0);
+			_ = firstResult.ResponseCode.Should().BePositive();
 		}
 	}
 
@@ -131,7 +131,7 @@ public class TestResultsIntegrationTest(IntegrationTestFixture fixture) : TestBa
 			if (firstResult.PathVis?.Length > 0)
 			{
 				var firstHop = firstResult.PathVis[0];
-				_ = firstHop.HopNumber.Should().BeGreaterThan(0);
+				_ = firstHop.HopNumber.Should().BePositive();
 				_ = firstHop.IpAddress.Should().NotBeNullOrEmpty();
 			}
 		}

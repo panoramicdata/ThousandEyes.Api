@@ -9,6 +9,12 @@ namespace ThousandEyes.Api.Models.OpenTelemetry;
 public class CreateStreamResponse : Stream
 {
     /// <summary>
+    /// The data stream ID
+    /// </summary>
+    [JsonPropertyName("id")]
+    public string? Id { get; set; }
+
+    /// <summary>
     /// Audit operation details
     /// </summary>
     [JsonPropertyName("auditOperation")]

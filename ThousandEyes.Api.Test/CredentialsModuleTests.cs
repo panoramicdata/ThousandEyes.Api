@@ -16,8 +16,8 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 		var result = await ThousandEyesClient.Credentials.GetAllAsync(aid: null, CancellationToken);
 
 		// Assert
-		result.Should().NotBeNull();
-		result.Items.Should().NotBeNull();
+		_ = result.Should().NotBeNull();
+		_ = result.Items.Should().NotBeNull();
 	}
 
 	[Fact]
@@ -36,9 +36,9 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 			var result = await ThousandEyesClient.Credentials.CreateAsync(request, aid: null, CancellationToken);
 
 			// Assert
-			result.Should().NotBeNull();
-			result.Id.Should().NotBeNullOrEmpty();
-			result.Name.Should().Be(request.Name);
+			_ = result.Should().NotBeNull();
+			_ = result.Id.Should().NotBeNullOrEmpty();
+			_ = result.Name.Should().Be(request.Name);
 
 			// Cleanup
 			await ThousandEyesClient.Credentials.DeleteAsync(result.Id!, aid: null, CancellationToken);
@@ -69,11 +69,11 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 			var result = await ThousandEyesClient.Credentials.GetByIdAsync(created.Id!, aid: null, CancellationToken);
 
 			// Assert
-			result.Should().NotBeNull();
-			result.Id.Should().Be(created.Id);
-			result.Name.Should().Be(request.Name);
-			result.Value.Should().NotBeNullOrEmpty();
-			result.Value.Should().NotBe(request.Value); // Value should be encrypted
+			_ = result.Should().NotBeNull();
+			_ = result.Id.Should().Be(created.Id);
+			_ = result.Name.Should().Be(request.Name);
+			_ = result.Value.Should().NotBeNullOrEmpty();
+			_ = result.Value.Should().NotBe(request.Value); // Value should be encrypted
 		}
 		finally
 		{
@@ -105,14 +105,14 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 			var result = await ThousandEyesClient.Credentials.UpdateAsync(created.Id!, updateRequest, aid: null, CancellationToken);
 
 			// Assert
-			result.Should().NotBeNull();
-			result.Id.Should().Be(created.Id);
-			result.Name.Should().Be(updateRequest.Name);
+			_ = result.Should().NotBeNull();
+			_ = result.Id.Should().Be(created.Id);
+			_ = result.Name.Should().Be(updateRequest.Name);
 
 			// Verify update by getting the credential
 			var retrieved = await ThousandEyesClient.Credentials.GetByIdAsync(created.Id!, aid: null, CancellationToken);
-			retrieved.Name.Should().Be(updateRequest.Name);
-			retrieved.Value.Should().NotBe(createRequest.Value); // Value should be different
+			_ = retrieved.Name.Should().Be(updateRequest.Name);
+			_ = retrieved.Value.Should().NotBe(createRequest.Value); // Value should be different
 		}
 		finally
 		{
@@ -140,7 +140,7 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 		// Assert - verify deletion by attempting to get the credential
 		// This should throw an exception (404 Not Found)
 		var act = async () => await ThousandEyesClient.Credentials.GetByIdAsync(created.Id!, aid: null, CancellationToken);
-		await act.Should().ThrowAsync<Exception>(); // Refit will throw an exception for 404
+		_ = await act.Should().ThrowAsync<Exception>(); // Refit will throw an exception for 404
 	}
 
 	[Fact]
@@ -163,9 +163,9 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 			var retrieved = await ThousandEyesClient.Credentials.GetByIdAsync(created.Id!, aid: null, CancellationToken);
 
 			// Assert
-			retrieved.Value.Should().NotBeNullOrEmpty();
-			retrieved.Value.Should().NotBe(plainTextPassword); // Encrypted value should differ from plain text
-			retrieved.Value!.Length.Should().BeGreaterThan(plainTextPassword.Length); // Encrypted values are typically longer
+			_ = retrieved.Value.Should().NotBeNullOrEmpty();
+			_ = retrieved.Value.Should().NotBe(plainTextPassword); // Encrypted value should differ from plain text
+			_ = retrieved.Value!.Length.Should().BeGreaterThan(plainTextPassword.Length); // Encrypted values are typically longer
 		}
 		finally
 		{
@@ -193,14 +193,14 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 			var result = await ThousandEyesClient.Credentials.GetAllAsync(aid: null, CancellationToken);
 
 			// Assert
-			result.Should().NotBeNull();
-			result.Items.Should().NotBeEmpty();
-			
+			_ = result.Should().NotBeNull();
+			_ = result.Items.Should().NotBeEmpty();
+
 			// Find our test credential
 			var testCredential = result.Items.FirstOrDefault(c => c.Id == created.Id);
-			testCredential.Should().NotBeNull();
-			testCredential!.Name.Should().Be(request.Name);
-			testCredential.Value.Should().NotBeNullOrEmpty(); // API returns values in list endpoint
+			_ = testCredential.Should().NotBeNull();
+			_ = testCredential!.Name.Should().Be(request.Name);
+			_ = testCredential.Value.Should().NotBeNullOrEmpty(); // API returns values in list endpoint
 		}
 		finally
 		{

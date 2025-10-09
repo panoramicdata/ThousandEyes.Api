@@ -22,7 +22,7 @@ public class TestsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fix
 			_ = firstTest.TestId.Should().NotBeNullOrEmpty();
 			_ = firstTest.TestName.Should().NotBeNullOrEmpty();
 			_ = firstTest.Type.Should().NotBeNullOrEmpty();
-			_ = firstTest.Interval.Should().BeGreaterThan(0);
+			_ = firstTest.Interval.Should().BePositive();
 		}
 	}
 

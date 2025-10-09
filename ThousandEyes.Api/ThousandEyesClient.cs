@@ -43,11 +43,11 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 
 		// Set up dependency injection for Credentials module
 		var services = new ServiceCollection();
-		services.AddSingleton(_httpClient);
+		_ = services.AddSingleton(_httpClient);
 		CredentialsModule.RegisterCredentialsServices(services, _refitSettings);
 		_serviceProvider = services.BuildServiceProvider();
 
-		// Initialize Phase 1, 2, 3, 4, 5 & 6 API modules
+		// Initialize Phase 1, 2, 3, 4, 5, 6 & 7 API modules
 		AccountManagement = new AccountManagementModule(_httpClient, _refitSettings);
 		Tests = new TestsModule(_httpClient, _refitSettings);
 		Agents = new AgentsModule(_httpClient, _refitSettings);
@@ -66,7 +66,7 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		EndpointAgents = new EndpointAgentsModule(_httpClient, _refitSettings);
 		OpenTelemetry = new OpenTelemetryModule(_httpClient, _refitSettings);
 
-		// Phase 6 complete! All ThousandEyes API v7 modules implemented
+		// Phase 7 in progress! OpenTelemetry data streaming module implemented
 	}
 
 	/// <summary>
@@ -201,14 +201,14 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 	/// Gets the OpenTelemetry module for data streaming configuration
 	/// </summary>
 	/// <remarks>
-	/// 📋 Phase 7 - PLANNED: OpenTelemetry data streaming including:
+	/// ✅ Phase 7 - IMPLEMENTED: OpenTelemetry data streaming including:
 	/// - Data stream management (CRUD operations)
 	/// - Support for OpenTelemetry and Splunk HEC stream types
 	/// - Metric and trace signal support
 	/// - Tag-based and test-based filtering
 	/// - Stream status monitoring
 	/// </remarks>
-	public OpenTelemetryModule OpenTelemetry => throw new NotImplementedException("OpenTelemetry API will be implemented in Phase 7. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
+	public OpenTelemetryModule OpenTelemetry { get; private set; }
 
 	/// <summary>
 	/// Gets the base URL for the ThousandEyes API

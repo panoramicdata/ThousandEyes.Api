@@ -1,7 +1,7 @@
 using AwesomeAssertions;
-using ThousandEyes.Api.Models.Templates;
 using Refit;
 using System.Text.Json;
+using ThousandEyes.Api.Models.Templates;
 
 namespace ThousandEyes.Api.Test;
 
@@ -182,11 +182,11 @@ public class TemplatesIntegrationTest(IntegrationTestFixture fixture) : TestBase
 			// Verify deletion by trying to get the template (should throw 404)
 			try
 			{
-				await ThousandEyesClient.Templates.Templates.GetByIdAsync(
+				_ = await ThousandEyesClient.Templates.Templates.GetByIdAsync(
 					createdTemplate.Id!,
 					aid: null,
 					cancellationToken: CancellationToken);
-				
+
 				// If we get here, the template wasn't deleted
 				throw new InvalidOperationException("Template should have been deleted");
 			}
