@@ -215,4 +215,17 @@ public interface IThousandEyesClient
 	/// - Optional expansion for clients, VPN profiles, network interfaces
 	/// </remarks>
 	EndpointAgentsModule EndpointAgents { get; }
+
+	/// <summary>
+	/// Gets the OpenTelemetry module for data streaming configuration
+	/// </summary>
+	/// <remarks>
+	/// 📋 Phase 7 - PLANNED: OpenTelemetry data streaming including:
+	/// - Data stream management (CRUD operations)
+	/// - Support for OpenTelemetry and Splunk HEC stream types
+	/// - Metric and trace signal support
+	/// - Tag-based and test-based filtering
+	/// - Stream status monitoring
+	/// </remarks>
+	OpenTelemetryModule OpenTelemetry { get; }
 }

@@ -64,9 +64,9 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		Templates = new TemplatesModule(_httpClient, _refitSettings);
 		Emulation = new EmulationModule(_httpClient, _refitSettings);
 		EndpointAgents = new EndpointAgentsModule(_httpClient, _refitSettings);
+		OpenTelemetry = new OpenTelemetryModule(_httpClient, _refitSettings);
 
 		// Phase 6 complete! All ThousandEyes API v7 modules implemented
-		// Phase 7 (OpenTelemetry) - future implementation
 	}
 
 	/// <summary>
@@ -196,6 +196,19 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 	/// - Optional expansion for clients, VPN profiles, network interfaces
 	/// </remarks>
 	public EndpointAgentsModule EndpointAgents { get; private set; }
+
+	/// <summary>
+	/// Gets the OpenTelemetry module for data streaming configuration
+	/// </summary>
+	/// <remarks>
+	/// 📋 Phase 7 - PLANNED: OpenTelemetry data streaming including:
+	/// - Data stream management (CRUD operations)
+	/// - Support for OpenTelemetry and Splunk HEC stream types
+	/// - Metric and trace signal support
+	/// - Tag-based and test-based filtering
+	/// - Stream status monitoring
+	/// </remarks>
+	public OpenTelemetryModule OpenTelemetry => throw new NotImplementedException("OpenTelemetry API will be implemented in Phase 7. Track progress at: https://github.com/panoramicdata/ThousandEyes.Api/issues");
 
 	/// <summary>
 	/// Gets the base URL for the ThousandEyes API
