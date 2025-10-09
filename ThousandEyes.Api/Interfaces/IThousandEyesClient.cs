@@ -151,8 +151,32 @@ public interface IThousandEyesClient
 	/// </remarks>
 	ICredentials Credentials { get; }
 
+	/// <summary>
+	/// Gets the Tags module for managing asset tags
+	/// </summary>
+	/// <remarks>
+	/// ✅ Phase 6.1 - IMPLEMENTED: Tag management including:
+	/// - Tag CRUD operations (create, read, update, delete)
+	/// - Bulk tag creation operations
+	/// - Tag assignment to tests, agents, dashboards, endpoint tests
+	/// - Bulk assignment and unassignment operations
+	/// - Optional expand parameter for assignments
+	/// </remarks>
+	TagsModule Tags { get; }
+
+	/// <summary>
+	/// Gets the Test Snapshots module for snapshot creation
+	/// </summary>
+	/// <remarks>
+	/// ✅ Phase 6.2 - IMPLEMENTED: Test snapshot management including:
+	/// - Create test snapshots for data preservation
+	/// - Time range specification (1-48 hours)
+	/// - Public and private snapshot support
+	/// - 30-day expiration period
+	/// </remarks>
+	TestSnapshotsModule TestSnapshots { get; }
+
 	// Additional modules will be added in future phases:
-	// Phase 5.3: Usage
-	// Phase 6: Emulation, Tags, Templates
+	// Phase 6.3+: Templates, Emulation, Endpoint Agents
 	// Phase 7: OpenTelemetry (future)
 }

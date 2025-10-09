@@ -47,7 +47,7 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		CredentialsModule.RegisterCredentialsServices(services, _refitSettings);
 		_serviceProvider = services.BuildServiceProvider();
 
-		// Initialize Phase 1, 2, 3, 4 & 5 API modules
+		// Initialize Phase 1, 2, 3, 4, 5 & 6 API modules
 		AccountManagement = new AccountManagementModule(_httpClient, _refitSettings);
 		Tests = new TestsModule(_httpClient, _refitSettings);
 		Agents = new AgentsModule(_httpClient, _refitSettings);
@@ -59,10 +59,11 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		EventDetection = new EventDetectionModule(_httpClient, _refitSettings);
 		Integrations = new IntegrationsModule(_httpClient, _refitSettings);
 		Credentials = _serviceProvider.GetRequiredService<ICredentials>();
+		Tags = new TagsModule(_httpClient, _refitSettings);
+		TestSnapshots = new TestSnapshotsModule(_httpClient, _refitSettings);
 
 		// Future modules will be initialized when implemented
-		// Phase 5: Usage
-		// Phase 6+: Emulation, Tags, Templates, etc.
+		// Phase 6.3+: Templates, Emulation, Endpoint Agents, etc.
 	}
 
 	/// <summary>
@@ -127,6 +128,31 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 	/// Gets the Credentials interface for managing transaction test credentials
 	/// </summary>
 	public ICredentials Credentials { get; private set; }
+
+	/// <summary>
+	/// Gets the Tags module for managing asset tags
+	/// </summary>
+	/// <remarks>
+	/// ✅ Phase 6.1 - IMPLEMENTED: Tag management including:
+	/// - Tag CRUD operations (create, read, update, delete)
+	/// - Bulk tag creation operations
+	/// - Tag assignment to tests, agents, dashboards, endpoint tests
+	/// - Bulk assignment and unassignment operations
+	/// - Optional expand parameter for assignments
+	/// </remarks>
+	public TagsModule Tags { get; private set; }
+
+	/// <summary>
+	/// Gets the Test Snapshots module for snapshot creation
+	/// </summary>
+	/// <remarks>
+	/// ✅ Phase 6.2 - IMPLEMENTED: Test snapshot management including:
+	/// - Create test snapshots for data preservation
+	/// - Time range specification (1-48 hours)
+	/// - Public and private snapshot support
+	/// - 30-day expiration period
+	/// </remarks>
+	public TestSnapshotsModule TestSnapshots { get; private set; }
 
 	/// <summary>
 	/// Gets the base URL for the ThousandEyes API
