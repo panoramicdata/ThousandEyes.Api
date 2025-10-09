@@ -189,7 +189,15 @@ public interface IThousandEyesClient
 	/// </remarks>
 	TemplatesModule Templates { get; }
 
-	// Additional modules will be added in future phases:
-	// Phase 6.4+: Emulation, Endpoint Agents
-	// Phase 7: OpenTelemetry (future)
+	/// <summary>
+	/// Gets the Emulation module for device emulation and user-agent management
+	/// </summary>
+	/// <remarks>
+	/// ✅ Phase 6.4 - IMPLEMENTED: Emulation functionality including:
+	/// - User-agent string retrieval for HTTP, pageload, and transaction tests
+	/// - Emulated device management for pageload and transaction tests
+	/// - Device creation with display specifications
+	/// - Support for desktop, laptop, phone, and tablet emulation
+	/// </remarks>
+	EmulationModule Emulation { get; }
 }

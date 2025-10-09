@@ -62,9 +62,10 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		Tags = new TagsModule(_httpClient, _refitSettings);
 		TestSnapshots = new TestSnapshotsModule(_httpClient, _refitSettings);
 		Templates = new TemplatesModule(_httpClient, _refitSettings);
+		Emulation = new EmulationModule(_httpClient, _refitSettings);
 
 		// Future modules will be initialized when implemented
-		// Phase 6.4+: Emulation, Endpoint Agents, etc.
+		// Phase 6.5+: Endpoint Agents, etc.
 	}
 
 	/// <summary>
@@ -167,6 +168,18 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 	/// - Support for tests, alert rules, dashboards, and filters
 	/// </remarks>
 	public TemplatesModule Templates { get; private set; }
+
+	/// <summary>
+	/// Gets the Emulation module for device emulation and user-agent management
+	/// </summary>
+	/// <remarks>
+	/// ✅ Phase 6.4 - IMPLEMENTED: Emulation functionality including:
+	/// - User-agent string retrieval for HTTP, pageload, and transaction tests
+	/// - Emulated device management for pageload and transaction tests
+	/// - Device creation with display specifications
+	/// - Support for desktop, laptop, phone, and tablet emulation
+	/// </remarks>
+	public EmulationModule Emulation { get; private set; }
 
 	/// <summary>
 	/// Gets the base URL for the ThousandEyes API
