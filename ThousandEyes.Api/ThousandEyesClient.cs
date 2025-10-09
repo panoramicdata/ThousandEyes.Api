@@ -61,9 +61,10 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		Credentials = _serviceProvider.GetRequiredService<ICredentials>();
 		Tags = new TagsModule(_httpClient, _refitSettings);
 		TestSnapshots = new TestSnapshotsModule(_httpClient, _refitSettings);
+		Templates = new TemplatesModule(_httpClient, _refitSettings);
 
 		// Future modules will be initialized when implemented
-		// Phase 6.3+: Templates, Emulation, Endpoint Agents, etc.
+		// Phase 6.4+: Emulation, Endpoint Agents, etc.
 	}
 
 	/// <summary>
@@ -153,6 +154,19 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 	/// - 30-day expiration period
 	/// </remarks>
 	public TestSnapshotsModule TestSnapshots { get; private set; }
+
+	/// <summary>
+	/// Gets the Templates module for template management and deployment
+	/// </summary>
+	/// <remarks>
+	/// ✅ Phase 6.3 - IMPLEMENTED: Template management including:
+	/// - Template CRUD operations (create, read, update, delete)
+	/// - Template deployment with user inputs
+	/// - Sharing settings management
+	/// - Infrastructure as code capabilities
+	/// - Support for tests, alert rules, dashboards, and filters
+	/// </remarks>
+	public TemplatesModule Templates { get; private set; }
 
 	/// <summary>
 	/// Gets the base URL for the ThousandEyes API

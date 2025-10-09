@@ -176,7 +176,20 @@ public interface IThousandEyesClient
 	/// </remarks>
 	TestSnapshotsModule TestSnapshots { get; }
 
+	/// <summary>
+	/// Gets the Templates module for template management and deployment
+	/// </summary>
+	/// <remarks>
+	/// ✅ Phase 6.3 - IMPLEMENTED: Template management including:
+	/// - Template CRUD operations (create, read, update, delete)
+	/// - Template deployment with user inputs
+	/// - Sharing settings management
+	/// - Infrastructure as code capabilities
+	/// - Support for tests, alert rules, dashboards, and filters
+	/// </remarks>
+	TemplatesModule Templates { get; }
+
 	// Additional modules will be added in future phases:
-	// Phase 6.3+: Templates, Emulation, Endpoint Agents
+	// Phase 6.4+: Emulation, Endpoint Agents
 	// Phase 7: OpenTelemetry (future)
 }
