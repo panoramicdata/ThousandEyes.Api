@@ -63,9 +63,10 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		TestSnapshots = new TestSnapshotsModule(_httpClient, _refitSettings);
 		Templates = new TemplatesModule(_httpClient, _refitSettings);
 		Emulation = new EmulationModule(_httpClient, _refitSettings);
+		EndpointAgents = new EndpointAgentsModule(_httpClient, _refitSettings);
 
-		// Future modules will be initialized when implemented
-		// Phase 6.5+: Endpoint Agents, etc.
+		// Phase 6 complete! All ThousandEyes API v7 modules implemented
+		// Phase 7 (OpenTelemetry) - future implementation
 	}
 
 	/// <summary>
@@ -180,6 +181,21 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 	/// - Support for desktop, laptop, phone, and tablet emulation
 	/// </remarks>
 	public EmulationModule Emulation { get; private set; }
+
+	/// <summary>
+	/// Gets the Endpoint Agents module for endpoint agent management
+	/// </summary>
+	/// <remarks>
+	/// ✅ Phase 6.5 - IMPLEMENTED: Endpoint agent management including:
+	/// - Comprehensive endpoint agent listing and filtering
+	/// - Agent lifecycle management (enable/disable/delete)
+	/// - Agent updates (name, license type)
+	/// - Connection string retrieval for agent installation
+	/// - Agent transfer between accounts
+	/// - Advanced filtering with multiple criteria
+	/// - Optional expansion for clients, VPN profiles, network interfaces
+	/// </remarks>
+	public EndpointAgentsModule EndpointAgents { get; private set; }
 
 	/// <summary>
 	/// Gets the base URL for the ThousandEyes API

@@ -200,4 +200,19 @@ public interface IThousandEyesClient
 	/// - Support for desktop, laptop, phone, and tablet emulation
 	/// </remarks>
 	EmulationModule Emulation { get; }
+
+	/// <summary>
+	/// Gets the Endpoint Agents module for endpoint agent management
+	/// </summary>
+	/// <remarks>
+	/// ✅ Phase 6.5 - IMPLEMENTED: Endpoint agent management including:
+	/// - Comprehensive endpoint agent listing and filtering
+	/// - Agent lifecycle management (enable/disable/delete)
+	/// - Agent updates (name, license type)
+	/// - Connection string retrieval for agent installation
+	/// - Agent transfer between accounts
+	/// - Advanced filtering with multiple criteria
+	/// - Optional expansion for clients, VPN profiles, network interfaces
+	/// </remarks>
+	EndpointAgentsModule EndpointAgents { get; }
 }
