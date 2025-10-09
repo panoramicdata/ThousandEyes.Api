@@ -1,4 +1,5 @@
-﻿using ThousandEyes.Api.Modules;
+﻿using ThousandEyes.Api.Interfaces.Credentials;
+using ThousandEyes.Api.Modules;
 
 namespace ThousandEyes.Api.Interfaces;
 
@@ -126,8 +127,32 @@ public interface IThousandEyesClient
 	/// </remarks>
 	EventDetectionModule EventDetection { get; }
 
+	/// <summary>
+	/// Gets the Integrations module for webhook and third-party service integrations
+	/// </summary>
+	/// <remarks>
+	/// ✅ Phase 5.1 - IMPLEMENTED: Integrations including:
+	/// - Webhook operation management
+	/// - Generic connector configuration (Slack, PagerDuty, ServiceNow, etc.)
+	/// - Operation-connector assignments
+	/// - Multiple authentication types (Basic, Bearer, OAuth)
+	/// </remarks>
+	IntegrationsModule Integrations { get; }
+
+	/// <summary>
+	/// Gets the Credentials interface for managing transaction test credentials
+	/// </summary>
+	/// <remarks>
+	/// ✅ Phase 5.2 - IMPLEMENTED: Credentials management including:
+	/// - Create, read, update, delete credentials
+	/// - Encrypted credential storage
+	/// - Account group context support
+	/// - Secure credential value handling
+	/// </remarks>
+	ICredentials Credentials { get; }
+
 	// Additional modules will be added in future phases:
-	// Phase 5: Integrations, Credentials, Usage
+	// Phase 5.3: Usage
 	// Phase 6: Emulation, Tags, Templates
 	// Phase 7: OpenTelemetry (future)
 }

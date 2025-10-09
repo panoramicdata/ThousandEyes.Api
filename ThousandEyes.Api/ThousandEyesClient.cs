@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.Logging.Abstractions;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Refit;
 using ThousandEyes.Api.Infrastructure;
 using ThousandEyes.Api.Interfaces;
+using ThousandEyes.Api.Interfaces.Credentials;
 using ThousandEyes.Api.Modules;
 
 namespace ThousandEyes.Api;
@@ -14,6 +16,7 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 	private readonly ThousandEyesClientOptions _options;
 	private readonly HttpClient _httpClient;
 	private readonly RefitSettings _refitSettings;
+	private readonly IServiceProvider _serviceProvider;
 	private bool _disposed;
 
 	/// <summary>
@@ -38,7 +41,13 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 			})
 		};
 
-		// Initialize Phase 1, 2, 3 & 4 API modules
+		// Set up dependency injection for Credentials module
+		var services = new ServiceCollection();
+		services.AddSingleton(_httpClient);
+		CredentialsModule.RegisterCredentialsServices(services, _refitSettings);
+		_serviceProvider = services.BuildServiceProvider();
+
+		// Initialize Phase 1, 2, 3, 4 & 5 API modules
 		AccountManagement = new AccountManagementModule(_httpClient, _refitSettings);
 		Tests = new TestsModule(_httpClient, _refitSettings);
 		Agents = new AgentsModule(_httpClient, _refitSettings);
@@ -48,10 +57,12 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		BgpMonitors = new BgpMonitorsModule(_httpClient, _refitSettings);
 		InternetInsights = new InternetInsightsModule(_httpClient, _refitSettings);
 		EventDetection = new EventDetectionModule(_httpClient, _refitSettings);
-		
+		Integrations = new IntegrationsModule(_httpClient, _refitSettings);
+		Credentials = _serviceProvider.GetRequiredService<ICredentials>();
+
 		// Future modules will be initialized when implemented
-		// Phase 3: Snapshots (remaining)
-		// Phase 5+: Integrations, Credentials, Usage, etc.
+		// Phase 5: Usage
+		// Phase 6+: Emulation, Tags, Templates, etc.
 	}
 
 	/// <summary>
@@ -106,6 +117,16 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 	/// Gets the Event Detection module for automated anomaly detection
 	/// </summary>
 	public EventDetectionModule EventDetection { get; private set; }
+
+	/// <summary>
+	/// Gets the Integrations module for webhook and third-party service integrations
+	/// </summary>
+	public IntegrationsModule Integrations { get; private set; }
+
+	/// <summary>
+	/// Gets the Credentials interface for managing transaction test credentials
+	/// </summary>
+	public ICredentials Credentials { get; private set; }
 
 	/// <summary>
 	/// Gets the base URL for the ThousandEyes API
@@ -189,6 +210,11 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		if (!_disposed && disposing)
 		{
 			_httpClient?.Dispose();
+			if (_serviceProvider is IDisposable disposable)
+			{
+				disposable.Dispose();
+			}
+
 			_disposed = true;
 		}
 	}
