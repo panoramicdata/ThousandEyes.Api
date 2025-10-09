@@ -16,25 +16,57 @@
 
 ---
 
-## ?? **What's Next: Phase 5.3 or Phase 6**
+## ?? **What's Next: Phase 6.1 - Tags API**
 
-### **Phase 5.3: Usage API** ?? **(NEXT OPTION)**
+### **Phase 6.1: Tags API** ? **READY TO START**
 
-**Status**: Not started - **? NO SPECIFICATION FOUND**
-**Estimated Timeline**: 1 week (if spec exists)
-**Complexity**: Low-Medium
-**Business Priority**: Medium (quota tracking)
-**?? Specification Status**: Not found in `Specification/` directory
+**Status**: Implementation plan created - ready to implement
+**Estimated Timeline**: 2-2.5 hours
+**Complexity**: Medium (more complex than Credentials, simpler than Integrations)
+**Business Priority**: Medium (asset tagging and metadata)
 
 #### **API Specification**
-- **File**: ? `Specification/usage_api_7_0_63.yaml` **NOT FOUND**
-- **Alternative**: May be part of another API or not available in v7.0.63
-- **Action**: Check ThousandEyes documentation or skip to Phase 6
+- **File**: ? `Specification/tags_api_7_0_63.yaml` **EXISTS**
+- **Implementation Plan**: ? `Specification/Phase6_Tags_Implementation_Plan.md` **CREATED**
+- **Base URL**: `https://api.thousandeyes.com/v7/tags`
 
-#### **Options if Spec Not Available**
-1. **Skip to Phase 6**: Move to Tags, Templates, Endpoint Agents, or Emulation APIs
-2. **Check Documentation**: Verify if Usage API exists in v7.0.63
-3. **Mark Phase 5 Complete**: Phase 5 = 5.1 (Integrations) + 5.2 (Credentials) ?
+#### **Planned Endpoints** (10 operations)
+```
+?? GET    /tags                    # List all tags (with expand)
+?? POST   /tags                    # Create single tag
+?? POST   /tags/bulk               # Create multiple tags
+?? GET    /tags/{id}               # Get tag details (with expand)
+?? PUT    /tags/{id}               # Update tag
+?? DELETE /tags/{id}               # Delete tag
+?? POST   /tags/{id}/assign        # Assign tag to objects
+?? POST   /tags/{id}/unassign      # Remove tag from objects
+?? POST   /tags/assign             # Bulk assign tags
+?? POST   /tags/unassign           # Bulk unassign tags
+```
+
+#### **Estimated Files**: ~15-17 files
+- **Models**: 10-12 files (TagInfo, Tag, Tags, assignments, bulk models, enums)
+- **Interfaces**: 2 files (ITags, ITagsRefitApi)
+- **Implementation**: 1 file (TagsImpl)
+- **Module**: 1 file (TagsModule)
+- **Client Integration**: 2 files (IThousandEyesClient, ThousandEyesClient)
+- **Tests**: 1 file (TagsModuleTests with 8-10 tests)
+
+#### **Estimated Tests**: 8-10 integration tests
+- **CRUD tests**: 6 tests (list, create, create bulk, get, update, delete)
+- **Assignment tests**: 4 tests (assign, unassign, bulk assign, bulk unassign)
+
+#### **Key Features**
+- ? Tag management with key/value pairs
+- ? Color-coded tags with icons
+- ? Support for different object types (test, dashboard, endpoint-test, v-agent)
+- ? Assignment/unassignment operations
+- ? Bulk operations for efficiency
+- ? Optional expand parameter for assignments
+- ? Access control (all, partner, system)
+
+#### **Next Session Action**
+Follow the implementation plan in `Specification/Phase6_Tags_Implementation_Plan.md` to implement the Tags API module.
 
 ---
 
@@ -47,6 +79,7 @@
 4. ? `Specification/Phase5_Credentials_Implementation_Plan.md` - Phase 5.2 implementation plan ? **NEW!**
 5. ? `Specification/Phase5_Credentials_Complete.md` - Phase 5.2 completion summary ? **NEW!**
 6. ? `Specification/ImplementationPlan.md` - Master plan (updated with Phase 4.3, 5.1, 5.2 complete)
+7. ? `Specification/Phase6_Tags_Implementation_Plan.md` - Phase 6.1 implementation plan ? **NEW!**
 
 ### **Code Files (Phase 5.1 - 28 files)**
 All files in `ThousandEyes.Api/Models/Integrations/`, `Interfaces/Integrations/`, `Refit/Integrations/`, `Implementations/Integrations/`, and module/tests.
@@ -54,29 +87,35 @@ All files in `ThousandEyes.Api/Models/Integrations/`, `Interfaces/Integrations/`
 ### **Code Files (Phase 5.2 - 11 files)** ? **NEW!**
 All files in `ThousandEyes.Api/Models/Credentials/`, `Interfaces/Credentials/`, `Refit/Credentials/`, `Implementations/Credentials/`, and module/tests.
 
+### **Code Files (Phase 6.1 - Tags API - 15 files)** ? **NEW!**
+All files in `ThousandEyes.Api/Models/Tags/`, `Interfaces/Tags/`, `Refit/Tags/`, `Implementations/Tags/`, and module/tests.
+
 ### **Client Integration**
 - ? `ThousandEyes.Api/ThousandEyesClient.cs` - Integrations and Credentials modules initialized
 - ? `ThousandEyes.Api/Interfaces/IThousandEyesClient.cs` - Integrations and Credentials properties added
+- ? `ThousandEyes.Api/ThousandEyesClient.cs` - Tags module initialized
+- ? `ThousandEyes.Api/Interfaces/IThousandEyesClient.cs` - Tags properties added
 
 ---
 
 ## ?? **How to Continue in Next Session**
 
-### **Option 1: Check for Phase 5.3 or Move to Phase 6**
+### **Option 1: Start Phase 6.1 - Tags API**
 
 **Copy/Paste This Into New Session:**
 
 ```
-Phase 5.2 (Credentials API) is now complete! 
-
-Next options:
-1. Check if Specification/usage_api_7_0_63.yaml exists for Phase 5.3
-2. If not, consider Phase 5 complete and move to Phase 6
+Phase 5.2 (Credentials API) is now complete! Phase 6.1 (Tags API) is ready to start!
 
 Please check:
-- List all specification files in Specification/ directory
-- If usage_api spec exists, implement Phase 5.3
-- If not, let's review Phase 6 options (Tags, Templates, Endpoint Agents, Emulation)
+- Phase 6.1 implementation plan: Specification/Phase6_Tags_Implementation_Plan.md
+- Tags API specification: Specification/tags_api_7_0_63.yaml
+
+Next steps:
+1. Implement Phase 6.1 based on the implementation plan
+2. Focus on Tags API module (ThousandEyes.Api/Models/Tags/, Interfaces/Tags/, Refit/Tags/, Implementations/Tags/)
+3. Update client integration (ThousandEyesClient.cs, IThousandEyesClient.cs)
+4. Run and verify integration tests (TagsModuleTests)
 
 Current project status: ~93% complete, 362 files, 11 API modules complete.
 
@@ -90,9 +129,10 @@ Files to reference:
 **Copy/Paste This Into New Session:**
 
 ```
-Phase 5 complete (Integrations + Credentials)! Let's start Phase 6.
+Phase 5 complete (Integrations + Credentials)! Phase 6.1 (Tags API) is ready to start!
 
-Please check for Phase 6 API specifications and implement Tags API first:
+Please check for Phase 6.1 API specifications and implement Tags API first:
+- Review Phase 6.1 implementation plan: Specification/Phase6_Tags_Implementation_Plan.md
 - Check if Specification/tags_api_7_0_63.yaml exists
 - Review endpoints and model requirements
 - Create implementation plan
@@ -168,7 +208,7 @@ public abstract class BaseType
 | Phase | Module | Status | Est. Files | Est. Tests | Priority |
 |-------|--------|--------|------------|------------|----------|
 | 5.3 | Usage | ? Planned | ~10-15 | ~5-6 | Medium |
-| 6.1 | Tags | ?? Future | ~10-15 | ~5-6 | Low |
+| **6.1** | **Tags** | ? **Ready to Start** | **~10-15** | **~5-6** | **Medium** |
 | 6.2 | Templates | ?? Future | ~15-20 | ~6-8 | Low |
 | 6.3 | Endpoint Agents | ?? Future | ~20-25 | ~8-10 | Low |
 | 6.4 | Emulation | ?? Future | ~15-20 | ~6-8 | Low |
@@ -231,9 +271,9 @@ public abstract class BaseType
 
 ## ? **Ready for Next Session**
 
-All progress saved. All tracking updated. Ready to continue Phase 5.3 (Usage if spec exists) or Phase 6 in next session.
+All progress saved. All tracking updated. Ready to continue Phase 6.1 (Tags API) in next session.
 
-**Recommendation**: Check for usage_api spec first. If not available, Phase 5 is complete and we can move to Phase 6 (Tags, Templates, etc.).
+**Recommendation**: Follow the implementation plan for Phase 6.1 Tags API. All necessary files and specifications are available.
 
 ---
 
