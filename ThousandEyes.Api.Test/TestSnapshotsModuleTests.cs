@@ -18,7 +18,7 @@ public class TestSnapshotsModuleTests(IntegrationTestFixture fixture) : TestBase
 		var testsResult = await testsModule.Tests.GetAllAsync(aid: null, CancellationToken);
 		testsResult.Should().NotBeNull();
 		testsResult.TestsList.Should().NotBeEmpty();
-		
+
 		var testId = testsResult.TestsList.First().TestId;
 		testId.Should().NotBeNullOrEmpty();
 
@@ -57,7 +57,7 @@ public class TestSnapshotsModuleTests(IntegrationTestFixture fixture) : TestBase
 		var testsResult = await testsModule.Tests.GetAllAsync(aid: null, CancellationToken);
 		testsResult.Should().NotBeNull();
 		testsResult.TestsList.Should().NotBeEmpty();
-		
+
 		var testId = testsResult.TestsList.First().TestId;
 
 		var request = new SnapshotRequest
@@ -97,7 +97,7 @@ public class TestSnapshotsModuleTests(IntegrationTestFixture fixture) : TestBase
 		var testsResult = await testsModule.Tests.GetAllAsync(aid: null, CancellationToken);
 		testsResult.Should().NotBeNull();
 		testsResult.TestsList.Should().NotBeEmpty();
-		
+
 		var testId = testsResult.TestsList.First().TestId;
 
 		var request = new SnapshotRequest
@@ -134,7 +134,7 @@ public class TestSnapshotsModuleTests(IntegrationTestFixture fixture) : TestBase
 		var testsResult = await testsModule.Tests.GetAllAsync(aid: null, CancellationToken);
 		testsResult.Should().NotBeNull();
 		testsResult.TestsList.Should().NotBeEmpty();
-		
+
 		var testId = testsResult.TestsList.First().TestId;
 
 		var request = new SnapshotRequest

@@ -142,7 +142,9 @@ public class IntegrationsModuleTests(IntegrationTestFixture fixture) : TestBase(
 			StatusValue = OperationStatus.Pending
 		};
 
-		var created = await ThousandEyesClient.Integrations.WebhookOperations.CreateAsync(
+		var created = await ThousandEyesClient
+			.Integrations
+			.WebhookOperations.CreateAsync(
 			operation,
 			aid: null,
 			CancellationToken);
