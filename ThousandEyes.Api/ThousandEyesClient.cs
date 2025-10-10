@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Refit;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using ThousandEyes.Api.Infrastructure;
 using ThousandEyes.Api.Interfaces;
 using ThousandEyes.Api.Interfaces.Credentials;
@@ -32,13 +34,20 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		_httpClient = CreateHttpClient();
 
 		// Create Refit settings for proper JSON serialization
+		// Configure JsonStringEnumConverter with CamelCase naming policy to serialize enums as lowercase strings
+		var jsonOptions = new JsonSerializerOptions
+		{
+			PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+			PropertyNameCaseInsensitive = true,
+			Converters =
+			{
+				new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
+			}
+		};
+
 		_refitSettings = new RefitSettings
 		{
-			ContentSerializer = new SystemTextJsonContentSerializer(new System.Text.Json.JsonSerializerOptions
-			{
-				PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
-				PropertyNameCaseInsensitive = true
-			})
+			ContentSerializer = new SystemTextJsonContentSerializer(jsonOptions)
 		};
 
 		// Set up dependency injection for Credentials module

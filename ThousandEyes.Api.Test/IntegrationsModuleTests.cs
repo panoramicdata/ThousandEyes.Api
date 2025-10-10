@@ -1,4 +1,6 @@
 using AwesomeAssertions;
+using Refit;
+using ThousandEyes.Api.Exceptions;
 using ThousandEyes.Api.Models.Integrations;
 
 namespace ThousandEyes.Api.Test;
@@ -35,23 +37,32 @@ public class IntegrationsModuleTests(IntegrationTestFixture fixture) : TestBase(
 		};
 
 		// Act
-		var result = await ThousandEyesClient.Integrations.WebhookOperations.CreateAsync(
-			operation,
-			aid: null,
-			CancellationToken);
-
-		// Assert
-		_ = result.Should().NotBeNull();
-		_ = result.Id.Should().NotBeNullOrWhiteSpace();
-		_ = result.Name.Should().Be(operation.Name);
-
-		// Cleanup
-		if (result.Id != null)
+		try
 		{
-			await ThousandEyesClient.Integrations.WebhookOperations.DeleteAsync(
-				result.Id,
+			var result = await ThousandEyesClient.Integrations.WebhookOperations.CreateAsync(
+				operation,
 				aid: null,
 				CancellationToken);
+
+			// Assert
+			_ = result.Should().NotBeNull();
+			_ = result.Id.Should().NotBeNullOrWhiteSpace();
+			_ = result.Name.Should().Be(operation.Name);
+
+			// Cleanup
+			if (result.Id != null)
+			{
+				await ThousandEyesClient.Integrations.WebhookOperations.DeleteAsync(
+					result.Id,
+					aid: null,
+					CancellationToken);
+			}
+		}
+		catch (Exception e)
+		{
+			// Test may fail if rate limit exceeded or permissions insufficient
+			// This is expected in some environments
+			throw new Exception("CreateWebhookOperation test failed", e);
 		}
 	}
 
@@ -295,5 +306,54 @@ public class IntegrationsModuleTests(IntegrationTestFixture fixture) : TestBase(
 			createdConn.Id!,
 			aid: null,
 			CancellationToken);
+	}
+
+	[Fact]
+	public async Task CreateWebhookOperation_WithMissingRequiredFields_ThrowsThousandEyesBadRequestException()
+	{
+		// Arrange - Create an operation with missing required fields to trigger 400 Bad Request
+		// Note: We're testing that the exception is properly parsed, not that validation works
+		var operation = new WebhookOperation
+		{
+			Name = "", // Empty name should cause validation error
+			CategoryValue = OperationCategory.Alerts,
+			StatusValue = OperationStatus.Pending
+		};
+
+		// Act & Assert
+		var exception = await Assert.ThrowsAsync<ThousandEyesBadRequestException>(
+			async () => await ThousandEyesClient.Integrations.WebhookOperations.CreateAsync(
+				operation,
+				aid: null,
+				CancellationToken));
+
+		// Verify exception properties are properly populated
+		_ = exception.Should().NotBeNull();
+		_ = exception.StatusCode.Should().Be(400);
+		_ = exception.Message.Should().NotBeNullOrWhiteSpace();
+		
+		// Verify Details dictionary contains the error response fields
+		_ = exception.Details.Should().NotBeNull();
+		_ = exception.Details.Should().ContainKey("status");
+		_ = exception.Details.Should().ContainKey("message");
+		_ = exception.Details.Should().ContainKey("path");
+		
+		// Verify the path is correct
+		_ = exception.Details["path"].Should().Be("/v7/operations/webhooks");
+		
+		// Verify StatusCode in Details matches the exception property
+		_ = exception.Details["status"].Should().Be(400);
+		
+		// Verify error code is populated
+		_ = exception.ErrorCode.Should().NotBeNullOrWhiteSpace();
+		
+		// Note: InnerException is null when ErrorHandler intercepts the error response
+		// before Refit can throw an ApiException. This is the correct behavior.
+		// If we needed to preserve the original ApiException, we would have to let Refit throw first,
+		// but that would complicate the error handling logic.
+		
+		// Verify request context is captured
+		_ = exception.RequestUrl.Should().Contain("/v7/operations/webhooks");
+		_ = exception.RequestMethod.Should().Be("POST");
 	}
 }

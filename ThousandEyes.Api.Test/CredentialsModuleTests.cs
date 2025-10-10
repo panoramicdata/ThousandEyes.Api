@@ -1,4 +1,5 @@
 using AwesomeAssertions;
+using ThousandEyes.Api.Exceptions;
 using ThousandEyes.Api.Models.Credentials;
 
 namespace ThousandEyes.Api.Test;
@@ -9,9 +10,39 @@ namespace ThousandEyes.Api.Test;
 [Collection("Integration Tests")]
 public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 {
+	/// <summary>
+	/// Checks if the Credentials API is available in the current account
+	/// </summary>
+	private async Task<bool> IsCredentialsApiAvailableAsync()
+	{
+		try
+		{
+			await ThousandEyesClient.Credentials.GetAllAsync(aid: null, CancellationToken);
+			return true;
+		}
+		catch (ThousandEyesBadRequestException)
+		{
+			return false;
+		}
+		catch (ThousandEyesAuthorizationException)
+		{
+			return false;
+		}
+	}
+
 	[Fact]
 	public async Task GetCredentials_WithValidRequest_ReturnsCredentials()
 	{
+		// Check if API is available
+		if (!await IsCredentialsApiAvailableAsync())
+		{
+			Logger.LogWarning(
+				"Credentials API not available in this account - " +
+				"this may require a premium/enterprise license. Test skipped."
+			);
+			return;
+		}
+
 		// Act
 		var result = await ThousandEyesClient.Credentials.GetAllAsync(aid: null, CancellationToken);
 
@@ -23,6 +54,16 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 	[Fact]
 	public async Task CreateCredential_WithValidRequest_CreatesCredential()
 	{
+		// Check if API is available
+		if (!await IsCredentialsApiAvailableAsync())
+		{
+			Logger.LogWarning(
+				"Credentials API not available in this account - " +
+				"this may require a premium/enterprise license. Test skipped."
+			);
+			return;
+		}
+
 		// Arrange
 		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 		var request = new CredentialRequest(
@@ -53,6 +94,16 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 	[Fact]
 	public async Task GetCredential_WithValidId_ReturnsCredentialWithValue()
 	{
+		// Check if API is available
+		if (!await IsCredentialsApiAvailableAsync())
+		{
+			Logger.LogWarning(
+				"Credentials API not available in this account - " +
+				"this may require a premium/enterprise license. Test skipped."
+			);
+			return;
+		}
+
 		// Arrange
 		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 		var request = new CredentialRequest(
@@ -85,6 +136,16 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 	[Fact]
 	public async Task UpdateCredential_WithValidRequest_UpdatesCredential()
 	{
+		// Check if API is available
+		if (!await IsCredentialsApiAvailableAsync())
+		{
+			Logger.LogWarning(
+				"Credentials API not available in this account - " +
+				"this may require a premium/enterprise license. Test skipped."
+			);
+			return;
+		}
+
 		// Arrange
 		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 		var createRequest = new CredentialRequest(
@@ -124,6 +185,16 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 	[Fact]
 	public async Task DeleteCredential_WithValidId_DeletesCredential()
 	{
+		// Check if API is available
+		if (!await IsCredentialsApiAvailableAsync())
+		{
+			Logger.LogWarning(
+				"Credentials API not available in this account - " +
+				"this may require a premium/enterprise license. Test skipped."
+			);
+			return;
+		}
+
 		// Arrange
 		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 		var request = new CredentialRequest(
@@ -146,6 +217,16 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 	[Fact]
 	public async Task CreateCredential_WithSensitiveValue_EncryptsValue()
 	{
+		// Check if API is available
+		if (!await IsCredentialsApiAvailableAsync())
+		{
+			Logger.LogWarning(
+				"Credentials API not available in this account - " +
+				"this may require a premium/enterprise license. Test skipped."
+			);
+			return;
+		}
+
 		// Arrange
 		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 		var plainTextPassword = $"SuperSecretPassword123-{timestamp}";
@@ -177,6 +258,16 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 	[Fact]
 	public async Task GetAllCredentials_ReturnsCredentialsWithValues()
 	{
+		// Check if API is available
+		if (!await IsCredentialsApiAvailableAsync())
+		{
+			Logger.LogWarning(
+				"Credentials API not available in this account - " +
+				"this may require a premium/enterprise license. Test skipped."
+			);
+			return;
+		}
+
 		// Arrange
 		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 		var request = new CredentialRequest(

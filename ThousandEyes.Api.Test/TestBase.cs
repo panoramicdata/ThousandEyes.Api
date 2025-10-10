@@ -16,7 +16,7 @@ public abstract class TestBase(IntegrationTestFixture fixture)
 	protected readonly IntegrationTestFixture _fixture = fixture;
 
 	/// <summary>
-	/// Gets the Halo API client for testing
+	/// Gets the API client for testing
 	/// </summary>
 	protected IThousandEyesClient ThousandEyesClient { get; } = fixture.GetThousandEyesClient();
 
