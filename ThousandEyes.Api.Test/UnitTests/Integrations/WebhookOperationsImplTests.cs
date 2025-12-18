@@ -2,7 +2,6 @@ using AwesomeAssertions;
 using Moq;
 using Refit;
 using System.Net;
-using ThousandEyes.Api.Exceptions;
 using ThousandEyes.Api.Implementations.Integrations;
 using ThousandEyes.Api.Models.Integrations;
 using ThousandEyes.Api.Refit.Integrations;
@@ -110,12 +109,14 @@ public class WebhookOperationsImplTests
 		_ = _refitApi.Setup(x => x.CreateAsync(operation, null, cancellationToken))
 			.ThrowsAsync(apiException);
 
-		// Act
-		var exception = await Assert.ThrowsAsync<ApiException>(
-			async () => await _sut.CreateAsync(operation, null, cancellationToken));
+		// Act & Assert - Verify the Refit ApiException is thrown with correct properties
+		var act = () => _sut.CreateAsync(operation, null, cancellationToken);
 
-		// Assert - Verify the Refit ApiException has the correct properties
-		_ = exception.Should().NotBeNull();
+		// The implementation doesn't convert Refit exceptions to ThousandEyes exceptions,
+		// so we expect the Refit ApiException to propagate
+		var exceptionAssertions = await act.Should().ThrowAsync<ApiException>();
+		var exception = exceptionAssertions.Which;
+
 		_ = exception.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 		_ = exception.Content.Should().Contain("JSON parse error");
 		_ = exception.Content.Should().Contain("Invalid value for Category");

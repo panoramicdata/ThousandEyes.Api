@@ -1,5 +1,4 @@
 using AwesomeAssertions;
-using Refit;
 using ThousandEyes.Api.Exceptions;
 using ThousandEyes.Api.Models.Integrations;
 
@@ -321,37 +320,38 @@ public class IntegrationsModuleTests(IntegrationTestFixture fixture) : TestBase(
 		};
 
 		// Act & Assert
-		var exception = await Assert.ThrowsAsync<ThousandEyesBadRequestException>(
-			async () => await ThousandEyesClient.Integrations.WebhookOperations.CreateAsync(
+		var act = () => ThousandEyesClient.Integrations.WebhookOperations.CreateAsync(
 				operation,
 				aid: null,
-				CancellationToken));
+				CancellationToken);
+
+		var exception = (await act.Should().ThrowAsync<ThousandEyesBadRequestException>()).Which;
 
 		// Verify exception properties are properly populated
 		_ = exception.Should().NotBeNull();
 		_ = exception.StatusCode.Should().Be(400);
 		_ = exception.Message.Should().NotBeNullOrWhiteSpace();
-		
+
 		// Verify Details dictionary contains the error response fields
 		_ = exception.Details.Should().NotBeNull();
 		_ = exception.Details.Should().ContainKey("status");
 		_ = exception.Details.Should().ContainKey("message");
 		_ = exception.Details.Should().ContainKey("path");
-		
+
 		// Verify the path is correct
 		_ = exception.Details["path"].Should().Be("/v7/operations/webhooks");
-		
+
 		// Verify StatusCode in Details matches the exception property
 		_ = exception.Details["status"].Should().Be(400);
-		
+
 		// Verify error code is populated
 		_ = exception.ErrorCode.Should().NotBeNullOrWhiteSpace();
-		
+
 		// Note: InnerException is null when ErrorHandler intercepts the error response
 		// before Refit can throw an ApiException. This is the correct behavior.
 		// If we needed to preserve the original ApiException, we would have to let Refit throw first,
 		// but that would complicate the error handling logic.
-		
+
 		// Verify request context is captured
 		_ = exception.RequestUrl.Should().Contain("/v7/operations/webhooks");
 		_ = exception.RequestMethod.Should().Be("POST");

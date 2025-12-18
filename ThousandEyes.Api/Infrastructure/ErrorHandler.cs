@@ -1,8 +1,8 @@
-using ThousandEyes.Api.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Refit;
 using System.Text.Json;
+using ThousandEyes.Api.Exceptions;
 
 namespace ThousandEyes.Api.Infrastructure;
 
@@ -21,7 +21,7 @@ internal sealed class ErrorHandler(ILogger? logger) : DelegatingHandler
 	/// <returns>The HTTP response message</returns>
 	protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 	{
-		HttpResponseMessage? response = null;
+		HttpResponseMessage? response;
 		try
 		{
 			response = await base.SendAsync(request, cancellationToken);
