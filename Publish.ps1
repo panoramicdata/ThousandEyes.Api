@@ -233,15 +233,16 @@ function Get-VersionInput {
 
     Write-ColorOutput "`n?? Version Information" $Magenta
 
-    # Use nbgv to get the automatically determined version
-    Write-Step "Getting version from nbgv (Nerdbank.GitVersioning)..."
+    # Use Nerdbank.GitVersioning via MSBuild (no nbgv CLI dependency) to determine the version
+    Write-Step "Getting version from Nerdbank.GitVersioning..."
     try {
-        $nbgvOutput = nbgv get-version --format json 2>$null
+        $proj = Join-Path $PSScriptRoot 'ThousandEyes.Api/ThousandEyes.Api.csproj'
+        $nbgvOutput = dotnet build $proj -t:GetBuildVersion --getProperty:Version --getProperty:AssemblyVersion --getProperty:NuGetPackageVersion -nologo -v:quiet -p:TreatWarningsAsErrors=false
         if ($LASTEXITCODE -ne 0) {
-            throw "nbgv command failed"
+            throw "Failed to determine version from Nerdbank.GitVersioning"
         }
 
-        $versionInfo = $nbgvOutput | ConvertFrom-Json
+        $versionInfo = ($nbgvOutput | ConvertFrom-Json).Properties
         $autoVersion = $versionInfo.NuGetPackageVersion
 
         Write-ColorOutput "Automatically determined version: $autoVersion" $Green
@@ -345,11 +346,11 @@ function Invoke-GitTag {
 
     Write-Success "Tag '$tag' created and pushed successfully!"
     Write-ColorOutput "?? GitHub Actions workflow will now:" $Magenta
-    Write-ColorOutput "  • Build the solution" $Cyan
-    Write-ColorOutput "  • Run tests" $Cyan
-    Write-ColorOutput "  • Pack NuGet package" $Cyan
-    Write-ColorOutput "  • Publish to NuGet.org" $Cyan
-    Write-ColorOutput "  • Create GitHub release" $Cyan
+    Write-ColorOutput "  ï¿½ Build the solution" $Cyan
+    Write-ColorOutput "  ï¿½ Run tests" $Cyan
+    Write-ColorOutput "  ï¿½ Pack NuGet package" $Cyan
+    Write-ColorOutput "  ï¿½ Publish to NuGet.org" $Cyan
+    Write-ColorOutput "  ï¿½ Create GitHub release" $Cyan
 
     $actionsUrl = "https://github.com/panoramicdata/ThousandEyes.Api/actions"
     Write-ColorOutput "`n?? Monitor the build at: $actionsUrl" $Blue
