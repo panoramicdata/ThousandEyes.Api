@@ -31,6 +31,7 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageIcon>Icon.png</PackageIcon>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<NoWarn>$(NoWarn);CA1873</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>
