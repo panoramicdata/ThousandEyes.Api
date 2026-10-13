@@ -1,8 +1,9 @@
 {
-	"version": "7.0",
-	"versionHeightOffset": 26,
-	"publicReleaseRefSpec": [
-		"^refs/heads/main$",
-		"^refs/tags/v7\\.\\d+\\.\\d+"
-	]
+  "version": "7.0",
+  "versionHeightOffset": 26,
+  "publicReleaseRefSpec": [
+    "^refs/heads/main$",
+    "^refs/tags/v7\\.\\d\u002B\\.\\d\u002B",
+    "^refs/tags/\\d\u002B\\.\\d\u002B\\.\\d\u002B$"
+  ]
 }
