@@ -1,414 +1,160 @@
-#Requires -Version 7.0
-
-<#
-.SYNOPSIS
-    Builds, tests, and publishes the ThousandEyes API NuGet package.
-
-.DESCRIPTION
-    This script performs the following operations:
-    1. Cleans and restores the solution
-    2. Builds the solution in Release configuration
-    3. Runs all unit and integration tests with 100% success rate requirement
-    4. Prompts for version tag if tests pass
-    5. Creates and pushes the version tag to trigger CI/CD pipeline
-    6. The GitHub Actions workflow will then build and publish to NuGet.org
-
-.PARAMETER Version
-    The version to tag and publish (e.g., "1.0.0", "2.1.3-beta")
-    If not provided, will prompt for input.
-
-.PARAMETER SkipTests
-    Skip running tests (not recommended for production releases).
-
-.PARAMETER DryRun
-    Perform all operations except creating and pushing the git tag.
-
-.EXAMPLE
-    .\Publish.ps1
-    Prompts for version and runs full publish process.
-
-.EXAMPLE
-    .\Publish.ps1 -Version "1.2.0"
-    Publishes version 1.2.0 after running tests.
-
-.EXAMPLE
-    .\Publish.ps1 -Version "2.0.0-beta" -DryRun
-    Tests the process without actually creating tags.
-#>
-
-[CmdletBinding()]
 param(
-    [Parameter(Mandatory = $false)]
-    [string]$Version,
-
-    [Parameter(Mandatory = $false)]
-    [switch]$SkipTests,
-
-    [Parameter(Mandatory = $false)]
-    [switch]$DryRun
+	# Skips waiting for the release run. The tag is still pushed, but nothing confirms a package
+	# reached nuget.org; use it only if you are checking the run yourself.
+	[switch]$SkipPublishVerification
 )
 
-# Script configuration
-$ErrorActionPreference = "Stop"
-$ProgressPreference = "SilentlyContinue"
+$InformationPreference = 'Continue'
 
-# ANSI color codes for better output
-$Red = "`e[31m"
-$Green = "`e[32m"
-$Yellow = "`e[33m"
-$Blue = "`e[34m"
-$Magenta = "`e[35m"
-$Cyan = "`e[36m"
-$Reset = "`e[0m"
-
-function Write-ColorOutput {
-    param(
-        [string]$Message,
-        [string]$Color = $Reset
-    )
-    # Use Write-Information for display output to avoid capturing in variables
-    # This satisfies Codacy while maintaining proper PowerShell output behavior
-    $InformationPreference = 'Continue'
-    Write-Information "$Color$Message$Reset" -InformationAction Continue
+# Ensure we are on the main branch
+$branch = git rev-parse --abbrev-ref HEAD
+if ($branch -ne 'main') {
+	Write-Error "Not on main branch. Current branch: $branch"
+	exit 1
 }
 
-function Write-Step {
-    param([string]$Message)
-    Write-ColorOutput "?? $Message" $Blue
+# Ensure working tree is clean
+$status = git status --porcelain
+if ($status) {
+	Write-Error "Working tree is not clean."
+	exit 1
 }
 
-function Write-Success {
-    param([string]$Message)
-    Write-ColorOutput "? $Message" $Green
+# Ensure we are up to date with origin
+git fetch origin main --quiet
+$behind = git rev-list --count HEAD..origin/main
+if ($behind -gt 0) {
+	Write-Error "Local branch is behind origin/main by $behind commit(s)."
+	exit 1
 }
 
-function Write-Warning {
-    param([string]$Message)
-    Write-ColorOutput "??  $Message" $Yellow
+# Checked before anything is pushed, because pushing the tag is the step that cannot be taken back.
+# Without the GitHub CLI there is no way to confirm the release run succeeded, and an unverified
+# publish is how repositories end up months behind their newest tag with nobody noticing.
+if (-not $SkipPublishVerification) {
+	$gh = Get-Command gh -ErrorAction SilentlyContinue
+	if (-not $gh) {
+		Write-Error "The GitHub CLI (gh) is required to verify that the package publishes. Install it from https://cli.github.com, or re-run with -SkipPublishVerification to publish without verification."
+		exit 1
+	}
+
+	# This only reads the stored login. The "status" subcommand makes an API call instead, so a GitHub
+	# rate limit makes it report "The token in keyring is invalid" for a perfectly good login.
+	gh auth token 2>&1 | Out-Null
+	if ($LASTEXITCODE -ne 0) {
+		Write-Error "The GitHub CLI has no stored login. Run 'gh auth login', or re-run with -SkipPublishVerification to publish without verification."
+		exit 1
+	}
 }
 
-function Write-Error {
-    param([string]$Message)
-    Write-ColorOutput "? $Message" $Red
+# Get version from Nerdbank.GitVersioning via the project's MSBuild targets (the
+# referenced NuGet package), so this does not depend on the global 'nbgv' CLI tool
+# being installed or on PATH.
+#
+# Only projects git tracks in this checkout are considered. A recursive file search also walks
+# git-ignored folders such as .claude/worktrees/, where each agent worktree holds a full checkout
+# on its own branch: versioning one of those yields a version that is not a public release.
+$packableProject = git ls-files '*.csproj' |
+	Where-Object { (Test-Path $_) -and (Get-Content $_ -Raw) -match 'Nerdbank\.GitVersioning' } |
+	Select-Object -First 1
+if (-not $packableProject) {
+	Write-Error "Could not find a tracked project referencing Nerdbank.GitVersioning."
+	exit 1
+}
+$buildOutput = dotnet build $packableProject -t:GetBuildVersion --getProperty:NuGetPackageVersion -nologo -v:quiet -p:TreatWarningsAsErrors=false
+if ($LASTEXITCODE -ne 0) {
+	Write-Error "Failed to determine version from Nerdbank.GitVersioning.`n$buildOutput"
+	exit 1
+}
+$version = ($buildOutput | Select-Object -Last 1).ToString().Trim()
+Write-Information "Version: $version"
+
+# On main the version must be a public release (1.2.3). Anything else, such as 1.2.3-gabcdef,
+# would be tagged with a name that misses publicReleaseRefSpec and publish a prerelease.
+if ($version -notmatch '^\d+\.\d+\.\d+$') {
+	Write-Error "Version '$version' is not a public-release version (expected major.minor.patch). Not tagging."
+	exit 1
 }
 
-function Test-GitRepository {
-    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-        throw "Git is not installed or not in PATH"
-    }
-
-    if (-not (Test-Path ".git")) {
-        throw "Not in a git repository"
-    }
-
-    # Check for uncommitted changes
-    $status = git status --porcelain
-    if ($status) {
-        Write-Warning "Uncommitted changes detected:"
-        git status --short
-        $continue = Read-Host "Continue anyway? (y/N)"
-        if ($continue -ne "y" -and $continue -ne "Y") {
-            throw "Aborted due to uncommitted changes"
-        }
-    }
+# Check if tag already exists
+$existingTag = git tag -l $version
+if ($existingTag) {
+	Write-Error "Tag $version already exists."
+	exit 1
 }
 
-function Test-DotNetVersion {
-    if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
-        throw ".NET CLI is not installed or not in PATH"
-    }
+# Create and push tag. A push can fail transiently (a dropped connection, a DNS error), so it is
+# retried, and the tag is never reported as pushed unless git says it was. If it still fails, the
+# local tag is removed, so a re-run starts clean instead of stopping at "Tag already exists".
+git tag $version
+$pushed = $false
+for ($attempt = 1; $attempt -le 3 -and -not $pushed; $attempt++) {
+	git push origin $version
+	if ($LASTEXITCODE -eq 0) {
+		$pushed = $true
+	}
+	elseif ($attempt -lt 3) {
+		Write-Warning "Pushing tag $version failed (attempt $attempt of 3); retrying."
+		Start-Sleep -Seconds 5
+	}
+}
+if (-not $pushed) {
+	git tag -d $version | Out-Null
+	Write-Error "Could not push tag $version to origin, so nothing was published. The local tag has been removed; re-run when the connection is back."
+	exit 1
+}
+Write-Information "Tag $version pushed."
 
-    $dotnetVersion = dotnet --version
-    Write-ColorOutput "Using .NET version: $dotnetVersion" $Cyan
-
-    # Check if .NET 10 is available (project targets .NET 9/.NET 10)
-    $sdks = dotnet --list-sdks
-    $hasNet10 = $sdks | Where-Object { $_ -match "10\." }
-    if (-not $hasNet10) {
-        Write-Warning ".NET 10 SDK not found. Project targets .NET 9/.NET 10."
-        Write-ColorOutput "Available SDKs:" $Cyan
-        $sdks | ForEach-Object { Write-ColorOutput "  $_" $Cyan }
-    }
+if ($SkipPublishVerification) {
+	Write-Warning "Not waiting for the release run (-SkipPublishVerification). Nothing has confirmed that a package reached nuget.org."
+	exit 0
 }
 
-function Invoke-Build {
-    Write-Step "Cleaning solution..."
-    dotnet clean --configuration Release
-    if ($LASTEXITCODE -ne 0) { throw "Clean failed" }
+# The repository the run belongs to, read from the remote rather than assumed.
+$originUrl = git remote get-url origin
+$repoFullName = ($originUrl -replace '^.*github\.com[:/]', '') -replace '\.git$', ''
 
-    Write-Step "Restoring NuGet packages..."
-    dotnet restore
-    if ($LASTEXITCODE -ne 0) { throw "Restore failed" }
+Write-Information "Waiting for the release run for $version..."
 
-    Write-Step "Building solution in Release configuration..."
-    dotnet build --configuration Release --no-restore
-    if ($LASTEXITCODE -ne 0) { throw "Build failed" }
-
-    Write-Success "Build completed successfully"
+# The run takes a few seconds to appear after the tag push.
+$runId = $null
+for ($attempt = 1; $attempt -le 12 -and -not $runId; $attempt++) {
+	Start-Sleep -Seconds 5
+	# A tag push can start several workflows; only the release workflow's run is the one to watch.
+	$runListJson = gh run list --repo $repoFullName --workflow ci.yml --branch $version --limit 1 --json databaseId 2>$null
+	if ($LASTEXITCODE -eq 0 -and $runListJson) {
+		$runList = $runListJson | ConvertFrom-Json
+		if ($runList.Count -gt 0) { $runId = $runList[0].databaseId }
+	}
 }
 
-function Invoke-Tests {
-    if ($SkipTests) {
-        Write-Warning "Skipping tests as requested"
-        return
-    }
-
-    Write-Step "Running all tests..."
-    Write-ColorOutput "?? Test execution started..." $Cyan
-
-    # Run tests with detailed output and capture both stdout and stderr
-    $testResult = dotnet test --configuration Release --no-build --verbosity normal 2>&1
-    $testExitCode = $LASTEXITCODE
-
-    # Display the test output
-    $testResult | ForEach-Object { Write-Output $_ }
-
-    if ($testExitCode -ne 0) {
-        Write-Error "Tests failed with exit code $testExitCode"
-        throw "Test execution failed"
-    }
-
-    # Look for the test summary in the output
-    $summaryFound = $false
-    $totalTests = 0
-    $failedTests = 0
-    $succeededTests = 0
-    $skippedTests = 0
-
-    # Parse the test output for results
-    foreach ($line in $testResult) {
-        if ($line -match "Test run summary:\s*(\w+)") {
-            $summaryFound = $true
-            $testStatus = $Matches[1]
-            if ($testStatus -eq "Failed") {
-                Write-Error "Test run summary indicates failure"
-                throw "Test execution failed"
-            }
-        }
-
-        if ($line -match "total:\s*(\d+)") {
-            $totalTests = [int]$Matches[1]
-        }
-
-        if ($line -match "failed:\s*(\d+)") {
-            $failedTests = [int]$Matches[1]
-        }
-
-        if ($line -match "succeeded:\s*(\d+)") {
-            $succeededTests = [int]$Matches[1]
-        }
-
-        if ($line -match "skipped:\s*(\d+)") {
-            $skippedTests = [int]$Matches[1]
-        }
-    }
-
-    # Validate results
-    if ($failedTests -gt 0) {
-        Write-Error "Found $failedTests failed tests - 100% success rate required"
-        throw "Test failures detected"
-    }
-
-    if ($skippedTests -gt 0) {
-        Write-Warning "Found $skippedTests skipped tests"
-        $continue = Read-Host "Skipped tests found. Continue with publish? (y/N)"
-        if ($continue -ne "y" -and $continue -ne "Y") {
-            throw "Aborted due to skipped tests"
-        }
-    }
-
-    # If we got here and exit code was 0, tests passed
-    Write-Success "All tests passed! ?"
-    if ($totalTests -gt 0) {
-        Write-ColorOutput "Test Results: $succeededTests/$totalTests tests succeeded, $failedTests failed, $skippedTests skipped" $Green
-    } else {
-        Write-ColorOutput "Test execution completed successfully" $Green
-    }
+if (-not $runId) {
+	Write-Error "Tag $version was pushed but no run appeared for it. Check https://github.com/$repoFullName/actions: the workflow may not trigger on tags, or GitHub may be rate-limiting the lookups."
+	exit 1
 }
 
-function Get-VersionInput {
-    if ($Version) {
-        return $Version
-    }
+Write-Information "Run: https://github.com/$repoFullName/actions/runs/$runId"
+gh run watch $runId --repo $repoFullName --exit-status --interval 20
+$runExitCode = $LASTEXITCODE
 
-    Write-ColorOutput "`n?? Version Information" $Magenta
+if ($runExitCode -ne 0) {
+	Write-Information ""
+	Write-Warning "The release run did not succeed: https://github.com/$repoFullName/actions/runs/$runId"
 
-    # Use Nerdbank.GitVersioning via MSBuild (no nbgv CLI dependency) to determine the version
-    Write-Step "Getting version from Nerdbank.GitVersioning..."
-    try {
-        $proj = Join-Path $PSScriptRoot 'ThousandEyes.Api/ThousandEyes.Api.csproj'
-        $nbgvOutput = dotnet build $proj -t:GetBuildVersion --getProperty:Version --getProperty:AssemblyVersion --getProperty:NuGetPackageVersion -nologo -v:quiet -p:TreatWarningsAsErrors=false
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to determine version from Nerdbank.GitVersioning"
-        }
+	# A refused job (an exhausted Actions budget, for instance) fails before any step runs, so it
+	# has no failed step to report. The check-run annotation is the only place the reason appears.
+	$jobId = gh api "repos/$repoFullName/actions/runs/$runId/jobs" --jq '.jobs[0].id' 2>$null
+	if ($LASTEXITCODE -eq 0 -and $jobId) {
+		$annotation = gh api "repos/$repoFullName/check-runs/$jobId/annotations" --jq '.[0].message' 2>$null
+		if ($LASTEXITCODE -eq 0 -and $annotation) {
+			Write-Warning "Reason: $annotation"
+		}
+	}
 
-        $versionInfo = ($nbgvOutput | ConvertFrom-Json).Properties
-        $autoVersion = $versionInfo.NuGetPackageVersion
-
-        Write-ColorOutput "Automatically determined version: $autoVersion" $Green
-        Write-ColorOutput "  Version: $($versionInfo.Version)" $Cyan
-        Write-ColorOutput "  AssemblyVersion: $($versionInfo.AssemblyVersion)" $Cyan
-        Write-ColorOutput "  NuGetPackageVersion: $($versionInfo.NuGetPackageVersion)" $Cyan
-
-        # Show recent tags for context
-        Write-ColorOutput "`nRecent tags:" $Cyan
-        $recentTags = git tag --sort=-version:refname | Select-Object -First 5
-        if ($recentTags) {
-            $recentTags | ForEach-Object { Write-ColorOutput "  $_" $Cyan }
-        } else {
-            Write-ColorOutput "  No existing tags" $Cyan
-        }
-
-        # Check if tag already exists
-        $tag = "v$autoVersion"
-        $existingTag = git tag -l $tag
-        if ($existingTag) {
-            Write-Warning "Tag '$tag' already exists"
-            $overwrite = Read-Host "Overwrite existing tag? (y/N)"
-            if ($overwrite -ne "y" -and $overwrite -ne "Y") {
-                throw "Tag already exists and overwrite not confirmed"
-            }
-        }
-
-        return $autoVersion
-
-    } catch {
-        Write-Warning "Failed to get version from nbgv: $($_.Exception.Message)"
-        Write-ColorOutput "Falling back to manual version input..." $Yellow
-
-        # Fallback to manual input
-        Write-ColorOutput "`nVersion format examples:" $Yellow
-        Write-ColorOutput "  ? 1.0.0 (release)" $Yellow
-        Write-ColorOutput "  ? 1.2.3-beta (pre-release)" $Yellow
-        Write-ColorOutput "  ? 2.0.0-alpha.1 (pre-release)" $Yellow
-
-        do {
-            $inputVersion = Read-Host "`nEnter version to publish (without 'v' prefix)"
-            if ([string]::IsNullOrWhiteSpace($inputVersion)) {
-                Write-Warning "Version cannot be empty"
-                continue
-            }
-
-            # Basic version validation
-            if ($inputVersion -notmatch '^\d+\.\d+\.\d+(-[\w\d\.-]+)?$') {
-                Write-Warning "Invalid version format. Use semantic versioning (e.g., 1.0.0, 1.2.3-beta)"
-                continue
-            }
-
-            $tag = "v$inputVersion"
-
-            # Check if tag already exists
-            $existingTag = git tag -l $tag
-            if ($existingTag) {
-                Write-Warning "Tag '$tag' already exists"
-                $overwrite = Read-Host "Overwrite existing tag? (y/N)"
-                if ($overwrite -eq "y" -or $overwrite -eq "Y") {
-                    return $inputVersion
-                }
-                continue
-            }
-
-            return $inputVersion
-        } while ($true)
-    }
+	Write-Information ""
+	Write-Warning "Tag $version is pushed but no package was published. Once the cause is fixed:"
+	Write-Information "  gh run rerun $runId --repo $repoFullName --failed"
+	exit 1
 }
 
-function Invoke-GitTag {
-    param([string]$Version)
-
-    $tag = "v$Version"
-
-    if ($DryRun) {
-        Write-Warning "DRY RUN: Would create and push tag '$tag'"
-        Write-ColorOutput "Git commands that would be executed:" $Yellow
-        Write-ColorOutput "  git tag -a $tag -m 'Release $Version'" $Yellow
-        Write-ColorOutput "  git push origin $tag" $Yellow
-        return
-    }
-
-    Write-Step "Creating git tag '$tag'..."
-
-    # Delete existing tag if it exists (for overwrites)
-    $existingTag = git tag -l $tag
-    if ($existingTag) {
-        Write-Warning "Deleting existing tag '$tag'..."
-        git tag -d $tag
-        git push --delete origin $tag 2>$null  # Ignore errors if remote tag doesn't exist
-    }
-
-    # Create new tag
-    git tag -a $tag -m "Release $Version"
-    if ($LASTEXITCODE -ne 0) { throw "Failed to create tag" }
-
-    Write-Step "Pushing tag to origin..."
-    git push origin $tag
-    if ($LASTEXITCODE -ne 0) { throw "Failed to push tag" }
-
-    Write-Success "Tag '$tag' created and pushed successfully!"
-    Write-ColorOutput "?? GitHub Actions workflow will now:" $Magenta
-    Write-ColorOutput "  � Build the solution" $Cyan
-    Write-ColorOutput "  � Run tests" $Cyan
-    Write-ColorOutput "  � Pack NuGet package" $Cyan
-    Write-ColorOutput "  � Publish to NuGet.org" $Cyan
-    Write-ColorOutput "  � Create GitHub release" $Cyan
-
-    $actionsUrl = "https://github.com/panoramicdata/ThousandEyes.Api/actions"
-    Write-ColorOutput "`n?? Monitor the build at: $actionsUrl" $Blue
-}
-
-function Main {
-    try {
-        Write-ColorOutput "`n?? ThousandEyes API NuGet Publishing Script" $Magenta
-        Write-ColorOutput "=======================================" $Magenta
-
-        # Pre-flight checks
-        Write-Step "Performing pre-flight checks..."
-        Test-GitRepository
-        Test-DotNetVersion
-        Write-Success "Pre-flight checks passed"
-
-        # Build solution
-        Invoke-Build
-
-        # Run tests
-        Invoke-Tests
-
-        # Get version
-        $versionToPublish = Get-VersionInput
-
-        # Show publication summary (no confirmation needed for automated versioning)
-        if (-not $DryRun) {
-            Write-ColorOutput "`n?? Publication Summary:" $Magenta
-            Write-ColorOutput "  Version: v$versionToPublish" $Cyan
-            Write-ColorOutput "  Target: NuGet.org" $Cyan
-            Write-ColorOutput "  Package: ThousandEyes.Api" $Cyan
-
-            # Only prompt for confirmation if version was manually specified
-            if ($Version) {
-                $confirm = Read-Host "`nProceed with publication? (y/N)"
-                if ($confirm -ne "y" -and $confirm -ne "Y") {
-                    Write-Warning "Publication cancelled by user"
-                    return
-                }
-            } else {
-                Write-ColorOutput "`n? Proceeding with automated publication (version determined by nbgv)" $Green
-            }
-        }
-
-        # Create and push tag
-        Invoke-GitTag -Version $versionToPublish
-
-        Write-Success "`n?? Publication process initiated successfully!"
-        Write-ColorOutput "The NuGet package will be available shortly at:" $Green
-        Write-ColorOutput "https://www.nuget.org/packages/ThousandEyes.Api/$versionToPublish" $Blue
-
-    } catch {
-        Write-Error "`n?? Publication failed: $($_.Exception.Message)"
-        Write-ColorOutput "Stack trace:" $Red
-        Write-ColorOutput $_.ScriptStackTrace $Red
-        exit 1
-    }
-}
-
-# Run the main function
-Main
+Write-Information "Package $version published."
