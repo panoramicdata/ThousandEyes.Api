@@ -1,5 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <PropertyGroup>
     <Copyright>Copyright © Panoramic Data Limited</Copyright>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Nullable>enable</Nullable>
+    <Authors>Panoramic Data Limited</Authors>
+    <Company>Panoramic Data Limited</Company>
+    <NuGetAuditMode>All</NuGetAuditMode>
   </PropertyGroup>
 </Project>
