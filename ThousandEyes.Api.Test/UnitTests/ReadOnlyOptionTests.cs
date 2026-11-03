@@ -17,6 +17,7 @@ public class ReadOnlyOptionTests
 
 		protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
 			Requests.Add(request);
 			return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
 		}
