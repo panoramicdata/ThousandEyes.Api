@@ -28,6 +28,11 @@ public partial class ThousandEyesClientOptions
 	public TimeSpan RetryDelay { get; init; } = TimeSpan.FromSeconds(1);
 
 	/// <summary>
+	/// Gets or sets whether the client refuses every request other than GET, HEAD, OPTIONS and the read-only endpoint agent filter POST
+	/// </summary>
+	public bool IsReadOnly { get; set; }
+
+	/// <summary>
 	/// Gets or sets the logger instance for HTTP operations. If null, no logging is performed
 	/// </summary>
 	public ILogger? Logger { get; init; }

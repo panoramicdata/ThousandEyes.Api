@@ -261,13 +261,18 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 			chain = loggingHandler;
 		}
 
-		// Add error handling as the outermost handler (wraps everything)
+		// Error handling wraps everything except read-only enforcement, so a refusal is never mapped or retried
 		var errorHandler = new ErrorHandler(_options.Logger)
 		{
 			InnerHandler = chain
 		};
 
-		var httpClient = new HttpClient(errorHandler)
+		var readOnlyHandler = new ReadOnlyHandler(_options)
+		{
+			InnerHandler = errorHandler
+		};
+
+		var httpClient = new HttpClient(readOnlyHandler)
 		{
 			BaseAddress = new Uri(BaseUrl),
 			Timeout = _options.RequestTimeout
