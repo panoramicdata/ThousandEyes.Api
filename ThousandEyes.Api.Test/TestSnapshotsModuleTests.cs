@@ -7,6 +7,7 @@ namespace ThousandEyes.Api.Test;
 /// Integration tests for the Test Snapshots API module
 /// </summary>
 [Collection("Integration Tests")]
+[Trait("Category", "Integration")]
 public class TestSnapshotsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 {
 	[Fact]

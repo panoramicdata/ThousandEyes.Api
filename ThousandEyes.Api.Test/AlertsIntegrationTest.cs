@@ -4,6 +4,7 @@ using ThousandEyes.Api.Models.Alerts;
 namespace ThousandEyes.Api.Test;
 
 [Collection("Integration Tests")]
+[Trait("Category", "Integration")]
 public class AlertsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fixture)
 {
 	[Fact]

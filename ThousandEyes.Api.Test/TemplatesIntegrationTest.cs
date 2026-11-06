@@ -7,6 +7,7 @@ using ThousandEyes.Api.Models.Templates;
 namespace ThousandEyes.Api.Test;
 
 [Collection("Integration Tests")]
+[Trait("Category", "Integration")]
 public class TemplatesIntegrationTest(IntegrationTestFixture fixture) : TestBase(fixture)
 {
 	/// <summary>

@@ -5,6 +5,7 @@ using ThousandEyes.Api.Models.EndpointAgents;
 namespace ThousandEyes.Api.Test;
 
 [Collection("Integration Tests")]
+[Trait("Category", "Integration")]
 public class EndpointAgentsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fixture)
 {
 	[Fact]
