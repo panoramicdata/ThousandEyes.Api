@@ -20,7 +20,7 @@ internal static class CredentialsModule
 	{
 		// Register Refit API client
 		services
-			.AddRefitClient<ICredentialsRefitApi>(refitSettings)
+			.AddRefitGeneratedClient<ICredentialsRefitApi>(refitSettings)
 			.ConfigureHttpClient(c => c.BaseAddress = new Uri("https://api.thousandeyes.com/v7"));
 
 		// Register implementation

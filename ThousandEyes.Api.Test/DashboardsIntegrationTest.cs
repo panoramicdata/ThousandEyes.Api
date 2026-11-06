@@ -6,6 +6,7 @@ using ThousandEyes.Api.Models.Dashboards;
 namespace ThousandEyes.Api.Test;
 
 [Collection("Integration Tests")]
+[Trait("Category", "Integration")]
 public class DashboardsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fixture)
 {
 	[Fact]

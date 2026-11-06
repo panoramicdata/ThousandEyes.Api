@@ -7,6 +7,7 @@ using OtelStream = ThousandEyes.Api.Models.OpenTelemetry.Stream;
 namespace ThousandEyes.Api.Test;
 
 [Collection("Integration Tests")]
+[Trait("Category", "Integration")]
 public class OpenTelemetryIntegrationTest(IntegrationTestFixture fixture) : TestBase(fixture)
 {
 	/// <summary>

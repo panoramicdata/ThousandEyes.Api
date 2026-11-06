@@ -5,6 +5,7 @@ using ThousandEyes.Api.Models.Integrations;
 namespace ThousandEyes.Api.Test;
 
 [Collection("Integration Tests")]
+[Trait("Category", "Integration")]
 public class IntegrationsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 {
 	[Fact]

@@ -3,6 +3,7 @@ using AwesomeAssertions;
 namespace ThousandEyes.Api.Test;
 
 [Collection("Integration Tests")]
+[Trait("Category", "Integration")]
 public class UsersIntegrationTest(IntegrationTestFixture fixture) : TestBase(fixture)
 {
 	[Fact]

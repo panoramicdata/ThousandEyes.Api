@@ -5,6 +5,7 @@ using ThousandEyes.Api.Models.Emulation;
 namespace ThousandEyes.Api.Test;
 
 [Collection("Integration Tests")]
+[Trait("Category", "Integration")]
 public class EmulationIntegrationTest(IntegrationTestFixture fixture) : TestBase(fixture)
 {
 	[Fact]
