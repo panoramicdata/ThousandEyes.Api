@@ -4,6 +4,7 @@ using ThousandEyes.Api.Models.InternetInsights;
 namespace ThousandEyes.Api.Test;
 
 [Collection("Integration Tests")]
+[Trait("Category", "Integration")]
 public class InternetInsightsModuleTests(IntegrationTestFixture fixture)
 {
 	private readonly IntegrationTestFixture _fixture = fixture;

@@ -4,6 +4,7 @@ using ThousandEyes.Api.Interfaces;
 namespace ThousandEyes.Api.Test;
 
 [Collection("Integration Tests")]
+[Trait("Category", "Integration")]
 public class DiagnosticTests(IntegrationTestFixture fixture)
 {
 	private readonly IntegrationTestFixture _fixture = fixture;

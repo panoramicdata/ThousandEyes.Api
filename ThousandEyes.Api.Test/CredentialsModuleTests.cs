@@ -8,6 +8,7 @@ namespace ThousandEyes.Api.Test;
 /// Integration tests for the Credentials API module
 /// </summary>
 [Collection("Integration Tests")]
+[Trait("Category", "Integration")]
 public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 {
 	/// <summary>

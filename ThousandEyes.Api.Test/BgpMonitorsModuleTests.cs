@@ -4,6 +4,7 @@ using ThousandEyes.Api.Models.BgpMonitors;
 namespace ThousandEyes.Api.Test;
 
 [Collection("Integration Tests")]
+[Trait("Category", "Integration")]
 public class BgpMonitorsModuleTests(IntegrationTestFixture fixture)
 {
 	private readonly IntegrationTestFixture _fixture = fixture;

@@ -8,6 +8,7 @@ namespace ThousandEyes.Api.Test;
 /// Integration tests for the Tags API module
 /// </summary>
 [Collection("Integration Tests")]
+[Trait("Category", "Integration")]
 public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 {
 	[Fact]
