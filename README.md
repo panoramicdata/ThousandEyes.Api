@@ -8,6 +8,8 @@
 
 A comprehensive, modern .NET library for interacting with the [ThousandEyes API v7](https://api.thousandeyes.com/v7). This library provides **complete coverage** of core monitoring and alert management APIs with a clean, intuitive interface using modern C# patterns and best practices.
 
+Supports .NET 11.0.
+
 ## 🎉 **Major Release: Phase 3 Advanced APIs In Progress**
 
 **🚀 ThousandEyes.Api now provides comprehensive monitoring, alerting, and reporting capabilities!**
@@ -19,7 +21,7 @@ A comprehensive, modern .NET library for interacting with the [ThousandEyes API 
 - ✅ **Complete Alert Management** - Alert monitoring and rule configuration with notifications
 - 🚧 **Advanced Dashboards & Reporting** - Framework implemented, endpoint validation in progress
 - ✅ **94% Test Success Rate** - 46/49 tests passing with real API integration
-- ✅ **Production Ready** - Zero warnings, modern .NET 9, comprehensive documentation
+- ✅ **Production Ready** - Zero warnings, modern .NET 11.0, comprehensive documentation
 
 ## 📚 Official Documentation
 
@@ -37,7 +39,7 @@ A comprehensive, modern .NET library for interacting with the [ThousandEyes API 
 - 🏛️ **Complete Administrative Coverage** - Full support for all ThousandEyes Administrative API v7 endpoints
 - 🚨 **Complete Alert Management** - Alert monitoring, rule configuration, and notification management
 - 📊 **Advanced Reporting Framework** - Dashboard and report models with modern architecture patterns
-- 🚀 **Modern .NET 9** - Built with primary constructors, collection expressions, and latest C# features
+- 🚀 **Modern .NET 11.0** - Built with primary constructors, collection expressions, and latest C# features
 - 🏛️ **Refit-Powered** - Uses Refit for type-safe, declarative HTTP API definitions
 - 🔒 **Type Safety** - Strongly typed models and responses with comprehensive validation
 - 📝 **Comprehensive Logging** - Built-in logging and request/response interception
@@ -83,7 +85,7 @@ ThousandEyes API uses **Bearer Token authentication**. You'll need:
 ```csharp
 using ThousandEyes.Api;
 
-// Modern .NET 9 approach with primary constructor
+// Modern .NET 11.0 approach with primary constructor
 var options = new ThousandEyesClientOptions
 {
     BearerToken = "your-bearer-token"
@@ -907,7 +909,7 @@ This library provides comprehensive coverage of the ThousandEyes API ecosystem, 
 
 ## Architecture
 
-This library is built using modern .NET 9 patterns and follows industry best practices:
+This library is built using modern .NET 11.0 patterns and follows industry best practices:
 
 - **Modular Design** - API endpoints organized into logical modules matching ThousandEyes structure
 - **Refit-Powered APIs** - Uses Refit for type-safe, declarative HTTP API definitions
@@ -956,7 +958,7 @@ We welcome contributions from the community! Here's how you can help:
    cd ThousandEyes.Api
    ```
 
-2. **Install .NET 9 SDK**:
+2. **Install .NET 11.0 SDK**:
    Download from [dotnet.microsoft.com](https://dotnet.microsoft.com/download)
 
 3. **Set up User Secrets for testing**:

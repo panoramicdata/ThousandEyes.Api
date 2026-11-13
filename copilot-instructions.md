@@ -8,7 +8,7 @@
 - Use `#pragma warning disable` only in exceptional cases with clear justification
 - Enable "Treat warnings as errors" where appropriate
 
-### Modern C# Practices (.NET 9)
+### Modern C# Practices (.NET 11.0)
 
 #### Primary Constructors
 - **Use primary constructors where possible** for cleaner, more concise code:
@@ -263,12 +263,12 @@ public async Task GetUsers_WithValidFilter_ReturnsFilteredResults()
 ### ThousandEyes API Library Structure
 
 #### Project Organization
-- **Main Library**: `ThousandEyes.Api` (targets .NET 9)
+- **Main Library**: `ThousandEyes.Api` (targets .NET 11.0)
   - Core client classes and interfaces
   - API models and DTOs (based on OpenAPI spec v7.0.63)
   - Authentication and configuration
   
-- **Test Project**: `ThousandEyes.Api.Test` (targets .NET 9)
+- **Test Project**: `ThousandEyes.Api.Test` (targets .NET 11.0)
   - Unit tests with AwesomeAssertions
   - Integration tests using Microsoft Testing Platform
   - Uses User Secrets for sensitive configuration

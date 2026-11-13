@@ -27,7 +27,7 @@
 - Enable "Treat warnings as errors" where appropriate
 - **Every commit must have zero diagnostics** - no exceptions
 
-### Modern C# Practices (.NET 9)
+### Modern C# Practices (.NET 11.0)
 
 #### Primary Constructors
 - **Use primary constructors where possible** for cleaner, more concise code:
