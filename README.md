@@ -1,10 +1,12 @@
-﻿# ThousandEyes API .NET Library
+# ThousandEyes API .NET Library
 
 [![NuGet Version](https://img.shields.io/nuget/v/ThousandEyes.Api)](https://www.nuget.org/packages/ThousandEyes.Api)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/ThousandEyes.Api)](https://www.nuget.org/packages/ThousandEyes.Api)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/panoramicdata/ThousandEyes.Api/publish-nuget.yml)](https://github.com/panoramicdata/ThousandEyes.Api/actions)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/a6c135d1c93d4d818e770f149385a149)](https://app.codacy.com/gh/panoramicdata/ThousandEyes.Api/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+> **Need help with APIs or .NET?** Panoramic Data are experts in APIs and .NET, and we can help with your development. [Contact us](https://www.panoramicdata.com/contact-us) or see our [software services](https://www.panoramicdata.com/services/software).
 
 A comprehensive, modern .NET library for interacting with the [ThousandEyes API v7](https://api.thousandeyes.com/v7). This library provides **complete coverage** of core monitoring and alert management APIs with a clean, intuitive interface using modern C# patterns and best practices.
 
