@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using ThousandEyes.Api.Models.UserEvents;
 
 namespace ThousandEyes.Api.Interfaces;
@@ -7,18 +8,18 @@ public interface IUserEventsApi
 {
 	/// <summary>Get audit user events with time window filtering</summary>
 	Task<AuditUserEvents> GetAllAsync(
-		string? aid = null,
-		bool useAllPermittedAids = false,
-		string? window = null,
-		string? cursor = null,
-		CancellationToken cancellationToken = default);
+		[Optional] string? aid,
+		[Optional] bool useAllPermittedAids,
+		[Optional] string? window,
+		[Optional] string? cursor,
+		[Optional] CancellationToken cancellationToken);
 
 	/// <summary>Get audit user events with date range filtering</summary>
 	Task<AuditUserEvents> GetAllAsync(
 		DateTime startDate,
 		DateTime endDate,
-		string? aid = null,
-		bool useAllPermittedAids = false,
-		string? cursor = null,
-		CancellationToken cancellationToken = default);
+		[Optional] string? aid,
+		[Optional] bool useAllPermittedAids,
+		[Optional] string? cursor,
+		[Optional] CancellationToken cancellationToken);
 }

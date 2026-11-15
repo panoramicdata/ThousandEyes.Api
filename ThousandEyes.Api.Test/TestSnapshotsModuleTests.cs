@@ -69,25 +69,17 @@ public class TestSnapshotsModuleTests(IntegrationTestFixture fixture) : TestBase
 			IsPublic = false
 		};
 
-		try
-		{
-			// Act
-			var result = await ThousandEyesClient.TestSnapshots.CreateAsync(testId!, request, aid: null, CancellationToken);
+		// Act
+		var result = await ThousandEyesClient.TestSnapshots.CreateAsync(testId!, request, aid: null, CancellationToken);
 
-			// Assert
-			result.Should().NotBeNull();
-			result.Id.Should().NotBeNullOrEmpty();
-			result.StartRoundId.Should().NotBeNull();
-			result.StartRoundId!.Value.Should().BePositive();
-			result.EndRoundId.Should().NotBeNull();
-			result.EndRoundId!.Value.Should().BePositive();
-			result.EndRoundId.Value.Should().BeGreaterThan(result.StartRoundId.Value);
-		}
-		catch (Exception)
-		{
-			// Test may fail for environmental reasons
-			throw;
-		}
+		// Assert
+		result.Should().NotBeNull();
+		result.Id.Should().NotBeNullOrEmpty();
+		result.StartRoundId.Should().NotBeNull();
+		result.StartRoundId!.Value.Should().BePositive();
+		result.EndRoundId.Should().NotBeNull();
+		result.EndRoundId!.Value.Should().BePositive();
+		result.EndRoundId.Value.Should().BeGreaterThan(result.StartRoundId.Value);
 	}
 
 	[Fact]
@@ -109,22 +101,14 @@ public class TestSnapshotsModuleTests(IntegrationTestFixture fixture) : TestBase
 			IsPublic = true
 		};
 
-		try
-		{
-			// Act
-			var result = await ThousandEyesClient.TestSnapshots.CreateAsync(testId!, request, aid: null, CancellationToken);
+		// Act
+		var result = await ThousandEyesClient.TestSnapshots.CreateAsync(testId!, request, aid: null, CancellationToken);
 
-			// Assert
-			result.Should().NotBeNull();
-			result.Id.Should().NotBeNullOrEmpty();
-			result.TestId.Should().NotBeNullOrEmpty();
-			result.Uid.Should().NotBeNullOrEmpty();
-		}
-		catch (Exception)
-		{
-			// Public snapshots may not be enabled in all regions for compliance reasons
-			throw;
-		}
+		// Assert
+		result.Should().NotBeNull();
+		result.Id.Should().NotBeNullOrEmpty();
+		result.TestId.Should().NotBeNullOrEmpty();
+		result.Uid.Should().NotBeNullOrEmpty();
 	}
 
 	[Fact]
@@ -146,20 +130,12 @@ public class TestSnapshotsModuleTests(IntegrationTestFixture fixture) : TestBase
 			IsPublic = false
 		};
 
-		try
-		{
-			// Act
-			var result = await ThousandEyesClient.TestSnapshots.CreateAsync(testId!, request, aid: null, CancellationToken);
+		// Act
+		var result = await ThousandEyesClient.TestSnapshots.CreateAsync(testId!, request, aid: null, CancellationToken);
 
-			// Assert
-			result.Should().NotBeNull();
-			result.ShareDate.Should().NotBeNull();
-			result.DisplayName.Should().Be(request.DisplayName);
-		}
-		catch (Exception)
-		{
-			// Test may fail for environmental reasons
-			throw;
-		}
+		// Assert
+		result.Should().NotBeNull();
+		result.ShareDate.Should().NotBeNull();
+		result.DisplayName.Should().Be(request.DisplayName);
 	}
 }

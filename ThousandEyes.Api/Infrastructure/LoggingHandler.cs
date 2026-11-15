@@ -39,18 +39,19 @@ internal sealed class LoggingHandler(
 		finally
 		{
 			stopwatch.Stop();
+			LogOutcome(request, response, exception, stopwatch.Elapsed, requestId);
+		}
+	}
 
-			if (logger != null)
-			{
-				if (exception != null)
-				{
-					LogHttpException(request, exception, stopwatch.Elapsed, requestId);
-				}
-				else if (logResponses && response != null)
-				{
-					LogHttpResponse(response, stopwatch.Elapsed, requestId);
-				}
-			}
+	private void LogOutcome(HttpRequestMessage request, HttpResponseMessage? response, Exception? exception, TimeSpan elapsed, string requestId)
+	{
+		if (exception != null)
+		{
+			LogHttpException(request, exception, elapsed, requestId);
+		}
+		else if (logResponses && response != null)
+		{
+			LogHttpResponse(response, elapsed, requestId);
 		}
 	}
 

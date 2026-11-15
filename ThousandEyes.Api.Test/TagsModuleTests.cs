@@ -11,6 +11,15 @@ namespace ThousandEyes.Api.Test;
 [Trait("Category", "Integration")]
 public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 {
+	private static Tag NewBulkTag(int index, string color, long timestamp) => new()
+	{
+		Key = $"test-key-{index}",
+		Value = $"test-value-{index}-{timestamp}",
+		Color = color,
+		Description = $"Test Tag {index} - {timestamp}",
+		ObjectType = ObjectType.Test
+	};
+
 	[Fact]
 	public async Task GetTags_WithValidRequest_ReturnsTags()
 	{
@@ -36,25 +45,17 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 			ObjectType = ObjectType.Test
 		};
 
-		try
-		{
-			// Act
-			var result = await ThousandEyesClient.Tags.CreateAsync(request, aid: null, CancellationToken);
+		// Act
+		var result = await ThousandEyesClient.Tags.CreateAsync(request, aid: null, CancellationToken);
 
-			// Assert
-			_ = result.Should().NotBeNull();
-			_ = result.Id.Should().NotBeNullOrEmpty();
-			_ = result.Key.Should().Be(request.Key);
-			_ = result.Value.Should().Be(request.Value);
+		// Assert
+		_ = result.Should().NotBeNull();
+		_ = result.Id.Should().NotBeNullOrEmpty();
+		_ = result.Key.Should().Be(request.Key);
+		_ = result.Value.Should().Be(request.Value);
 
-			// Cleanup
-			await ThousandEyesClient.Tags.DeleteAsync(result.Id!, aid: null, CancellationToken);
-		}
-		catch (Exception)
-		{
-			// Test failed - exception will be captured by test framework
-			throw;
-		}
+		// Cleanup
+		await ThousandEyesClient.Tags.DeleteAsync(result.Id!, aid: null, CancellationToken);
 	}
 
 	[Fact]
@@ -174,22 +175,8 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 		{
 			Tags =
 			[
-				new Tag
-				{
-					Key = "test-key-1",
-					Value = $"test-value-1-{timestamp}",
-					Color = "#FF0000",
-					Description = $"Test Tag 1 - {timestamp}",
-					ObjectType = ObjectType.Test
-				},
-				new Tag
-				{
-					Key = "test-key-2",
-					Value = $"test-value-2-{timestamp}",
-					Color = "#00FF00",
-					Description = $"Test Tag 2 - {timestamp}",
-					ObjectType = ObjectType.Test
-				}
+				NewBulkTag(1, "#FF0000", timestamp),
+				NewBulkTag(2, "#00FF00", timestamp)
 			]
 		};
 
@@ -213,14 +200,10 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 			// Cleanup all created tags
 			foreach (var id in createdIds)
 			{
-				try
+				await IgnoreErrorsAsync(async () =>
 				{
 					await ThousandEyesClient.Tags.DeleteAsync(id, aid: null, CancellationToken);
-				}
-				catch
-				{
-					// Ignore cleanup errors
-				}
+				});
 			}
 		}
 	}
@@ -279,24 +262,16 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 			ObjectType = ObjectType.Dashboard
 		};
 
-		try
-		{
-			// Act - Create
-			var created = await ThousandEyesClient.Tags.CreateAsync(request, aid: null, CancellationToken);
+		// Act - Create
+		var created = await ThousandEyesClient.Tags.CreateAsync(request, aid: null, CancellationToken);
 
-			// Assert - Create
-			_ = created.Should().NotBeNull();
-			_ = created.Color.Should().Be(request.Color);
-			_ = created.Icon.Should().Be(request.Icon);
-			_ = created.ObjectType.Should().Be(ObjectType.Dashboard);
+		// Assert - Create
+		_ = created.Should().NotBeNull();
+		_ = created.Color.Should().Be(request.Color);
+		_ = created.Icon.Should().Be(request.Icon);
+		_ = created.ObjectType.Should().Be(ObjectType.Dashboard);
 
-			// Cleanup
-			await ThousandEyesClient.Tags.DeleteAsync(created.Id!, aid: null, CancellationToken);
-		}
-		catch (Exception)
-		{
-			// Test failed - exception will be captured by test framework
-			throw;
-		}
+		// Cleanup
+		await ThousandEyesClient.Tags.DeleteAsync(created.Id!, aid: null, CancellationToken);
 	}
 }

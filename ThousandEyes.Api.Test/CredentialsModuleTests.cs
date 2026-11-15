@@ -1,5 +1,4 @@
 using AwesomeAssertions;
-using ThousandEyes.Api.Exceptions;
 using ThousandEyes.Api.Models.Credentials;
 
 namespace ThousandEyes.Api.Test;
@@ -11,293 +10,137 @@ namespace ThousandEyes.Api.Test;
 [Trait("Category", "Integration")]
 public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 {
+	private static long Timestamp => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+	private static CredentialRequest NewRequest(string namePrefix = "Test Credential", string valuePrefix = "test-password") =>
+		new(Name: $"{namePrefix} - {Timestamp}", Value: $"{valuePrefix}-{Timestamp}");
+
+	private Task RunWhenAvailableAsync(Func<Task> body) => RunWhenAvailableAsync(
+		"Credentials",
+		() => ThousandEyesClient.Credentials.GetAllAsync(aid: null, CancellationToken),
+		body);
+
+	private Task<Credential> GetAsync(string id) =>
+		ThousandEyesClient.Credentials.GetByIdAsync(id, aid: null, CancellationToken);
+
+	private Task DeleteAsync(string id) =>
+		ThousandEyesClient.Credentials.DeleteAsync(id, aid: null, CancellationToken);
+
 	/// <summary>
-	/// Checks if the Credentials API is available in the current account
+	/// Creates a credential, runs the body against it and always deletes it afterwards
 	/// </summary>
-	private async Task<bool> IsCredentialsApiAvailableAsync()
+	private async Task WithCredentialAsync(CredentialRequest request, Func<CredentialWithoutValue, Task> body)
 	{
+		var created = await ThousandEyesClient.Credentials.CreateAsync(request, aid: null, CancellationToken);
 		try
 		{
-			await ThousandEyesClient.Credentials.GetAllAsync(aid: null, CancellationToken);
-			return true;
+			await body(created);
 		}
-		catch (ThousandEyesBadRequestException)
+		finally
 		{
-			return false;
-		}
-		catch (ThousandEyesAuthorizationException)
-		{
-			return false;
+			await DeleteAsync(created.Id!);
 		}
 	}
 
 	[Fact]
-	public async Task GetCredentials_WithValidRequest_ReturnsCredentials()
+	public Task GetCredentials_WithValidRequest_ReturnsCredentials() => RunWhenAvailableAsync(async () =>
 	{
-		// Check if API is available
-		if (!await IsCredentialsApiAvailableAsync())
-		{
-			Logger.LogWarning(
-				"Credentials API not available in this account - " +
-				"this may require a premium/enterprise license. Test skipped."
-			);
-			return;
-		}
-
-		// Act
 		var result = await ThousandEyesClient.Credentials.GetAllAsync(aid: null, CancellationToken);
 
-		// Assert
 		_ = result.Should().NotBeNull();
 		_ = result.Items.Should().NotBeNull();
-	}
+	});
 
 	[Fact]
-	public async Task CreateCredential_WithValidRequest_CreatesCredential()
+	public Task CreateCredential_WithValidRequest_CreatesCredential() => RunWhenAvailableAsync(() =>
 	{
-		// Check if API is available
-		if (!await IsCredentialsApiAvailableAsync())
+		var request = NewRequest();
+		return WithCredentialAsync(request, created =>
 		{
-			Logger.LogWarning(
-				"Credentials API not available in this account - " +
-				"this may require a premium/enterprise license. Test skipped."
-			);
-			return;
-		}
-
-		// Arrange
-		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-		var request = new CredentialRequest(
-			Name: $"Test Credential - {timestamp}",
-			Value: $"test-password-{timestamp}"
-		);
-
-		try
-		{
-			// Act
-			var result = await ThousandEyesClient.Credentials.CreateAsync(request, aid: null, CancellationToken);
-
-			// Assert
-			_ = result.Should().NotBeNull();
-			_ = result.Id.Should().NotBeNullOrEmpty();
-			_ = result.Name.Should().Be(request.Name);
-
-			// Cleanup
-			await ThousandEyesClient.Credentials.DeleteAsync(result.Id!, aid: null, CancellationToken);
-		}
-		catch (Exception)
-		{
-			// Test failed - exception will be captured by test framework
-			throw;
-		}
-	}
+			_ = created.Should().NotBeNull();
+			_ = created.Id.Should().NotBeNullOrEmpty();
+			_ = created.Name.Should().Be(request.Name);
+			return Task.CompletedTask;
+		});
+	});
 
 	[Fact]
-	public async Task GetCredential_WithValidId_ReturnsCredentialWithValue()
+	public Task GetCredential_WithValidId_ReturnsCredentialWithValue() => RunWhenAvailableAsync(() =>
 	{
-		// Check if API is available
-		if (!await IsCredentialsApiAvailableAsync())
+		var request = NewRequest();
+		return WithCredentialAsync(request, async created =>
 		{
-			Logger.LogWarning(
-				"Credentials API not available in this account - " +
-				"this may require a premium/enterprise license. Test skipped."
-			);
-			return;
-		}
+			var result = await GetAsync(created.Id!);
 
-		// Arrange
-		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-		var request = new CredentialRequest(
-			Name: $"Test Credential - {timestamp}",
-			Value: $"test-password-{timestamp}"
-		);
-
-		// Create a credential first
-		var created = await ThousandEyesClient.Credentials.CreateAsync(request, aid: null, CancellationToken);
-
-		try
-		{
-			// Act
-			var result = await ThousandEyesClient.Credentials.GetByIdAsync(created.Id!, aid: null, CancellationToken);
-
-			// Assert
 			_ = result.Should().NotBeNull();
 			_ = result.Id.Should().Be(created.Id);
 			_ = result.Name.Should().Be(request.Name);
 			_ = result.Value.Should().NotBeNullOrEmpty();
 			_ = result.Value.Should().NotBe(request.Value); // Value should be encrypted
-		}
-		finally
-		{
-			// Cleanup
-			await ThousandEyesClient.Credentials.DeleteAsync(created.Id!, aid: null, CancellationToken);
-		}
-	}
+		});
+	});
 
 	[Fact]
-	public async Task UpdateCredential_WithValidRequest_UpdatesCredential()
+	public Task UpdateCredential_WithValidRequest_UpdatesCredential() => RunWhenAvailableAsync(() =>
 	{
-		// Check if API is available
-		if (!await IsCredentialsApiAvailableAsync())
+		var createRequest = NewRequest();
+		return WithCredentialAsync(createRequest, async created =>
 		{
-			Logger.LogWarning(
-				"Credentials API not available in this account - " +
-				"this may require a premium/enterprise license. Test skipped."
-			);
-			return;
-		}
+			var updateRequest = NewRequest("Updated Test Credential", "updated-password");
 
-		// Arrange
-		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-		var createRequest = new CredentialRequest(
-			Name: $"Test Credential - {timestamp}",
-			Value: $"test-password-{timestamp}"
-		);
-
-		// Create a credential first
-		var created = await ThousandEyesClient.Credentials.CreateAsync(createRequest, aid: null, CancellationToken);
-
-		try
-		{
-			// Act
-			var updateRequest = new CredentialRequest(
-				Name: $"Updated Test Credential - {timestamp}",
-				Value: $"updated-password-{timestamp}"
-			);
 			var result = await ThousandEyesClient.Credentials.UpdateAsync(created.Id!, updateRequest, aid: null, CancellationToken);
 
-			// Assert
 			_ = result.Should().NotBeNull();
 			_ = result.Id.Should().Be(created.Id);
 			_ = result.Name.Should().Be(updateRequest.Name);
 
-			// Verify update by getting the credential
-			var retrieved = await ThousandEyesClient.Credentials.GetByIdAsync(created.Id!, aid: null, CancellationToken);
+			var retrieved = await GetAsync(created.Id!);
 			_ = retrieved.Name.Should().Be(updateRequest.Name);
-			_ = retrieved.Value.Should().NotBe(createRequest.Value); // Value should be different
-		}
-		finally
-		{
-			// Cleanup
-			await ThousandEyesClient.Credentials.DeleteAsync(created.Id!, aid: null, CancellationToken);
-		}
-	}
+			_ = retrieved.Value.Should().NotBe(createRequest.Value);
+		});
+	});
 
 	[Fact]
-	public async Task DeleteCredential_WithValidId_DeletesCredential()
+	public Task DeleteCredential_WithValidId_DeletesCredential() => RunWhenAvailableAsync(async () =>
 	{
-		// Check if API is available
-		if (!await IsCredentialsApiAvailableAsync())
-		{
-			Logger.LogWarning(
-				"Credentials API not available in this account - " +
-				"this may require a premium/enterprise license. Test skipped."
-			);
-			return;
-		}
+		var created = await ThousandEyesClient.Credentials.CreateAsync(NewRequest(), aid: null, CancellationToken);
 
-		// Arrange
-		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-		var request = new CredentialRequest(
-			Name: $"Test Credential - {timestamp}",
-			Value: $"test-password-{timestamp}"
-		);
+		await DeleteAsync(created.Id!);
 
-		// Create a credential first
-		var created = await ThousandEyesClient.Credentials.CreateAsync(request, aid: null, CancellationToken);
-
-		// Act
-		await ThousandEyesClient.Credentials.DeleteAsync(created.Id!, aid: null, CancellationToken);
-
-		// Assert - verify deletion by attempting to get the credential
-		// This should throw an exception (404 Not Found)
-		var act = async () => await ThousandEyesClient.Credentials.GetByIdAsync(created.Id!, aid: null, CancellationToken);
-		_ = await act.Should().ThrowAsync<Exception>(); // Refit will throw an exception for 404
-	}
+		// Refit throws for the 404 that follows a successful delete
+		var act = () => GetAsync(created.Id!);
+		_ = await act.Should().ThrowAsync<Exception>();
+	});
 
 	[Fact]
-	public async Task CreateCredential_WithSensitiveValue_EncryptsValue()
+	public Task CreateCredential_WithSensitiveValue_EncryptsValue() => RunWhenAvailableAsync(() =>
 	{
-		// Check if API is available
-		if (!await IsCredentialsApiAvailableAsync())
+		var plainTextPassword = $"SuperSecretPassword123-{Timestamp}";
+		return WithCredentialAsync(new CredentialRequest(Name: $"Test Credential - {Timestamp}", Value: plainTextPassword), async created =>
 		{
-			Logger.LogWarning(
-				"Credentials API not available in this account - " +
-				"this may require a premium/enterprise license. Test skipped."
-			);
-			return;
-		}
+			var retrieved = await GetAsync(created.Id!);
 
-		// Arrange
-		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-		var plainTextPassword = $"SuperSecretPassword123-{timestamp}";
-		var request = new CredentialRequest(
-			Name: $"Test Credential - {timestamp}",
-			Value: plainTextPassword
-		);
-
-		// Create a credential
-		var created = await ThousandEyesClient.Credentials.CreateAsync(request, aid: null, CancellationToken);
-
-		try
-		{
-			// Act - retrieve the credential to get the encrypted value
-			var retrieved = await ThousandEyesClient.Credentials.GetByIdAsync(created.Id!, aid: null, CancellationToken);
-
-			// Assert
 			_ = retrieved.Value.Should().NotBeNullOrEmpty();
-			_ = retrieved.Value.Should().NotBe(plainTextPassword); // Encrypted value should differ from plain text
-			_ = retrieved.Value!.Length.Should().BeGreaterThan(plainTextPassword.Length); // Encrypted values are typically longer
-		}
-		finally
-		{
-			// Cleanup
-			await ThousandEyesClient.Credentials.DeleteAsync(created.Id!, aid: null, CancellationToken);
-		}
-	}
+			_ = retrieved.Value.Should().NotBe(plainTextPassword);
+			_ = retrieved.Value!.Length.Should().BeGreaterThan(plainTextPassword.Length);
+		});
+	});
 
 	[Fact]
-	public async Task GetAllCredentials_ReturnsCredentialsWithValues()
+	public Task GetAllCredentials_ReturnsCredentialsWithValues() => RunWhenAvailableAsync(() =>
 	{
-		// Check if API is available
-		if (!await IsCredentialsApiAvailableAsync())
+		var request = NewRequest();
+		return WithCredentialAsync(request, async created =>
 		{
-			Logger.LogWarning(
-				"Credentials API not available in this account - " +
-				"this may require a premium/enterprise license. Test skipped."
-			);
-			return;
-		}
-
-		// Arrange
-		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-		var request = new CredentialRequest(
-			Name: $"Test Credential - {timestamp}",
-			Value: $"test-password-{timestamp}"
-		);
-
-		// Create a credential
-		var created = await ThousandEyesClient.Credentials.CreateAsync(request, aid: null, CancellationToken);
-
-		try
-		{
-			// Act
 			var result = await ThousandEyesClient.Credentials.GetAllAsync(aid: null, CancellationToken);
 
-			// Assert
 			_ = result.Should().NotBeNull();
 			_ = result.Items.Should().NotBeEmpty();
 
-			// Find our test credential
 			var testCredential = result.Items.FirstOrDefault(c => c.Id == created.Id);
 			_ = testCredential.Should().NotBeNull();
 			_ = testCredential!.Name.Should().Be(request.Name);
-			_ = testCredential.Value.Should().NotBeNullOrEmpty(); // API returns values in list endpoint
-		}
-		finally
-		{
-			// Cleanup
-			await ThousandEyesClient.Credentials.DeleteAsync(created.Id!, aid: null, CancellationToken);
-		}
-	}
+			_ = testCredential.Value.Should().NotBeNullOrEmpty();
+		});
+	});
 }

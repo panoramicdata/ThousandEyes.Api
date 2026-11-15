@@ -1,6 +1,4 @@
 using AwesomeAssertions;
-using Refit;
-using ThousandEyes.Api.Exceptions;
 using ThousandEyes.Api.Models.OpenTelemetry;
 using OtelStream = ThousandEyes.Api.Models.OpenTelemetry.Stream;
 
@@ -10,299 +8,113 @@ namespace ThousandEyes.Api.Test;
 [Trait("Category", "Integration")]
 public class OpenTelemetryIntegrationTest(IntegrationTestFixture fixture) : TestBase(fixture)
 {
-	/// <summary>
-	/// Checks if the OpenTelemetry Streams API is available in the current account
-	/// </summary>
-	private async Task<bool> IsOpenTelemetryApiAvailableAsync()
+	private const string GrpcUrl = "https://otel-collector.example.com:4317";
+	private const string HttpUrl = "https://otel-collector.example.com:4318";
+
+	private static OtelStream NewStream(EndpointType endpoint, string url, Signal signal = Signal.Metric) => new()
 	{
+		Type = StreamType.Opentelemetry,
+		Signal = signal,
+		EndpointType = endpoint,
+		DataModelVersion = DataModelVersion.V1,
+		StreamEndpointUrl = url,
+		Enabled = true,
+		TestMatch = [],
+		TagMatch = []
+	};
+
+	private Task RunWhenAvailableAsync(Func<Task> body) => RunWhenAvailableAsync(
+		"OpenTelemetry Streams",
+		() => ThousandEyesClient.OpenTelemetry.Streams.GetAllAsync(aid: null, type: null, cancellationToken: CancellationToken),
+		body);
+
+	private Task<CreateStreamResponse> CreateAsync(OtelStream request) =>
+		ThousandEyesClient.OpenTelemetry.Streams.CreateAsync(request, aid: null, cancellationToken: CancellationToken);
+
+	private Task<GetStreamResponse> GetAsync(string id) =>
+		ThousandEyesClient.OpenTelemetry.Streams.GetByIdAsync(id, aid: null, type: null, cancellationToken: CancellationToken);
+
+	private Task DeleteAsync(string id) =>
+		ThousandEyesClient.OpenTelemetry.Streams.DeleteAsync(id, aid: null, cancellationToken: CancellationToken);
+
+	/// <summary>
+	/// Creates a stream, runs the body against it and always deletes it afterwards
+	/// </summary>
+	private async Task WithStreamAsync(OtelStream request, Func<CreateStreamResponse, Task> body)
+	{
+		var created = await CreateAsync(request);
 		try
 		{
-			await ThousandEyesClient.OpenTelemetry.Streams.GetAllAsync(
-				aid: null,
-				type: null,
-				cancellationToken: CancellationToken);
-			return true;
+			await body(created);
 		}
-		catch (ThousandEyesBadRequestException)
+		finally
 		{
-			return false;
-		}
-		catch (ThousandEyesAuthorizationException)
-		{
-			return false;
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			return false;
+			await IgnoreErrorsAsync(() => DeleteAsync(created.Id!));
 		}
 	}
 
 	[Fact]
-	public async Task GetStreams_WithValidRequest_ReturnsStreams()
+	public Task GetStreams_WithValidRequest_ReturnsStreams() => RunWhenAvailableAsync(async () =>
 	{
-		// Check if API is available
-		if (!await IsOpenTelemetryApiAvailableAsync())
-		{
-			Logger.LogWarning(
-				"OpenTelemetry Streams API not available in this account - " +
-				"this may require an enterprise license or specific permissions. Test skipped."
-			);
-			return;
-		}
+		var result = await ThousandEyesClient.OpenTelemetry.Streams.GetAllAsync(aid: null, type: null, cancellationToken: CancellationToken);
 
-		// Act
-		var result = await ThousandEyesClient.OpenTelemetry.Streams.GetAllAsync(
-			aid: null,
-			type: null,
-			cancellationToken: CancellationToken);
-
-		// Assert
 		_ = result.Should().NotBeNull();
 		_ = result.Streams.Should().NotBeNull();
-	}
+	});
 
 	[Fact]
-	public async Task GetStreams_WithTypeFilter_ReturnsFilteredStreams()
+	public Task GetStreams_WithTypeFilter_ReturnsFilteredStreams() => RunWhenAvailableAsync(async () =>
 	{
-		// Check if API is available
-		if (!await IsOpenTelemetryApiAvailableAsync())
-		{
-			Logger.LogWarning(
-				"OpenTelemetry Streams API not available in this account - " +
-				"this may require an enterprise license or specific permissions. Test skipped."
-			);
-			return;
-		}
+		var result = await ThousandEyesClient.OpenTelemetry.Streams.GetAllAsync(aid: null, type: StreamType.Opentelemetry, cancellationToken: CancellationToken);
 
-		// Act
-		var result = await ThousandEyesClient.OpenTelemetry.Streams.GetAllAsync(
-			aid: null,
-			type: StreamType.Opentelemetry,
-			cancellationToken: CancellationToken);
-
-		// Assert
 		_ = result.Should().NotBeNull();
 		_ = result.Streams.Should().NotBeNull();
-
-		// If there are streams, verify they match the filter
 		if (result.Streams.Length > 0)
 		{
 			_ = result.Streams.Should().OnlyContain(s => s.Enabled.HasValue);
 		}
-	}
+	});
 
 	[Fact]
-	public async Task CreateStream_OpenTelemetryGrpc_CreatesStream()
-	{
-		// Check if API is available
-		if (!await IsOpenTelemetryApiAvailableAsync())
+	public Task CreateStream_OpenTelemetryGrpc_CreatesStream() => RunWhenAvailableAsync(() =>
+		WithStreamAsync(NewStream(EndpointType.Grpc, GrpcUrl), result =>
 		{
-			Logger.LogWarning(
-				"OpenTelemetry Streams API not available in this account - " +
-				"this may require an enterprise license or specific permissions. Test skipped."
-			);
-			return;
-		}
-
-		// Arrange
-		var streamRequest = new OtelStream
-		{
-			Type = StreamType.Opentelemetry,
-			Signal = Signal.Metric,
-			EndpointType = EndpointType.Grpc,
-			DataModelVersion = DataModelVersion.V1,
-			StreamEndpointUrl = "https://otel-collector.example.com:4317",
-			Enabled = true,
-			TestMatch = [],
-			TagMatch = []
-		};
-
-		// Act
-		var result = await ThousandEyesClient.OpenTelemetry.Streams.CreateAsync(
-			streamRequest,
-			aid: null,
-			cancellationToken: CancellationToken);
-
-		// Assert
-		_ = result.Should().NotBeNull();
-		_ = result.Id.Should().NotBeNullOrEmpty();
-		_ = result.Type.Should().Be(StreamType.Opentelemetry);
-		_ = result.Signal.Should().Be(Signal.Metric);
-		_ = result.EndpointType.Should().Be(EndpointType.Grpc);
-
-		// Cleanup - Delete the created stream
-		try
-		{
-			await ThousandEyesClient.OpenTelemetry.Streams.DeleteAsync(
-				result.Id!,
-				aid: null,
-				cancellationToken: CancellationToken);
-		}
-		catch
-		{
-			// Ignore cleanup errors
-		}
-	}
-
-	[Fact]
-	public async Task CreateStream_SplunkHec_CreatesStream()
-	{
-		// Check if API is available
-		if (!await IsOpenTelemetryApiAvailableAsync())
-		{
-			Logger.LogWarning(
-				"OpenTelemetry Streams API not available in this account - " +
-				"this may require an enterprise license or specific permissions. Test skipped."
-			);
-			return;
-		}
-
-		// Arrange
-		var streamRequest = new OtelStream
-		{
-			Type = StreamType.SplunkHec,
-			Signal = Signal.Trace,
-			EndpointType = EndpointType.Http,
-			DataModelVersion = DataModelVersion.V2,
-			StreamEndpointUrl = "https://splunk.example.com:8088/services/collector",
-			Enabled = true,
-			ExporterConfig = new ExporterConfig
-			{
-				SplunkHec = new ExporterConfigSplunkHec
-				{
-					Token = "test-token-12345",
-					Source = "thousandeyes",
-					SourceType = "thousandeyes:trace"
-				}
-			},
-			TestMatch = [],
-			TagMatch = []
-		};
-
-		// Act
-		var result = await ThousandEyesClient.OpenTelemetry.Streams.CreateAsync(
-			streamRequest,
-			aid: null,
-			cancellationToken: CancellationToken);
-
-		// Assert
-		_ = result.Should().NotBeNull();
-		_ = result.Id.Should().NotBeNullOrEmpty();
-		_ = result.Type.Should().Be(StreamType.SplunkHec);
-		_ = result.Signal.Should().Be(Signal.Trace);
-		_ = result.EndpointType.Should().Be(EndpointType.Http);
-
-		// Cleanup - Delete the created stream
-		try
-		{
-			await ThousandEyesClient.OpenTelemetry.Streams.DeleteAsync(
-				result.Id!,
-				aid: null,
-				cancellationToken: CancellationToken);
-		}
-		catch
-		{
-			// Ignore cleanup errors
-		}
-	}
-
-	[Fact]
-	public async Task GetStream_WithValidId_ReturnsStreamDetails()
-	{
-		// Check if API is available
-		if (!await IsOpenTelemetryApiAvailableAsync())
-		{
-			Logger.LogWarning(
-				"OpenTelemetry Streams API not available in this account - " +
-				"this may require an enterprise license or specific permissions. Test skipped."
-			);
-			return;
-		}
-
-		// Arrange - First create a stream
-		var streamRequest = new OtelStream
-		{
-			Type = StreamType.Opentelemetry,
-			Signal = Signal.Metric,
-			EndpointType = EndpointType.Http,
-			DataModelVersion = DataModelVersion.V1,
-			StreamEndpointUrl = "https://otel-collector.example.com:4318",
-			Enabled = true,
-			TestMatch = [],
-			TagMatch = []
-		};
-
-		var createdStream = await ThousandEyesClient.OpenTelemetry.Streams.CreateAsync(
-			streamRequest,
-			aid: null,
-			cancellationToken: CancellationToken);
-
-		try
-		{
-			// Act
-			var result = await ThousandEyesClient.OpenTelemetry.Streams.GetByIdAsync(
-				createdStream.Id!,
-				aid: null,
-				type: null,
-				cancellationToken: CancellationToken);
-
-			// Assert
 			_ = result.Should().NotBeNull();
-			_ = result.Id.Should().Be(createdStream.Id);
+			_ = result.Id.Should().NotBeNullOrEmpty();
+			_ = result.Type.Should().Be(StreamType.Opentelemetry);
+			_ = result.Signal.Should().Be(Signal.Metric);
+			_ = result.EndpointType.Should().Be(EndpointType.Grpc);
+			return Task.CompletedTask;
+		}));
+
+	[Fact]
+	public Task CreateStream_SplunkHec_CreatesStream() => RunWhenAvailableAsync(() =>
+		WithStreamAsync(NewSplunkStream(), result =>
+		{
+			_ = result.Should().NotBeNull();
+			_ = result.Id.Should().NotBeNullOrEmpty();
+			_ = result.Type.Should().Be(StreamType.SplunkHec);
+			_ = result.Signal.Should().Be(Signal.Trace);
+			_ = result.EndpointType.Should().Be(EndpointType.Http);
+			return Task.CompletedTask;
+		}));
+
+	[Fact]
+	public Task GetStream_WithValidId_ReturnsStreamDetails() => RunWhenAvailableAsync(() =>
+		WithStreamAsync(NewStream(EndpointType.Http, HttpUrl), async created =>
+		{
+			var result = await GetAsync(created.Id!);
+
+			_ = result.Should().NotBeNull();
+			_ = result.Id.Should().Be(created.Id);
 			_ = result.Type.Should().Be(StreamType.Opentelemetry);
 			_ = result.StreamEndpointUrl.Should().NotBeNullOrEmpty();
-		}
-		finally
-		{
-			// Cleanup - Delete the created stream
-			try
-			{
-				await ThousandEyesClient.OpenTelemetry.Streams.DeleteAsync(
-					createdStream.Id!,
-					aid: null,
-					cancellationToken: CancellationToken);
-			}
-			catch
-			{
-				// Ignore cleanup errors
-			}
-		}
-	}
+		}));
 
 	[Fact]
-	public async Task UpdateStream_WithValidRequest_UpdatesStream()
-	{
-		// Check if API is available
-		if (!await IsOpenTelemetryApiAvailableAsync())
+	public Task UpdateStream_WithValidRequest_UpdatesStream() => RunWhenAvailableAsync(() =>
+		WithStreamAsync(NewStream(EndpointType.Grpc, GrpcUrl), async created =>
 		{
-			Logger.LogWarning(
-				"OpenTelemetry Streams API not available in this account - " +
-				"this may require an enterprise license or specific permissions. Test skipped."
-			);
-			return;
-		}
-
-		// Arrange - First create a stream
-		var streamRequest = new OtelStream
-		{
-			Type = StreamType.Opentelemetry,
-			Signal = Signal.Metric,
-			EndpointType = EndpointType.Grpc,
-			DataModelVersion = DataModelVersion.V1,
-			StreamEndpointUrl = "https://otel-collector.example.com:4317",
-			Enabled = true,
-			TestMatch = [],
-			TagMatch = []
-		};
-
-		var createdStream = await ThousandEyesClient.OpenTelemetry.Streams.CreateAsync(
-			streamRequest,
-			aid: null,
-			cancellationToken: CancellationToken);
-
-		try
-		{
-			// Update request
 			var updateRequest = new PutStream
 			{
 				StreamEndpointUrl = "https://otel-collector-updated.example.com:4317",
@@ -311,155 +123,64 @@ public class OpenTelemetryIntegrationTest(IntegrationTestFixture fixture) : Test
 				TagMatch = []
 			};
 
-			// Act
 			var result = await ThousandEyesClient.OpenTelemetry.Streams.UpdateAsync(
-				createdStream.Id!,
+				created.Id!,
 				updateRequest,
 				aid: null,
 				cancellationToken: CancellationToken);
 
-			// Assert
 			_ = result.Should().NotBeNull();
-			_ = result.Id.Should().Be(createdStream.Id);
+			_ = result.Id.Should().Be(created.Id);
 			_ = result.StreamEndpointUrl.Should().Be(updateRequest.StreamEndpointUrl);
 			_ = result.Enabled.Should().Be(false);
-		}
-		finally
-		{
-			// Cleanup - Delete the created stream
-			try
-			{
-				await ThousandEyesClient.OpenTelemetry.Streams.DeleteAsync(
-					createdStream.Id!,
-					aid: null,
-					cancellationToken: CancellationToken);
-			}
-			catch
-			{
-				// Ignore cleanup errors
-			}
-		}
-	}
+		}));
 
 	[Fact]
-	public async Task DeleteStream_WithValidId_DeletesStream()
+	public Task DeleteStream_WithValidId_DeletesStream() => RunWhenAvailableAsync(async () =>
 	{
-		// Check if API is available
-		if (!await IsOpenTelemetryApiAvailableAsync())
+		var created = await CreateAsync(NewStream(EndpointType.Http, HttpUrl, Signal.Trace));
+
+		await DeleteAsync(created.Id!);
+
+		await RunIfAvailableAsync(async () =>
 		{
-			Logger.LogWarning(
-				"OpenTelemetry Streams API not available in this account - " +
-				"this may require an enterprise license or specific permissions. Test skipped."
-			);
-			return;
-		}
-
-		// Arrange - Create a stream first
-		var streamRequest = new OtelStream
-		{
-			Type = StreamType.Opentelemetry,
-			Signal = Signal.Trace,
-			EndpointType = EndpointType.Http,
-			DataModelVersion = DataModelVersion.V1,
-			StreamEndpointUrl = "https://otel-collector.example.com:4318",
-			Enabled = true,
-			TestMatch = [],
-			TagMatch = []
-		};
-
-		var createdStream = await ThousandEyesClient.OpenTelemetry.Streams.CreateAsync(
-			streamRequest,
-			aid: null,
-			cancellationToken: CancellationToken);
-
-		// Act & Assert - Delete should not throw
-		await ThousandEyesClient.OpenTelemetry.Streams.DeleteAsync(
-			createdStream.Id!,
-			aid: null,
-			cancellationToken: CancellationToken);
-
-		// Verify deletion by trying to get the stream (should throw 404)
-		try
-		{
-			_ = await ThousandEyesClient.OpenTelemetry.Streams.GetByIdAsync(
-				createdStream.Id!,
-				aid: null,
-				type: null,
-				cancellationToken: CancellationToken);
-
-			// If we get here, the stream wasn't deleted
+			_ = await GetAsync(created.Id!);
 			throw new InvalidOperationException("Stream should have been deleted");
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// This is expected - stream was successfully deleted
-		}
-	}
+		});
+	});
 
 	[Fact]
-	public async Task GetStreamStatus_AfterCreation_ValidatesStatus()
-	{
-		// Check if API is available
-		if (!await IsOpenTelemetryApiAvailableAsync())
+	public Task GetStreamStatus_AfterCreation_ValidatesStatus() => RunWhenAvailableAsync(() =>
+		WithStreamAsync(NewStream(EndpointType.Grpc, GrpcUrl), async created =>
 		{
-			Logger.LogWarning(
-				"OpenTelemetry Streams API not available in this account - " +
-				"this may require an enterprise license or specific permissions. Test skipped."
-			);
-			return;
-		}
+			var result = await GetAsync(created.Id!);
 
-		// Arrange - Create a stream first
-		var streamRequest = new OtelStream
-		{
-			Type = StreamType.Opentelemetry,
-			Signal = Signal.Metric,
-			EndpointType = EndpointType.Grpc,
-			DataModelVersion = DataModelVersion.V1,
-			StreamEndpointUrl = "https://otel-collector.example.com:4317",
-			Enabled = true,
-			TestMatch = [],
-			TagMatch = []
-		};
-
-		var createdStream = await ThousandEyesClient.OpenTelemetry.Streams.CreateAsync(
-			streamRequest,
-			aid: null,
-			cancellationToken: CancellationToken);
-
-		try
-		{
-			// Act - Get the stream details which includes status
-			var result = await ThousandEyesClient.OpenTelemetry.Streams.GetByIdAsync(
-				createdStream.Id!,
-				aid: null,
-				type: null,
-				cancellationToken: CancellationToken);
-
-			// Assert
 			_ = result.Should().NotBeNull();
-			_ = result.Id.Should().Be(createdStream.Id);
-
-			// StreamStatus should be present
+			_ = result.Id.Should().Be(created.Id);
 			if (result.StreamStatus != null)
 			{
 				_ = result.StreamStatus.Status.Should().BeDefined();
 			}
-		}
-		finally
+		}));
+
+	private static OtelStream NewSplunkStream() => new()
+	{
+		Type = StreamType.SplunkHec,
+		Signal = Signal.Trace,
+		EndpointType = EndpointType.Http,
+		DataModelVersion = DataModelVersion.V2,
+		StreamEndpointUrl = "https://splunk.example.com:8088/services/collector",
+		Enabled = true,
+		ExporterConfig = new ExporterConfig
 		{
-			// Cleanup - Delete the created stream
-			try
+			SplunkHec = new ExporterConfigSplunkHec
 			{
-				await ThousandEyesClient.OpenTelemetry.Streams.DeleteAsync(
-					createdStream.Id!,
-					aid: null,
-					cancellationToken: CancellationToken);
+				Token = "test-token-12345",
+				Source = "thousandeyes",
+				SourceType = "thousandeyes:trace"
 			}
-			catch
-			{
-				// Ignore cleanup errors
-			}
-		}
-	}
+		},
+		TestMatch = [],
+		TagMatch = []
+	};
 }

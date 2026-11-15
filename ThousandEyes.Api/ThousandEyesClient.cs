@@ -17,7 +17,6 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 {
 	private readonly ThousandEyesClientOptions _options;
 	private readonly HttpClient _httpClient;
-	private readonly RefitSettings _refitSettings;
 	private readonly IServiceProvider _serviceProvider;
 	private bool _disposed;
 
@@ -45,7 +44,7 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 			}
 		};
 
-		_refitSettings = new RefitSettings
+		var refitSettings = new RefitSettings
 		{
 			ContentSerializer = new SystemTextJsonContentSerializer(jsonOptions)
 		};
@@ -53,27 +52,27 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		// Set up dependency injection for Credentials module
 		var services = new ServiceCollection();
 		_ = services.AddSingleton(_httpClient);
-		CredentialsModule.RegisterCredentialsServices(services, _refitSettings);
+		CredentialsModule.RegisterCredentialsServices(services, refitSettings);
 		_serviceProvider = services.BuildServiceProvider();
 
 		// Initialize Phase 1, 2, 3, 4, 5, 6 & 7 API modules
-		AccountManagement = new AccountManagementModule(_httpClient, _refitSettings);
-		Tests = new TestsModule(_httpClient, _refitSettings);
-		Agents = new AgentsModule(_httpClient, _refitSettings);
-		TestResults = new TestResultsModule(_httpClient, _refitSettings);
-		Alerts = new AlertsModule(_httpClient, _refitSettings);
-		Dashboards = new DashboardsModule(_httpClient, _refitSettings);
-		BgpMonitors = new BgpMonitorsModule(_httpClient, _refitSettings);
-		InternetInsights = new InternetInsightsModule(_httpClient, _refitSettings);
-		EventDetection = new EventDetectionModule(_httpClient, _refitSettings);
-		Integrations = new IntegrationsModule(_httpClient, _refitSettings);
+		AccountManagement = new AccountManagementModule(_httpClient, refitSettings);
+		Tests = new TestsModule(_httpClient, refitSettings);
+		Agents = new AgentsModule(_httpClient, refitSettings);
+		TestResults = new TestResultsModule(_httpClient, refitSettings);
+		Alerts = new AlertsModule(_httpClient, refitSettings);
+		Dashboards = new DashboardsModule(_httpClient, refitSettings);
+		BgpMonitors = new BgpMonitorsModule(_httpClient, refitSettings);
+		InternetInsights = new InternetInsightsModule(_httpClient, refitSettings);
+		EventDetection = new EventDetectionModule(_httpClient, refitSettings);
+		Integrations = new IntegrationsModule(_httpClient, refitSettings);
 		Credentials = _serviceProvider.GetRequiredService<ICredentials>();
-		Tags = new TagsModule(_httpClient, _refitSettings);
-		TestSnapshots = new TestSnapshotsModule(_httpClient, _refitSettings);
-		Templates = new TemplatesModule(_httpClient, _refitSettings);
-		Emulation = new EmulationModule(_httpClient, _refitSettings);
-		EndpointAgents = new EndpointAgentsModule(_httpClient, _refitSettings);
-		OpenTelemetry = new OpenTelemetryModule(_httpClient, _refitSettings);
+		Tags = new TagsModule(_httpClient, refitSettings);
+		TestSnapshots = new TestSnapshotsModule(_httpClient, refitSettings);
+		Templates = new TemplatesModule(_httpClient, refitSettings);
+		Emulation = new EmulationModule(_httpClient, refitSettings);
+		EndpointAgents = new EndpointAgentsModule(_httpClient, refitSettings);
+		OpenTelemetry = new OpenTelemetryModule(_httpClient, refitSettings);
 
 		// Phase 7 in progress! OpenTelemetry data streaming module implemented
 	}
@@ -226,50 +225,9 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 
 	private HttpClient CreateHttpClient()
 	{
-		var handler = new HttpClientHandler();
-
-		// Build the handler chain (order matters - authentication should be innermost, error handling outermost)
-		DelegatingHandler chain = new AuthenticationHandler(_options)
-		{
-			// Set the innermost handler (AuthenticationHandler) to point to HttpClientHandler
-			InnerHandler = handler
-		};
-
-		if (_options.MaxRetryAttempts > 0)
-		{
-			var retryHandler = new RetryHandler(
-				_options.MaxRetryAttempts,
-				_options.RetryDelay,
-				_options.UseExponentialBackoff,
-				_options.MaxRetryDelay,
-				_options.Logger)
-			{
-				InnerHandler = chain
-			};
-			chain = retryHandler;
-		}
-
-		if (_options.EnableRequestLogging || _options.EnableResponseLogging)
-		{
-			var loggingHandler = new LoggingHandler(
-				_options.Logger ?? NullLogger.Instance,
-				_options.EnableRequestLogging,
-				_options.EnableResponseLogging)
-			{
-				InnerHandler = chain
-			};
-			chain = loggingHandler;
-		}
-
-		// Error handling wraps everything except read-only enforcement, so a refusal is never mapped or retried
-		var errorHandler = new ErrorHandler(_options.Logger)
-		{
-			InnerHandler = chain
-		};
-
 		var readOnlyHandler = new ReadOnlyHandler(_options)
 		{
-			InnerHandler = errorHandler
+			InnerHandler = BuildHandlerChain()
 		};
 
 		var httpClient = new HttpClient(readOnlyHandler)
@@ -278,7 +236,6 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 			Timeout = _options.RequestTimeout
 		};
 
-		// Add default headers
 		httpClient.DefaultRequestHeaders.Add("User-Agent", "ThousandEyes.Api/.NET");
 		foreach (var header in _options.DefaultHeaders)
 		{
@@ -286,6 +243,44 @@ public class ThousandEyesClient : IThousandEyesClient, IDisposable
 		}
 
 		return httpClient;
+	}
+
+	// Authentication is innermost and error handling outermost, so a read-only refusal is never mapped or retried
+	private ErrorHandler BuildHandlerChain()
+	{
+		DelegatingHandler chain = new AuthenticationHandler(_options)
+		{
+			InnerHandler = new HttpClientHandler()
+		};
+
+		if (_options.MaxRetryAttempts > 0)
+		{
+			chain = new RetryHandler(
+				_options.MaxRetryAttempts,
+				_options.RetryDelay,
+				_options.UseExponentialBackoff,
+				_options.MaxRetryDelay,
+				_options.Logger)
+			{
+				InnerHandler = chain
+			};
+		}
+
+		if (_options.EnableRequestLogging || _options.EnableResponseLogging)
+		{
+			chain = new LoggingHandler(
+				_options.Logger ?? NullLogger.Instance,
+				_options.EnableRequestLogging,
+				_options.EnableResponseLogging)
+			{
+				InnerHandler = chain
+			};
+		}
+
+		return new ErrorHandler(_options.Logger)
+		{
+			InnerHandler = chain
+		};
 	}
 
 	/// <summary>
