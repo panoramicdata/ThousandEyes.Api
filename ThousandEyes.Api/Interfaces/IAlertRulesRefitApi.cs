@@ -12,29 +12,29 @@ internal interface IAlertRulesRefitApi
 	/// Get all alert rules
 	/// </summary>
 	[Get("/alert-rules")]
-	Task<AlertRules> GetAllAsync([Query] string? aid, CancellationToken cancellationToken);
+	Task<AlertRules> GetAllAsync([Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Get alert rule by ID
 	/// </summary>
 	[Get("/alert-rules/{ruleId}")]
-	Task<AlertRule> GetByIdAsync(string ruleId, [Query] string? aid, CancellationToken cancellationToken);
+	Task<AlertRule> GetByIdAsync(string ruleId, [Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Create alert rule
 	/// </summary>
 	[Post("/alert-rules")]
-	Task<AlertRule> CreateAsync([Body] AlertRuleRequest request, [Query] string? aid, CancellationToken cancellationToken);
+	Task<AlertRule> CreateAsync([Body] AlertRuleRequest request, [Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Update alert rule
 	/// </summary>
 	[Put("/alert-rules/{ruleId}")]
-	Task<AlertRule> UpdateAsync(string ruleId, [Body] AlertRuleRequest request, [Query] string? aid, CancellationToken cancellationToken);
+	Task<AlertRule> UpdateAsync(string ruleId, [Body] AlertRuleRequest request, [Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Delete alert rule
 	/// </summary>
 	[Delete("/alert-rules/{ruleId}")]
-	Task DeleteAsync(string ruleId, [Query] string? aid, CancellationToken cancellationToken);
+	Task DeleteAsync(string ruleId, [Query] string? aid, CancellationToken ct);
 }

@@ -13,29 +13,29 @@ internal interface IStreamsRefitApi
     /// Get all streams
     /// </summary>
     [Get("/streams")]
-    Task<StreamCollection> GetAllAsync([Query] string? aid, [Query] StreamType? type, CancellationToken cancellationToken);
+    Task<StreamCollection> GetAllAsync([Query] string? aid, [Query] StreamType? type, CancellationToken ct);
 
     /// <summary>
     /// Create stream
     /// </summary>
     [Post("/streams")]
-    Task<CreateStreamResponse> CreateAsync([Body] Stream request, [Query] string? aid, CancellationToken cancellationToken);
+    Task<CreateStreamResponse> CreateAsync([Body] Stream request, [Query] string? aid, CancellationToken ct);
 
     /// <summary>
     /// Get stream by ID
     /// </summary>
     [Get("/streams/{id}")]
-    Task<GetStreamResponse> GetByIdAsync(string id, [Query] string? aid, [Query] StreamType? type, CancellationToken cancellationToken);
+    Task<GetStreamResponse> GetByIdAsync(string id, [Query] string? aid, [Query] StreamType? type, CancellationToken ct);
 
     /// <summary>
     /// Update stream
     /// </summary>
     [Put("/streams/{id}")]
-    Task<GetStreamResponse> UpdateAsync(string id, [Body] PutStream request, [Query] string? aid, CancellationToken cancellationToken);
+    Task<GetStreamResponse> UpdateAsync(string id, [Body] PutStream request, [Query] string? aid, CancellationToken ct);
 
     /// <summary>
     /// Delete stream
     /// </summary>
     [Delete("/streams/{id}")]
-    Task DeleteAsync(string id, [Query] string? aid, CancellationToken cancellationToken);
+    Task DeleteAsync(string id, [Query] string? aid, CancellationToken ct);
 }

@@ -12,35 +12,35 @@ internal interface IAgentsRefitApi
 	/// Get all agents
 	/// </summary>
 	[Get("/agents")]
-	Task<Agents> GetAllAsync([Query] string? aid, CancellationToken cancellationToken);
+	Task<Agents> GetAllAsync([Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Get agent by ID
 	/// </summary>
 	[Get("/agents/{agentId}")]
-	Task<Agent> GetByIdAsync(string agentId, [Query] string? aid, CancellationToken cancellationToken);
+	Task<Agent> GetByIdAsync(string agentId, [Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Update agent
 	/// </summary>
 	[Put("/agents/{agentId}")]
-	Task<Agent> UpdateAsync(string agentId, [Body] AgentRequest request, [Query] string? aid, CancellationToken cancellationToken);
+	Task<Agent> UpdateAsync(string agentId, [Body] AgentRequest request, [Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Delete agent
 	/// </summary>
 	[Delete("/agents/{agentId}")]
-	Task DeleteAsync(string agentId, [Query] string? aid, CancellationToken cancellationToken);
+	Task DeleteAsync(string agentId, [Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Create agent
 	/// </summary>
 	[Post("/agents")]
-	Task<Agent> CreateAsync([Body] AgentRequest request, [Query] string? aid, CancellationToken cancellationToken);
+	Task<Agent> CreateAsync([Body] AgentRequest request, [Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Get supported test types
 	/// </summary>
 	[Get("/agents/{agentId}/supported-tests")]
-	Task<string[]> GetSupportedTestsAsync(string agentId, [Query] string? aid, CancellationToken cancellationToken);
+	Task<string[]> GetSupportedTestsAsync(string agentId, [Query] string? aid, CancellationToken ct);
 }
