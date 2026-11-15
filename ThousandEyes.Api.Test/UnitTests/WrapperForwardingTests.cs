@@ -106,12 +106,12 @@ internal static class ValueFactory
 			_ when type == typeof(string) => name,
 			_ when type == typeof(bool) => true,
 			_ when type == typeof(int) => name.Length,
-			_ when type == typeof(long) => name.Length,
+			_ when type == typeof(long) => (long)name.Length,
 			_ when type == typeof(DateTime) => new DateTime(2024, 1, 2, 3, 4, 5, DateTimeKind.Utc),
 			_ when type == typeof(CancellationToken) => new CancellationToken(true),
-			_ when type.IsInterface => null,
 			_ when type.IsEnum => Enum.GetValues(type).GetValue(0),
 			_ when type.IsArray => MakeArray(type.GetElementType()!, name),
+			_ when type.IsInterface || type.IsAbstract => null,
 			_ when type.IsValueType => Activator.CreateInstance(type),
 			_ => RuntimeHelpers.GetUninitializedObject(type)
 		};
