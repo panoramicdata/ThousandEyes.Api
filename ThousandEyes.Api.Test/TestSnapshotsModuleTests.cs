@@ -31,23 +31,14 @@ public class TestSnapshotsModuleTests(IntegrationTestFixture fixture) : TestBase
 			IsPublic = false
 		};
 
-		try
-		{
-			// Act
-			var result = await ThousandEyesClient.TestSnapshots.CreateAsync(testId!, request, aid: null, CancellationToken);
+		// Act
+		var result = await ThousandEyesClient.TestSnapshots.CreateAsync(testId!, request, aid: null, CancellationToken);
 
-			// Assert
-			result.Should().NotBeNull();
-			result.Id.Should().NotBeNullOrEmpty();
-			result.DisplayName.Should().Be(request.DisplayName);
-			result.SourceTestId.Should().Be(testId);
-		}
-		catch (Exception)
-		{
-			// Test may fail if no tests exist, rate limit exceeded, or permissions insufficient
-			// This is expected in some environments
-			throw;
-		}
+		// Assert
+		result.Should().NotBeNull();
+		result.Id.Should().NotBeNullOrEmpty();
+		result.DisplayName.Should().Be(request.DisplayName);
+		result.SourceTestId.Should().Be(testId);
 	}
 
 	[Fact]
