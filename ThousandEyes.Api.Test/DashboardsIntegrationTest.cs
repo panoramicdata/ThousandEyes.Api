@@ -54,7 +54,7 @@ public class DashboardsIntegrationTest(IntegrationTestFixture fixture) : TestBas
 	[Fact]
 	public async Task GetDashboards_WithValidRequest_ReturnsDashboards()
 	{
-		try
+		await RunIfAvailableAsync(async () =>
 		{
 			// Act
 			var result = await ThousandEyesClient.Dashboards.Dashboards.GetAllAsync(
@@ -71,18 +71,13 @@ public class DashboardsIntegrationTest(IntegrationTestFixture fixture) : TestBas
 				_ = firstDashboard.DashboardId.Should().NotBeNullOrEmpty();
 				_ = firstDashboard.Title.Should().NotBeNullOrEmpty();
 			}
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Dashboards API is not available in ThousandEyes API v7
-			return;
-		}
+		});
 	}
 
 	[Fact]
 	public async Task GetDashboardById_WithValidDashboardId_ReturnsDashboardDetails()
 	{
-		try
+		await RunIfAvailableAsync(async () =>
 		{
 			// Arrange - First get list of dashboards to find a valid dashboard ID
 			var dashboards = await ThousandEyesClient.Dashboards.Dashboards.GetAllAsync(
@@ -107,18 +102,13 @@ public class DashboardsIntegrationTest(IntegrationTestFixture fixture) : TestBas
 			_ = result.Should().NotBeNull();
 			_ = result.DashboardId.Should().Be(dashboardId);
 			_ = result.Title.Should().NotBeNullOrEmpty();
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Dashboards API is not available
-			return;
-		}
+		});
 	}
 
 	[Fact]
 	public async Task CreateDashboard_WithValidRequest_CreatesDashboard()
 	{
-		try
+		await RunIfAvailableAsync(async () =>
 		{
 			// Arrange
 			var dashboardRequest = new DashboardRequest
@@ -142,29 +132,20 @@ public class DashboardsIntegrationTest(IntegrationTestFixture fixture) : TestBas
 			_ = result.IsPrivate.Should().Be(dashboardRequest.IsPrivate);
 
 			// Cleanup - Delete the created dashboard
-			try
+			await IgnoreErrorsAsync(async () =>
 			{
 				await ThousandEyesClient.Dashboards.Dashboards.DeleteAsync(
 					result.DashboardId,
 					aid: null,
 					cancellationToken: CancellationToken);
-			}
-			catch
-			{
-				// Ignore cleanup errors
-			}
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Dashboards API is not available
-			return;
-		}
+			});
+		});
 	}
 
 	[Fact]
 	public async Task GetDashboardSnapshots_WithValidRequest_ReturnsSnapshots()
 	{
-		try
+		await RunIfAvailableAsync(async () =>
 		{
 			// Act
 			var result = await ThousandEyesClient.Dashboards.Snapshots.GetAllAsync(
@@ -176,18 +157,13 @@ public class DashboardsIntegrationTest(IntegrationTestFixture fixture) : TestBas
 			// Assert
 			_ = result.Should().NotBeNull();
 			_ = result.DashboardSnapshots.Should().NotBeNull();
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Dashboard Snapshots API is not available
-			return;
-		}
+		});
 	}
 
 	[Fact]
 	public async Task CreateDashboardSnapshot_WithValidRequest_CreatesSnapshot()
 	{
-		try
+		await RunIfAvailableAsync(async () =>
 		{
 			// Arrange - First get list of dashboards to find a valid dashboard ID
 			var dashboards = await ThousandEyesClient.Dashboards.Dashboards.GetAllAsync(
@@ -223,29 +199,20 @@ public class DashboardsIntegrationTest(IntegrationTestFixture fixture) : TestBas
 			_ = result.SnapshotId.Should().NotBeNullOrEmpty();
 
 			// Cleanup - Delete the created snapshot
-			try
+			await IgnoreErrorsAsync(async () =>
 			{
 				await ThousandEyesClient.Dashboards.Snapshots.DeleteAsync(
 					result.SnapshotId,
 					aid: null,
 					cancellationToken: CancellationToken);
-			}
-			catch
-			{
-				// Ignore cleanup errors
-			}
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Dashboard Snapshots API is not available
-			return;
-		}
+			});
+		});
 	}
 
 	[Fact]
 	public async Task GetDashboardFilters_WithValidRequest_ReturnsFilters()
 	{
-		try
+		await RunIfAvailableAsync(async () =>
 		{
 			// Act
 			var result = await ThousandEyesClient.Dashboards.Filters.GetAllAsync(
@@ -264,18 +231,13 @@ public class DashboardsIntegrationTest(IntegrationTestFixture fixture) : TestBas
 				_ = firstFilter.Id.Should().NotBeNullOrEmpty();
 				_ = firstFilter.Name.Should().NotBeNullOrEmpty();
 			}
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Dashboard Filters API is not available
-			return;
-		}
+		});
 	}
 
 	[Fact]
 	public async Task CreateDashboardFilter_WithValidRequest_CreatesFilter()
 	{
-		try
+		await RunIfAvailableAsync(async () =>
 		{
 			// Arrange - First get real test IDs to use in the filter
 			var tests = await ThousandEyesClient.Tests.Tests.GetAllAsync(aid: null, CancellationToken);
@@ -290,25 +252,7 @@ public class DashboardsIntegrationTest(IntegrationTestFixture fixture) : TestBas
 			// Use the first test ID for the filter
 			var testId = tests.TestsList[0].TestId ?? "0";
 
-			var filterRequest = new DashboardFilterRequest
-			{
-				Name = $"Test Filter - {DateTime.UtcNow:yyyyMMdd-HHmmss}",
-				Description = "Integration test filter",
-				Context = [
-					new DataSourceFilter
-					{
-						DataSourceId = "CLOUD_AND_ENTERPRISE_AGENTS",
-						Filters = [
-							new FilterProperty
-							{
-								FilterId = "TEST",
-								Values = [testId], // Use actual test ID
-								MetricIds = ["WEB_AVAILABILITY"]
-							}
-						]
-					}
-				]
-			};
+			var filterRequest = NewFilterRequest(testId);
 
 			// Act
 			var result = await ThousandEyesClient.Dashboards.Filters.CreateAsync(
@@ -322,22 +266,35 @@ public class DashboardsIntegrationTest(IntegrationTestFixture fixture) : TestBas
 			_ = result.Name.Should().Be(filterRequest.Name);
 
 			// Cleanup - Delete the created filter
-			try
+			await IgnoreErrorsAsync(async () =>
 			{
 				await ThousandEyesClient.Dashboards.Filters.DeleteAsync(
 					result.Id,
 					aid: null,
 					cancellationToken: CancellationToken);
-			}
-			catch
-			{
-				// Ignore cleanup errors
-			}
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Dashboard Filters API is not available
-			return;
-		}
+			});
+		});
 	}
+
+	private static DashboardFilterRequest NewFilterRequest(string testId) => new()
+	{
+		Name = $"Test Filter - {DateTime.UtcNow:yyyyMMdd-HHmmss}",
+		Description = "Integration test filter",
+		Context =
+		[
+			new DataSourceFilter
+			{
+				DataSourceId = "CLOUD_AND_ENTERPRISE_AGENTS",
+				Filters =
+				[
+					new FilterProperty
+					{
+						FilterId = "TEST",
+						Values = [testId],
+						MetricIds = ["WEB_AVAILABILITY"]
+					}
+				]
+			}
+		]
+	};
 }

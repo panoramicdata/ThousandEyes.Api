@@ -32,5 +32,5 @@ public class SnapshotRequest
 	/// Note: Saved Events are now called Private Snapshots in the user interface.
 	/// </summary>
 	[JsonPropertyName("isPublic")]
-	public bool IsPublic { get; set; } = false;
+	public bool IsPublic { get; set; }
 }

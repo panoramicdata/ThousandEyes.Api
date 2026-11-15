@@ -145,7 +145,7 @@ public class AgentsApiTests
 		// Arrange
 		var agentId = "123";
 		var cancellationToken = new CancellationToken();
-		var expectedResponse = new string[] { "http-server", "page-load" };
+		string[] expectedResponse = ["http-server", "page-load"];
 		_ = _refitApi.Setup(x => x.GetSupportedTestsAsync(agentId, null, cancellationToken))
 			.ReturnsAsync(expectedResponse);
 

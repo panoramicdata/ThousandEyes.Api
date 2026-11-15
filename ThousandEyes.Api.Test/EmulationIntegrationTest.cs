@@ -11,7 +11,7 @@ public class EmulationIntegrationTest(IntegrationTestFixture fixture) : TestBase
 	[Fact]
 	public async Task GetUserAgents_WithValidRequest_ReturnsUserAgents()
 	{
-		try
+		await RunIfAvailableAsync(async () =>
 		{
 			// Act
 			var result = await ThousandEyesClient.Emulation.UserAgents.GetAllAsync(
@@ -29,18 +29,13 @@ public class EmulationIntegrationTest(IntegrationTestFixture fixture) : TestBase
 				_ = firstUserAgent.Value.Should().NotBeNullOrEmpty();
 				// Browser and OS may be null for some user agents
 			}
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Emulation API is not available in ThousandEyes API v7
-			return;
-		}
+		});
 	}
 
 	[Fact]
 	public async Task GetEmulatedDevices_WithValidRequest_ReturnsDevices()
 	{
-		try
+		await RunIfAvailableAsync(async () =>
 		{
 			// Act
 			var result = await ThousandEyesClient.Emulation.EmulatedDevices.GetAllAsync(
@@ -61,18 +56,13 @@ public class EmulationIntegrationTest(IntegrationTestFixture fixture) : TestBase
 				_ = firstDevice.Width.Should().BePositive();
 				_ = firstDevice.Height.Should().BePositive();
 			}
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Emulation API is not available
-			return;
-		}
+		});
 	}
 
 	[Fact]
 	public async Task GetEmulatedDevices_WithExpandUserAgent_ReturnsDevicesWithUserAgents()
 	{
-		try
+		await RunIfAvailableAsync(async () =>
 		{
 			// Act
 			var result = await ThousandEyesClient.Emulation.EmulatedDevices.GetAllAsync(
@@ -96,18 +86,13 @@ public class EmulationIntegrationTest(IntegrationTestFixture fixture) : TestBase
 					_ = firstDevice.AvailableUserAgents[0].Should().NotBeNullOrEmpty();
 				}
 			}
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Emulation API is not available
-			return;
-		}
+		});
 	}
 
 	[Fact]
 	public async Task CreateEmulatedDevice_WithValidRequest_CreatesDevice()
 	{
-		try
+		await RunIfAvailableAsync(async () =>
 		{
 			// Arrange
 			var deviceRequest = new EmulatedDevice
@@ -132,18 +117,13 @@ public class EmulationIntegrationTest(IntegrationTestFixture fixture) : TestBase
 
 			// Note: This test doesn't clean up the created device as there's no delete endpoint
 			// The device will remain in the system as per the API design
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Emulation API is not available
-			return;
-		}
+		});
 	}
 
 	[Fact]
 	public async Task CreateEmulatedDevice_WithTabletCategory_CreatesTabletDevice()
 	{
-		try
+		await RunIfAvailableAsync(async () =>
 		{
 			// Arrange
 			var deviceRequest = new EmulatedDevice
@@ -165,11 +145,6 @@ public class EmulationIntegrationTest(IntegrationTestFixture fixture) : TestBase
 			_ = result.Category.Should().Be(EmulatedDeviceCategory.Tablet);
 			_ = result.Width.Should().Be(768);
 			_ = result.Height.Should().Be(1024);
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Emulation API is not available
-			return;
-		}
+		});
 	}
 }

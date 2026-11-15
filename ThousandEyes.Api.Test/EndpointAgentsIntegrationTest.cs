@@ -1,5 +1,5 @@
 using AwesomeAssertions;
-using Refit;
+using ThousandEyes.Api.Interfaces;
 using ThousandEyes.Api.Models.EndpointAgents;
 
 namespace ThousandEyes.Api.Test;
@@ -8,323 +8,157 @@ namespace ThousandEyes.Api.Test;
 [Trait("Category", "Integration")]
 public class EndpointAgentsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fixture)
 {
-	[Fact]
-	public async Task GetEndpointAgents_WithValidRequest_ReturnsAgents()
+	private IEndpointAgentsApi Api => ThousandEyesClient.EndpointAgents.EndpointAgents;
+
+	private async Task<EndpointAgent[]> ListAgentsAsync(
+		int? max = null,
+		ExpandEndpointAgentOptions[]? expand = null,
+		bool? includeDeleted = null) =>
+		(await Api.GetAllAsync(
+			aid: null,
+			max: max,
+			cursor: null,
+			expand: expand,
+			includeDeleted: includeDeleted,
+			useAllPermittedAids: null,
+			agentName: null,
+			computerName: null,
+			cancellationToken: CancellationToken)).AgentsList;
+
+	/// <summary>
+	/// Runs the body against the first endpoint agent, or returns when the account has none
+	/// </summary>
+	private Task WithFirstAgentAsync(Func<EndpointAgent, Task> body) => RunIfAvailableAsync(async () =>
 	{
-		try
+		var agents = await ListAgentsAsync(max: 1, includeDeleted: false);
+		if (agents.Length > 0)
 		{
-			// Act
-			var result = await ThousandEyesClient.EndpointAgents.EndpointAgents.GetAllAsync(
-				aid: null,
-				max: null,
-				cursor: null,
-				expand: null,
-				includeDeleted: null,
-				useAllPermittedAids: null,
-				agentName: null,
-				computerName: null,
-				cancellationToken: CancellationToken);
-
-			// Assert
-			_ = result.Should().NotBeNull();
-			_ = result.AgentsList.Should().NotBeNull();
-
-			// If there are agents, verify the structure
-			if (result.AgentsList.Length > 0)
-			{
-				var firstAgent = result.AgentsList[0];
-				_ = firstAgent.Id.Should().NotBeNullOrEmpty();
-				_ = firstAgent.Name.Should().NotBeNullOrEmpty();
-				_ = firstAgent.Platform.Should().BeDefined();
-			}
+			await body(agents[0]);
 		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Endpoint Agents API is not available
-			return;
-		}
-	}
+	});
+
+	private Task<EndpointAgent> SetEnabledAsync(string agentId, bool enabled) => enabled
+		? Api.EnableAsync(agentId: agentId, aid: null, cancellationToken: CancellationToken)
+		: Api.DisableAsync(agentId: agentId, aid: null, cancellationToken: CancellationToken);
 
 	[Fact]
-	public async Task GetEndpointAgents_WithExpandClients_ReturnsAgentsWithClients()
+	public Task GetEndpointAgents_WithValidRequest_ReturnsAgents() => RunIfAvailableAsync(async () =>
 	{
-		try
-		{
-			// Act
-			var result = await ThousandEyesClient.EndpointAgents.EndpointAgents.GetAllAsync(
-				aid: null,
-				max: 5,
-				cursor: null,
-				expand: [ExpandEndpointAgentOptions.Clients],
-				includeDeleted: false,
-				useAllPermittedAids: null,
-				agentName: null,
-				computerName: null,
-				cancellationToken: CancellationToken);
+		var agents = await ListAgentsAsync();
 
-			// Assert
-			_ = result.Should().NotBeNull();
-			_ = result.AgentsList.Should().NotBeNull();
-
-			// When expand=clients is used, agents with clients should have client data
-			var agentsWithClients = result.AgentsList.Where(a => a.NumberOfClients > 0).ToArray();
-			if (agentsWithClients.Length > 0)
-			{
-				var agentWithClients = agentsWithClients[0];
-				_ = agentWithClients.Clients.Should().NotBeNull();
-			}
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+		_ = agents.Should().NotBeNull();
+		if (agents.Length > 0)
 		{
-			// Skip test if Endpoint Agents API is not available
-			return;
+			_ = agents[0].Id.Should().NotBeNullOrEmpty();
+			_ = agents[0].Name.Should().NotBeNullOrEmpty();
+			_ = agents[0].Platform.Should().BeDefined();
 		}
-	}
+	});
 
 	[Fact]
-	public async Task GetEndpointAgent_WithValidId_ReturnsAgentDetails()
+	public Task GetEndpointAgents_WithExpandClients_ReturnsAgentsWithClients() => RunIfAvailableAsync(async () =>
 	{
-		try
+		var agents = await ListAgentsAsync(max: 5, expand: [ExpandEndpointAgentOptions.Clients], includeDeleted: false);
+
+		_ = agents.Should().NotBeNull();
+		var agentsWithClients = agents.Where(a => a.NumberOfClients > 0).ToArray();
+		if (agentsWithClients.Length > 0)
 		{
-			// Arrange - Get list of agents first
-			var agents = await ThousandEyesClient.EndpointAgents.EndpointAgents.GetAllAsync(
-				aid: null,
-				max: 1,
-				cursor: null,
-				expand: null,
-				includeDeleted: false,
-				useAllPermittedAids: null,
-				agentName: null,
-				computerName: null,
-				cancellationToken: CancellationToken);
-
-			if (agents.AgentsList.Length == 0)
-			{
-				// Skip if no agents available
-				return;
-			}
-
-			var agentId = agents.AgentsList[0].Id!;
-
-			// Act
-			var result = await ThousandEyesClient.EndpointAgents.EndpointAgents.GetByIdAsync(
-				agentId: agentId,
-				aid: null,
-				expand: null,
-				includeDeleted: false,
-				cancellationToken: CancellationToken);
-
-			// Assert
-			_ = result.Should().NotBeNull();
-			_ = result.Id.Should().Be(agentId);
-			_ = result.Name.Should().NotBeNullOrEmpty();
-			_ = result.Platform.Should().BeDefined();
+			_ = agentsWithClients[0].Clients.Should().NotBeNull();
 		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Endpoint Agents API is not available
-			return;
-		}
-	}
+	});
 
 	[Fact]
-	public async Task FilterEndpointAgents_WithPlatformFilter_ReturnsFilteredAgents()
+	public Task GetEndpointAgent_WithValidId_ReturnsAgentDetails() => WithFirstAgentAsync(async agent =>
 	{
-		try
-		{
-			// Arrange
-			var filterRequest = new AgentSearchRequest
-			{
-				SearchFilters = new AgentSearchFilters
-				{
-					Platform = [Models.EndpointAgents.Platform.Windows, Models.EndpointAgents.Platform.Mac]
-				}
-			};
+		var result = await Api.GetByIdAsync(
+			agentId: agent.Id!,
+			aid: null,
+			expand: null,
+			includeDeleted: false,
+			cancellationToken: CancellationToken);
 
-			// Act
-			var result = await ThousandEyesClient.EndpointAgents.EndpointAgents.FilterAsync(
-				request: filterRequest,
-				aid: null,
-				max: null,
-				cursor: null,
-				expand: null,
-				includeDeleted: false,
-				cancellationToken: CancellationToken);
-
-			// Assert
-			_ = result.Should().NotBeNull();
-			_ = result.AgentsList.Should().NotBeNull();
-
-			// All returned agents should be Windows or Mac
-			if (result.AgentsList.Length > 0)
-			{
-				_ = result.AgentsList.Should().OnlyContain(a =>
-					a.Platform == Models.EndpointAgents.Platform.Windows ||
-					a.Platform == Models.EndpointAgents.Platform.Mac);
-			}
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Endpoint Agents API is not available
-			return;
-		}
-	}
+		_ = result.Should().NotBeNull();
+		_ = result.Id.Should().Be(agent.Id);
+		_ = result.Name.Should().NotBeNullOrEmpty();
+		_ = result.Platform.Should().BeDefined();
+	});
 
 	[Fact]
-	public async Task GetConnectionString_WithValidRequest_ReturnsConnectionString()
+	public Task FilterEndpointAgents_WithPlatformFilter_ReturnsFilteredAgents() => RunIfAvailableAsync(async () =>
 	{
-		try
+		var filterRequest = new AgentSearchRequest
 		{
-			// Act
-			var result = await ThousandEyesClient.EndpointAgents.EndpointAgents.GetConnectionStringAsync(
-				aid: null,
-				cancellationToken: CancellationToken);
+			SearchFilters = new AgentSearchFilters
+			{
+				Platform = [Platform.Windows, Platform.Mac]
+			}
+		};
 
-			// Assert
-			_ = result.Should().NotBeNull();
-			_ = result.ConnectionStringValue.Should().NotBeNullOrEmpty();
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+		var result = await Api.FilterAsync(
+			request: filterRequest,
+			aid: null,
+			max: null,
+			cursor: null,
+			expand: null,
+			includeDeleted: false,
+			cancellationToken: CancellationToken);
+
+		_ = result.Should().NotBeNull();
+		_ = result.AgentsList.Should().NotBeNull();
+		if (result.AgentsList.Length > 0)
 		{
-			// Skip test if Endpoint Agents API is not available
-			return;
+			_ = result.AgentsList.Should().OnlyContain(a => a.Platform == Platform.Windows || a.Platform == Platform.Mac);
 		}
-	}
+	});
 
 	[Fact]
-	public async Task UpdateEndpointAgent_WithValidRequest_UpdatesAgent()
+	public Task GetConnectionString_WithValidRequest_ReturnsConnectionString() => RunIfAvailableAsync(async () =>
 	{
-		try
-		{
-			// Arrange - Get list of agents first
-			var agents = await ThousandEyesClient.EndpointAgents.EndpointAgents.GetAllAsync(
-				aid: null,
-				max: 1,
-				cursor: null,
-				expand: null,
-				includeDeleted: false,
-				useAllPermittedAids: null,
-				agentName: null,
-				computerName: null,
-				cancellationToken: CancellationToken);
+		var result = await Api.GetConnectionStringAsync(aid: null, cancellationToken: CancellationToken);
 
-			if (agents.AgentsList.Length == 0)
-			{
-				// Skip if no agents available
-				return;
-			}
-
-			var agent = agents.AgentsList[0];
-			var originalName = agent.Name;
-
-			var updateRequest = new EndpointAgentUpdate
-			{
-				Name = $"{originalName}-Updated-{DateTime.UtcNow:yyyyMMddHHmmss}"
-			};
-
-			// Act
-			var result = await ThousandEyesClient.EndpointAgents.EndpointAgents.UpdateAsync(
-				agentId: agent.Id!,
-				request: updateRequest,
-				aid: null,
-				expand: null,
-				cancellationToken: CancellationToken);
-
-			// Assert
-			_ = result.Should().NotBeNull();
-			_ = result.Id.Should().Be(agent.Id);
-			_ = result.Name.Should().Be(updateRequest.Name);
-
-			// Cleanup - Restore original name
-			try
-			{
-				var restoreRequest = new EndpointAgentUpdate { Name = originalName };
-				_ = await ThousandEyesClient.EndpointAgents.EndpointAgents.UpdateAsync(
-					agentId: agent.Id!,
-					request: restoreRequest,
-					aid: null,
-					expand: null,
-					cancellationToken: CancellationToken);
-			}
-			catch
-			{
-				// Ignore cleanup errors
-			}
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Endpoint Agents API is not available
-			return;
-		}
-	}
+		_ = result.Should().NotBeNull();
+		_ = result.ConnectionStringValue.Should().NotBeNullOrEmpty();
+	});
 
 	[Fact]
-	public async Task EnableDisableEndpointAgent_WithValidId_TogglesAgentStatus()
+	public Task UpdateEndpointAgent_WithValidRequest_UpdatesAgent() => WithFirstAgentAsync(async agent =>
 	{
-		try
+		var originalName = agent.Name;
+		var updateRequest = new EndpointAgentUpdate
 		{
-			// Arrange - Get list of agents first
-			var agents = await ThousandEyesClient.EndpointAgents.EndpointAgents.GetAllAsync(
-				aid: null,
-				max: 1,
-				cursor: null,
-				expand: null,
-				includeDeleted: false,
-				useAllPermittedAids: null,
-				agentName: null,
-				computerName: null,
-				cancellationToken: CancellationToken);
+			Name = $"{originalName}-Updated-{DateTime.UtcNow:yyyyMMddHHmmss}"
+		};
 
-			if (agents.AgentsList.Length == 0)
-			{
-				// Skip if no agents available
-				return;
-			}
+		var result = await Api.UpdateAsync(
+			agentId: agent.Id!,
+			request: updateRequest,
+			aid: null,
+			expand: null,
+			cancellationToken: CancellationToken);
 
-			var agent = agents.AgentsList[0];
-			var originalStatus = agent.Status;
+		_ = result.Should().NotBeNull();
+		_ = result.Id.Should().Be(agent.Id);
+		_ = result.Name.Should().Be(updateRequest.Name);
 
-			// Act - Disable if enabled, enable if disabled
-			EndpointAgent result;
-			if (originalStatus == AgentStatus.Enabled)
-			{
-				result = await ThousandEyesClient.EndpointAgents.EndpointAgents.DisableAsync(
-					agentId: agent.Id!,
-					aid: null,
-					cancellationToken: CancellationToken);
+		await IgnoreErrorsAsync(() => Api.UpdateAsync(
+			agentId: agent.Id!,
+			request: new EndpointAgentUpdate { Name = originalName },
+			aid: null,
+			expand: null,
+			cancellationToken: CancellationToken));
+	});
 
-				// Assert
-				_ = result.Should().NotBeNull();
-				_ = result.Status.Should().Be(AgentStatus.Disabled);
+	[Fact]
+	public Task EnableDisableEndpointAgent_WithValidId_TogglesAgentStatus() => WithFirstAgentAsync(async agent =>
+	{
+		var wasEnabled = agent.Status == AgentStatus.Enabled;
 
-				// Restore - Re-enable the agent
-				_ = await ThousandEyesClient.EndpointAgents.EndpointAgents.EnableAsync(
-					agentId: agent.Id!,
-					aid: null,
-					cancellationToken: CancellationToken);
-			}
-			else
-			{
-				result = await ThousandEyesClient.EndpointAgents.EndpointAgents.EnableAsync(
-					agentId: agent.Id!,
-					aid: null,
-					cancellationToken: CancellationToken);
+		var result = await SetEnabledAsync(agent.Id!, enabled: !wasEnabled);
 
-				// Assert
-				_ = result.Should().NotBeNull();
-				_ = result.Status.Should().Be(AgentStatus.Enabled);
+		_ = result.Should().NotBeNull();
+		_ = result.Status.Should().Be(wasEnabled ? AgentStatus.Disabled : AgentStatus.Enabled);
 
-				// Restore - Disable the agent
-				_ = await ThousandEyesClient.EndpointAgents.EndpointAgents.DisableAsync(
-					agentId: agent.Id!,
-					aid: null,
-					cancellationToken: CancellationToken);
-			}
-		}
-		catch (ValidationApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-		{
-			// Skip test if Endpoint Agents API is not available
-			return;
-		}
-	}
+		_ = await SetEnabledAsync(agent.Id!, enabled: wasEnabled);
+	});
 }

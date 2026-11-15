@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using ThousandEyes.Api.Models.Permissions;
 
 namespace ThousandEyes.Api.Interfaces;
@@ -6,5 +7,5 @@ namespace ThousandEyes.Api.Interfaces;
 public interface IPermissionsApi
 {
 	/// <summary>Get all assignable permissions</summary>
-	Task<Permissions> GetAllAsync(string? aid = null, CancellationToken cancellationToken = default);
+	Task<Permissions> GetAllAsync([Optional] string? aid, [Optional] CancellationToken cancellationToken);
 }

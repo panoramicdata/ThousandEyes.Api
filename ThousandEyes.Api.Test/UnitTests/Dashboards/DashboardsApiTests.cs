@@ -21,10 +21,10 @@ public class DashboardsApiTests
 	{
 		// Arrange
 		var cancellationToken = new CancellationToken();
-		var expectedResponse = new Dashboard[]
-		{
+		Dashboard[] expectedResponse =
+		[
 			new() { DashboardId = "123", Title = "Test Dashboard" }
-		};
+		];
 		_ = _refitApi.Setup(x => x.GetAllAsync(null, cancellationToken))
 			.ReturnsAsync(expectedResponse);
 

@@ -66,7 +66,7 @@ public class AuthenticationTests
 	public void ThousandEyesClientOptions_WithValidBearerToken_ShouldValidateOptions()
 	{
 		// Arrange
-		var logger = new TestLogger();
+		var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
 		var options = new ThousandEyesClientOptions
 		{
 			BearerToken = "test-bearer-token-abc123",
@@ -124,20 +124,5 @@ public class AuthenticationTests
 		var act = options.Validate;
 		_ = act.Should().Throw<ArgumentException>()
 			.WithMessage("MaxRetryAttempts cannot be negative. (Parameter 'MaxRetryAttempts')");
-	}
-
-	private class TestLogger : ILogger
-	{
-		public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-		public bool IsEnabled(LogLevel logLevel) => true;
-		public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
-		{
-			// Test logger implementation - parameters are required by interface
-			_ = logLevel;
-			_ = eventId;
-			_ = state;
-			_ = exception;
-			_ = formatter;
-		}
 	}
 }

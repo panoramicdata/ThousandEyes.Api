@@ -196,25 +196,8 @@ public class AlertsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fi
 		var testId = tests.TestsList[0].TestId;
 		var testName = tests.TestsList[0].TestName;
 
-		var alertRuleRequest = new AlertRuleRequest
-		{
-			RuleName = $"Test Alert Rule - {DateTime.UtcNow:yyyyMMdd-HHmmss}",
-			Description = "Integration test alert rule",
-			Expression = "((loss >= 5%))",
-			Enabled = false, // Keep disabled to avoid triggering real alerts
-			AlertType = "test",
-			Severity = "warning",
-			MinimumSources = 1,
-			MinimumSourcesPct = 100,
-			RoundsBelowThreshold = 2,
-			Tests = [
-				new AlertRuleTest { TestId = testId, TestName = testName }
-			],
-			Notifications = new AlertRuleNotifications
-			{
-				Emails = ["test@example.com"]
-			}
-		};
+		var alertRuleRequest = NewAlertRuleRequest(testId, testName);
+
 
 		// Act
 		var result = await ThousandEyesClient.Alerts.AlertRules.CreateAsync(
@@ -232,16 +215,30 @@ public class AlertsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fi
 		_ = result.Enabled.Should().BeFalse();
 
 		// Cleanup - Delete the created alert rule
-		try
+		await IgnoreErrorsAsync(async () =>
 		{
 			await ThousandEyesClient.Alerts.AlertRules.DeleteAsync(
 				result.RuleId,
 				aid: null,
 				cancellationToken: CancellationToken);
-		}
-		catch
-		{
-			// Ignore cleanup errors - rule will be left disabled
-		}
+		});
 	}
+
+	private static AlertRuleRequest NewAlertRuleRequest(string testId, string testName) => new()
+	{
+		RuleName = $"Test Alert Rule - {DateTime.UtcNow:yyyyMMdd-HHmmss}",
+		Description = "Integration test alert rule",
+		Expression = "((loss >= 5%))",
+		Enabled = false, // Keep disabled to avoid triggering real alerts
+		AlertType = "test",
+		Severity = "warning",
+		MinimumSources = 1,
+		MinimumSourcesPct = 100,
+		RoundsBelowThreshold = 2,
+		Tests = [new AlertRuleTest { TestId = testId, TestName = testName }],
+		Notifications = new AlertRuleNotifications
+		{
+			Emails = ["test@example.com"]
+		}
+	};
 }

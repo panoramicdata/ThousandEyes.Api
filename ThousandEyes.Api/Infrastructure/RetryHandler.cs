@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Net;
 using System.Net.Sockets;
 
@@ -18,7 +19,7 @@ internal sealed class RetryHandler(
 	private readonly TimeSpan _retryDelay = retryDelay;
 	private readonly bool _useExponentialBackoff = useExponentialBackoff;
 	private readonly TimeSpan _maxRetryDelay = maxRetryDelay;
-	private readonly ILogger? _logger = logger;
+	private readonly ILogger _logger = logger ?? NullLogger.Instance;
 
 	private static readonly HttpStatusCode[] RetryableStatusCodes =
 	[
@@ -34,91 +35,101 @@ internal sealed class RetryHandler(
 		HttpRequestMessage request,
 		CancellationToken cancellationToken)
 	{
-		var attempt = 0;
 		Exception? lastException = null;
 
-		while (attempt <= _maxRetryAttempts)
+		for (var attempt = 0; attempt <= _maxRetryAttempts; attempt++)
 		{
 			try
 			{
 				var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
-
-				// Return successful responses or non-retryable errors
-				if (response.IsSuccessStatusCode || !IsRetryableStatusCode(response.StatusCode))
+				var result = HandleResponse(response, request, attempt);
+				if (result is not null)
 				{
-					if (attempt > 0)
-					{
-						_logger?.LogInformation(
-							"HTTP request succeeded on attempt {Attempt} for {Method} {Uri}",
-							attempt + 1,
-							request.Method,
-							request.RequestUri);
-					}
-
-					return response;
+					return result;
 				}
-
-				// Dispose failed response to free resources
-				response.Dispose();
-
-				if (attempt == _maxRetryAttempts)
-				{
-					_logger?.LogWarning(
-						"HTTP request failed after {MaxAttempts} attempts for {Method} {Uri} with status {StatusCode}",
-						_maxRetryAttempts + 1,
-						request.Method,
-						request.RequestUri,
-						response.StatusCode);
-
-					// Create a new response for the final failure
-					return new HttpResponseMessage(response.StatusCode)
-					{
-						RequestMessage = request,
-						ReasonPhrase = $"Failed after {_maxRetryAttempts + 1} attempts"
-					};
-				}
-
-				_logger?.LogWarning(
-					"HTTP request failed on attempt {Attempt}, retrying in {Delay}ms for {Method} {Uri} (Status: {StatusCode})",
-					attempt + 1,
-					CalculateDelay(attempt).TotalMilliseconds,
-					request.Method,
-					request.RequestUri,
-					response.StatusCode);
 			}
 			catch (Exception ex) when (IsRetryableException(ex))
 			{
 				lastException = ex;
-
+				LogFailedAttempt(ex, request, attempt);
 				if (attempt == _maxRetryAttempts)
 				{
-					_logger?.LogError(ex,
-						"HTTP request failed after {MaxAttempts} attempts for {Method} {Uri}",
-						_maxRetryAttempts + 1,
-						request.Method,
-						request.RequestUri);
 					throw;
 				}
-
-				_logger?.LogWarning(ex,
-					"HTTP request failed on attempt {Attempt}, retrying in {Delay}ms for {Method} {Uri}",
-					attempt + 1,
-					CalculateDelay(attempt).TotalMilliseconds,
-					request.Method,
-					request.RequestUri);
 			}
 
-			// Wait before retrying
 			if (attempt < _maxRetryAttempts)
 			{
 				await Task.Delay(CalculateDelay(attempt), cancellationToken).ConfigureAwait(false);
 			}
-
-			attempt++;
 		}
 
-		// This should never be reached due to the logic above, but just in case
 		throw lastException ?? new HttpRequestException($"Request failed after {_maxRetryAttempts + 1} attempts");
+	}
+
+	private HttpResponseMessage? HandleResponse(HttpResponseMessage response, HttpRequestMessage request, int attempt)
+	{
+		if (response.IsSuccessStatusCode || !IsRetryableStatusCode(response.StatusCode))
+		{
+			if (attempt > 0)
+			{
+				_logger.LogInformation(
+					"HTTP request succeeded on attempt {Attempt} for {Method} {Uri}",
+					attempt + 1,
+					request.Method,
+					request.RequestUri);
+			}
+
+			return response;
+		}
+
+		response.Dispose();
+
+		if (attempt == _maxRetryAttempts)
+		{
+			_logger.LogWarning(
+				"HTTP request failed after {MaxAttempts} attempts for {Method} {Uri} with status {StatusCode}",
+				_maxRetryAttempts + 1,
+				request.Method,
+				request.RequestUri,
+				response.StatusCode);
+
+			return new HttpResponseMessage(response.StatusCode)
+			{
+				RequestMessage = request,
+				ReasonPhrase = $"Failed after {_maxRetryAttempts + 1} attempts"
+			};
+		}
+
+		_logger.LogWarning(
+			"HTTP request failed on attempt {Attempt}, retrying in {Delay}ms for {Method} {Uri} (Status: {StatusCode})",
+			attempt + 1,
+			CalculateDelay(attempt).TotalMilliseconds,
+			request.Method,
+			request.RequestUri,
+			response.StatusCode);
+
+		return null;
+	}
+
+	private void LogFailedAttempt(Exception ex, HttpRequestMessage request, int attempt)
+	{
+		if (attempt == _maxRetryAttempts)
+		{
+			_logger.LogError(ex,
+				"HTTP request failed after {MaxAttempts} attempts for {Method} {Uri}",
+				_maxRetryAttempts + 1,
+				request.Method,
+				request.RequestUri);
+			return;
+		}
+
+		_logger.LogWarning(ex,
+			"HTTP request failed on attempt {Attempt}, retrying in {Delay}ms for {Method} {Uri}",
+			attempt + 1,
+			CalculateDelay(attempt).TotalMilliseconds,
+			request.Method,
+			request.RequestUri);
 	}
 
 	private TimeSpan CalculateDelay(int attemptNumber)
@@ -128,7 +139,6 @@ internal sealed class RetryHandler(
 			return _retryDelay;
 		}
 
-		// Exponential backoff: delay * 2^attempt
 		var exponentialDelay = TimeSpan.FromMilliseconds(_retryDelay.TotalMilliseconds * Math.Pow(2, attemptNumber));
 		return exponentialDelay > _maxRetryDelay ? _maxRetryDelay : exponentialDelay;
 	}

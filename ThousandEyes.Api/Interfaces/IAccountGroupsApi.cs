@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using ThousandEyes.Api.Models.AccountGroups;
 
 namespace ThousandEyes.Api.Interfaces;
@@ -9,13 +10,13 @@ public interface IAccountGroupsApi
 	Task<AccountGroups> GetAllAsync(CancellationToken cancellationToken);
 
 	/// <summary>Get a specific account group by ID</summary>
-	Task<AccountGroupDetail> GetByIdAsync(string id, string[]? expand = null, CancellationToken cancellationToken = default);
+	Task<AccountGroupDetail> GetByIdAsync(string id, [Optional] string[]? expand, [Optional] CancellationToken cancellationToken);
 
 	/// <summary>Create a new account group</summary>
-	Task<CreatedAccountGroup> CreateAsync(AccountGroupRequest request, string[]? expand = null, CancellationToken cancellationToken = default);
+	Task<CreatedAccountGroup> CreateAsync(AccountGroupRequest request, [Optional] string[]? expand, [Optional] CancellationToken cancellationToken);
 
 	/// <summary>Update an existing account group</summary>
-	Task<AccountGroupDetail> UpdateAsync(string id, AccountGroupRequest request, string[]? expand = null, CancellationToken cancellationToken = default);
+	Task<AccountGroupDetail> UpdateAsync(string id, AccountGroupRequest request, [Optional] string[]? expand, [Optional] CancellationToken cancellationToken);
 
 	/// <summary>Delete an account group</summary>
 	Task DeleteAsync(string id, CancellationToken cancellationToken);
