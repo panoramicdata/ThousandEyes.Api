@@ -5,173 +5,76 @@ namespace ThousandEyes.Api.Test;
 
 [Collection("Integration Tests")]
 [Trait("Category", "Integration")]
-public class InternetInsightsModuleTests(IntegrationTestFixture fixture)
+public class InternetInsightsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 {
-	private readonly IntegrationTestFixture _fixture = fixture;
+	private Task<CatalogProviderResponse> LicensedProvidersAsync() =>
+		ThousandEyesClient.InternetInsights.CatalogProviders.FilterAsync(new CatalogProviderFilter { Included = true }, aid: null, CancellationToken);
+
+	private Task<OutagesResponse> OutagesAsync(OutageFilter filter) =>
+		ThousandEyesClient.InternetInsights.Outages.FilterAsync(filter, aid: null, CancellationToken);
+
+	private async Task WithOutageOfTypeAsync(string type, Func<string, Task> body)
+	{
+		var outages = await OutagesAsync(new OutageFilter { Window = "30d" });
+		var outage = outages.OutagesList.FirstOrDefault(o => o.Type == type);
+		if (outage != null)
+		{
+			await body(outage.Id);
+		}
+	}
 
 	[Fact]
 	public async Task FilterCatalogProviders_WithValidFilter_ReturnsProviders()
 	{
-		// Arrange
-		var client = _fixture.GetThousandEyesClient();
-		var cancellationToken = CancellationToken.None;
-		var filter = new CatalogProviderFilter
-		{
-			Included = true // Only licensed providers
-		};
+		var result = await LicensedProvidersAsync();
 
-		// Act
-		var result = await client.InternetInsights.CatalogProviders.FilterAsync(
-			filter,
-			aid: null,
-			cancellationToken);
-
-		// Assert
-		result.Should().NotBeNull();
-		result.ProvidersList.Should().NotBeEmpty();
-
-		// Validate first provider structure
-		var firstProvider = result.ProvidersList[0];
-		firstProvider.Id.Should().NotBeNullOrWhiteSpace();
-		firstProvider.ProviderName.Should().NotBeNullOrWhiteSpace();
+		_ = result.ProvidersList.Should().NotBeEmpty();
+		_ = result.ProvidersList[0].Id.Should().NotBeNullOrWhiteSpace();
+		_ = result.ProvidersList[0].ProviderName.Should().NotBeNullOrWhiteSpace();
 	}
 
 	[Fact]
 	public async Task GetCatalogProvider_WithValidId_ReturnsProviderDetails()
 	{
-		// Arrange
-		var client = _fixture.GetThousandEyesClient();
-		var cancellationToken = CancellationToken.None;
+		var providers = await LicensedProvidersAsync();
+		_ = providers.ProvidersList.Should().NotBeEmpty();
+		var providerId = providers.ProvidersList[0].Id;
 
-		// First, get a list of providers to get a valid ID
-		var filter = new CatalogProviderFilter { Included = true };
-		var providers = await client.InternetInsights.CatalogProviders.FilterAsync(
-			filter,
-			aid: null,
-			cancellationToken);
+		var result = await ThousandEyesClient.InternetInsights.CatalogProviders.GetByIdAsync(providerId, aid: null, CancellationToken);
 
-		providers.ProvidersList.Should().NotBeEmpty();
-		var testProviderId = providers.ProvidersList[0].Id;
-
-		// Act
-		var result = await client.InternetInsights.CatalogProviders.GetByIdAsync(
-			testProviderId,
-			aid: null,
-			cancellationToken);
-
-		// Assert
-		result.Should().NotBeNull();
-		result.Id.Should().Be(testProviderId);
-		result.ProviderName.Should().NotBeNullOrWhiteSpace();
+		_ = result.Id.Should().Be(providerId);
+		_ = result.ProviderName.Should().NotBeNullOrWhiteSpace();
 	}
 
 	[Fact]
 	public async Task FilterOutages_WithTimeWindow_ReturnsOutages()
 	{
-		// Arrange
-		var client = _fixture.GetThousandEyesClient();
-		var cancellationToken = CancellationToken.None;
-		var filter = new OutageFilter
-		{
-			Window = "7d" // Last 7 days
-		};
+		var result = await OutagesAsync(new OutageFilter { Window = "7d" });
 
-		// Act
-		var result = await client.InternetInsights.Outages.FilterAsync(
-			filter,
-			aid: null,
-			cancellationToken);
-
-		// Assert
-		result.Should().NotBeNull();
-		result.OutagesList.Should().NotBeNull();
-		// Note: Outages list may be empty if no outages in timeframe
+		_ = result.OutagesList.Should().NotBeNull();
 	}
 
 	[Fact]
 	public async Task FilterOutages_WithDateRange_ReturnsOutages()
 	{
-		// Arrange
-		var client = _fixture.GetThousandEyesClient();
-		var cancellationToken = CancellationToken.None;
-		var filter = new OutageFilter
-		{
-			StartDate = DateTime.UtcNow.AddDays(-7),
-			EndDate = DateTime.UtcNow
-		};
+		var result = await OutagesAsync(new OutageFilter { StartDate = DateTime.UtcNow.AddDays(-7), EndDate = DateTime.UtcNow });
 
-		// Act
-		var result = await client.InternetInsights.Outages.FilterAsync(
-			filter,
-			aid: null,
-			cancellationToken);
-
-		// Assert
-		result.Should().NotBeNull();
-		result.OutagesList.Should().NotBeNull();
+		_ = result.OutagesList.Should().NotBeNull();
 	}
 
 	[Fact]
-	public async Task GetNetworkOutage_WithValidId_ReturnsOutageDetails()
+	public Task GetNetworkOutage_WithValidId_ReturnsOutageDetails() => WithOutageOfTypeAsync("net", async id =>
 	{
-		// Arrange
-		var client = _fixture.GetThousandEyesClient();
-		var cancellationToken = CancellationToken.None;
+		var result = await ThousandEyesClient.InternetInsights.Outages.GetNetworkOutageAsync(id, aid: null, CancellationToken);
 
-		// First, get a list of outages to find a network outage
-		var filter = new OutageFilter { Window = "30d" };
-		var outages = await client.InternetInsights.Outages.FilterAsync(
-			filter,
-			aid: null,
-			cancellationToken);
-
-		var networkOutage = outages.OutagesList.FirstOrDefault(o => o.Type == "net");
-		if (networkOutage == null)
-		{
-			// Skip test if no network outages found
-			return;
-		}
-
-		// Act
-		var result = await client.InternetInsights.Outages.GetNetworkOutageAsync(
-			networkOutage.Id,
-			aid: null,
-			cancellationToken);
-
-		// Assert
-		result.Should().NotBeNull();
-		result.Id.Should().Be(networkOutage.Id);
-	}
+		_ = result.Id.Should().Be(id);
+	});
 
 	[Fact]
-	public async Task GetApplicationOutage_WithValidId_ReturnsOutageDetails()
+	public Task GetApplicationOutage_WithValidId_ReturnsOutageDetails() => WithOutageOfTypeAsync("app", async id =>
 	{
-		// Arrange
-		var client = _fixture.GetThousandEyesClient();
-		var cancellationToken = CancellationToken.None;
+		var result = await ThousandEyesClient.InternetInsights.Outages.GetApplicationOutageAsync(id, aid: null, CancellationToken);
 
-		// First, get a list of outages to find an application outage
-		var filter = new OutageFilter { Window = "30d" };
-		var outages = await client.InternetInsights.Outages.FilterAsync(
-			filter,
-			aid: null,
-			cancellationToken);
-
-		var appOutage = outages.OutagesList.FirstOrDefault(o => o.Type == "app");
-		if (appOutage == null)
-		{
-			// Skip test if no application outages found
-			return;
-		}
-
-		// Act
-		var result = await client.InternetInsights.Outages.GetApplicationOutageAsync(
-			appOutage.Id,
-			aid: null,
-			cancellationToken);
-
-		// Assert
-		result.Should().NotBeNull();
-		result.Id.Should().Be(appOutage.Id);
-	}
+		_ = result.Id.Should().Be(id);
+	});
 }

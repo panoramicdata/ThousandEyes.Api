@@ -29,7 +29,7 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 	/// <summary>
 	/// Creates a credential, runs the body against it and always deletes it afterwards
 	/// </summary>
-	private async Task WithCredentialAsync(CredentialRequest request, Func<CredentialWithoutValue, Task> body)
+	private Task WithCredentialAsync(CredentialRequest request, Func<CredentialWithoutValue, Task> body) => RunWhenAvailableAsync(async () =>
 	{
 		var created = await ThousandEyesClient.Credentials.CreateAsync(request, aid: null, CancellationToken);
 		try
@@ -40,57 +40,51 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 		{
 			await DeleteAsync(created.Id!);
 		}
-	}
+	});
 
 	[Fact]
 	public Task GetCredentials_WithValidRequest_ReturnsCredentials() => RunWhenAvailableAsync(async () =>
 	{
 		var result = await ThousandEyesClient.Credentials.GetAllAsync(aid: null, CancellationToken);
 
-		_ = result.Should().NotBeNull();
 		_ = result.Items.Should().NotBeNull();
 	});
 
 	[Fact]
-	public Task CreateCredential_WithValidRequest_CreatesCredential() => RunWhenAvailableAsync(() =>
+	public Task CreateCredential_WithValidRequest_CreatesCredential()
 	{
 		var request = NewRequest();
 		return WithCredentialAsync(request, created =>
 		{
-			_ = created.Should().NotBeNull();
 			_ = created.Id.Should().NotBeNullOrEmpty();
 			_ = created.Name.Should().Be(request.Name);
 			return Task.CompletedTask;
 		});
-	});
+	}
 
 	[Fact]
-	public Task GetCredential_WithValidId_ReturnsCredentialWithValue() => RunWhenAvailableAsync(() =>
+	public Task GetCredential_WithValidId_ReturnsCredentialWithValue()
 	{
 		var request = NewRequest();
 		return WithCredentialAsync(request, async created =>
 		{
 			var result = await GetAsync(created.Id!);
 
-			_ = result.Should().NotBeNull();
 			_ = result.Id.Should().Be(created.Id);
 			_ = result.Name.Should().Be(request.Name);
-			_ = result.Value.Should().NotBeNullOrEmpty();
-			_ = result.Value.Should().NotBe(request.Value); // Value should be encrypted
+			_ = result.Value.Should().NotBeNullOrEmpty().And.NotBe(request.Value);
 		});
-	});
+	}
 
 	[Fact]
-	public Task UpdateCredential_WithValidRequest_UpdatesCredential() => RunWhenAvailableAsync(() =>
+	public Task UpdateCredential_WithValidRequest_UpdatesCredential()
 	{
 		var createRequest = NewRequest();
+		var updateRequest = NewRequest("Updated Test Credential", "updated-password");
 		return WithCredentialAsync(createRequest, async created =>
 		{
-			var updateRequest = NewRequest("Updated Test Credential", "updated-password");
-
 			var result = await ThousandEyesClient.Credentials.UpdateAsync(created.Id!, updateRequest, aid: null, CancellationToken);
 
-			_ = result.Should().NotBeNull();
 			_ = result.Id.Should().Be(created.Id);
 			_ = result.Name.Should().Be(updateRequest.Name);
 
@@ -98,7 +92,7 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 			_ = retrieved.Name.Should().Be(updateRequest.Name);
 			_ = retrieved.Value.Should().NotBe(createRequest.Value);
 		});
-	});
+	}
 
 	[Fact]
 	public Task DeleteCredential_WithValidId_DeletesCredential() => RunWhenAvailableAsync(async () =>
@@ -113,34 +107,30 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 	});
 
 	[Fact]
-	public Task CreateCredential_WithSensitiveValue_EncryptsValue() => RunWhenAvailableAsync(() =>
+	public Task CreateCredential_WithSensitiveValue_EncryptsValue()
 	{
 		var plainTextPassword = $"SuperSecretPassword123-{Timestamp}";
 		return WithCredentialAsync(new CredentialRequest(Name: $"Test Credential - {Timestamp}", Value: plainTextPassword), async created =>
 		{
 			var retrieved = await GetAsync(created.Id!);
 
-			_ = retrieved.Value.Should().NotBeNullOrEmpty();
-			_ = retrieved.Value.Should().NotBe(plainTextPassword);
+			_ = retrieved.Value.Should().NotBeNullOrEmpty().And.NotBe(plainTextPassword);
 			_ = retrieved.Value!.Length.Should().BeGreaterThan(plainTextPassword.Length);
 		});
-	});
+	}
 
 	[Fact]
-	public Task GetAllCredentials_ReturnsCredentialsWithValues() => RunWhenAvailableAsync(() =>
+	public Task GetAllCredentials_ReturnsCredentialsWithValues()
 	{
 		var request = NewRequest();
 		return WithCredentialAsync(request, async created =>
 		{
 			var result = await ThousandEyesClient.Credentials.GetAllAsync(aid: null, CancellationToken);
 
-			_ = result.Should().NotBeNull();
-			_ = result.Items.Should().NotBeEmpty();
-
 			var testCredential = result.Items.FirstOrDefault(c => c.Id == created.Id);
 			_ = testCredential.Should().NotBeNull();
 			_ = testCredential!.Name.Should().Be(request.Name);
 			_ = testCredential.Value.Should().NotBeNullOrEmpty();
 		});
-	});
+	}
 }

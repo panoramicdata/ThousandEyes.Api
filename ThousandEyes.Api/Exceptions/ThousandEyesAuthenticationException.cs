@@ -49,7 +49,7 @@ public class ThousandEyesAuthenticationException : ThousandEyesApiException
 		string? requestUrl,
 		string? requestMethod,
 		Exception? innerException)
-		: base(message, statusCode, errorCode, details, requestUrl, requestMethod, innerException)
+		: base(message: message, innerException: innerException, requestMethod: requestMethod, requestUrl: requestUrl, details: details, errorCode: errorCode, statusCode: statusCode)
 	{
 	}
 }

@@ -40,7 +40,7 @@ public class OpenTelemetryIntegrationTest(IntegrationTestFixture fixture) : Test
 	/// <summary>
 	/// Creates a stream, runs the body against it and always deletes it afterwards
 	/// </summary>
-	private async Task WithStreamAsync(OtelStream request, Func<CreateStreamResponse, Task> body)
+	private Task WithStreamAsync(OtelStream request, Func<CreateStreamResponse, Task> body) => RunWhenAvailableAsync(async () =>
 	{
 		var created = await CreateAsync(request);
 		try
@@ -51,7 +51,7 @@ public class OpenTelemetryIntegrationTest(IntegrationTestFixture fixture) : Test
 		{
 			await IgnoreErrorsAsync(() => DeleteAsync(created.Id!));
 		}
-	}
+	});
 
 	[Fact]
 	public Task GetStreams_WithValidRequest_ReturnsStreams() => RunWhenAvailableAsync(async () =>
@@ -76,64 +76,60 @@ public class OpenTelemetryIntegrationTest(IntegrationTestFixture fixture) : Test
 	});
 
 	[Fact]
-	public Task CreateStream_OpenTelemetryGrpc_CreatesStream() => RunWhenAvailableAsync(() =>
-		WithStreamAsync(NewStream(EndpointType.Grpc, GrpcUrl), result =>
-		{
-			_ = result.Should().NotBeNull();
-			_ = result.Id.Should().NotBeNullOrEmpty();
-			_ = result.Type.Should().Be(StreamType.Opentelemetry);
-			_ = result.Signal.Should().Be(Signal.Metric);
-			_ = result.EndpointType.Should().Be(EndpointType.Grpc);
-			return Task.CompletedTask;
-		}));
+	public Task CreateStream_OpenTelemetryGrpc_CreatesStream() => WithStreamAsync(NewStream(EndpointType.Grpc, GrpcUrl), result =>
+	{
+		_ = result.Should().NotBeNull();
+		_ = result.Id.Should().NotBeNullOrEmpty();
+		_ = result.Type.Should().Be(StreamType.Opentelemetry);
+		_ = result.Signal.Should().Be(Signal.Metric);
+		_ = result.EndpointType.Should().Be(EndpointType.Grpc);
+		return Task.CompletedTask;
+	});
 
 	[Fact]
-	public Task CreateStream_SplunkHec_CreatesStream() => RunWhenAvailableAsync(() =>
-		WithStreamAsync(NewSplunkStream(), result =>
-		{
-			_ = result.Should().NotBeNull();
-			_ = result.Id.Should().NotBeNullOrEmpty();
-			_ = result.Type.Should().Be(StreamType.SplunkHec);
-			_ = result.Signal.Should().Be(Signal.Trace);
-			_ = result.EndpointType.Should().Be(EndpointType.Http);
-			return Task.CompletedTask;
-		}));
+	public Task CreateStream_SplunkHec_CreatesStream() => WithStreamAsync(NewSplunkStream(), result =>
+	{
+		_ = result.Should().NotBeNull();
+		_ = result.Id.Should().NotBeNullOrEmpty();
+		_ = result.Type.Should().Be(StreamType.SplunkHec);
+		_ = result.Signal.Should().Be(Signal.Trace);
+		_ = result.EndpointType.Should().Be(EndpointType.Http);
+		return Task.CompletedTask;
+	});
 
 	[Fact]
-	public Task GetStream_WithValidId_ReturnsStreamDetails() => RunWhenAvailableAsync(() =>
-		WithStreamAsync(NewStream(EndpointType.Http, HttpUrl), async created =>
-		{
-			var result = await GetAsync(created.Id!);
+	public Task GetStream_WithValidId_ReturnsStreamDetails() => WithStreamAsync(NewStream(EndpointType.Http, HttpUrl), async created =>
+	{
+		var result = await GetAsync(created.Id!);
 
-			_ = result.Should().NotBeNull();
-			_ = result.Id.Should().Be(created.Id);
-			_ = result.Type.Should().Be(StreamType.Opentelemetry);
-			_ = result.StreamEndpointUrl.Should().NotBeNullOrEmpty();
-		}));
+		_ = result.Should().NotBeNull();
+		_ = result.Id.Should().Be(created.Id);
+		_ = result.Type.Should().Be(StreamType.Opentelemetry);
+		_ = result.StreamEndpointUrl.Should().NotBeNullOrEmpty();
+	});
 
 	[Fact]
-	public Task UpdateStream_WithValidRequest_UpdatesStream() => RunWhenAvailableAsync(() =>
-		WithStreamAsync(NewStream(EndpointType.Grpc, GrpcUrl), async created =>
+	public Task UpdateStream_WithValidRequest_UpdatesStream() => WithStreamAsync(NewStream(EndpointType.Grpc, GrpcUrl), async created =>
+	{
+		var updateRequest = new PutStream
 		{
-			var updateRequest = new PutStream
-			{
-				StreamEndpointUrl = "https://otel-collector-updated.example.com:4317",
-				Enabled = false,
-				TestMatch = [],
-				TagMatch = []
-			};
+			StreamEndpointUrl = "https://otel-collector-updated.example.com:4317",
+			Enabled = false,
+			TestMatch = [],
+			TagMatch = []
+		};
 
-			var result = await ThousandEyesClient.OpenTelemetry.Streams.UpdateAsync(
-				created.Id!,
-				updateRequest,
-				aid: null,
-				cancellationToken: CancellationToken);
+		var result = await ThousandEyesClient.OpenTelemetry.Streams.UpdateAsync(
+			created.Id!,
+			updateRequest,
+			aid: null,
+			cancellationToken: CancellationToken);
 
-			_ = result.Should().NotBeNull();
-			_ = result.Id.Should().Be(created.Id);
-			_ = result.StreamEndpointUrl.Should().Be(updateRequest.StreamEndpointUrl);
-			_ = result.Enabled.Should().Be(false);
-		}));
+		_ = result.Should().NotBeNull();
+		_ = result.Id.Should().Be(created.Id);
+		_ = result.StreamEndpointUrl.Should().Be(updateRequest.StreamEndpointUrl);
+		_ = result.Enabled.Should().Be(false);
+	});
 
 	[Fact]
 	public Task DeleteStream_WithValidId_DeletesStream() => RunWhenAvailableAsync(async () =>
@@ -150,18 +146,17 @@ public class OpenTelemetryIntegrationTest(IntegrationTestFixture fixture) : Test
 	});
 
 	[Fact]
-	public Task GetStreamStatus_AfterCreation_ValidatesStatus() => RunWhenAvailableAsync(() =>
-		WithStreamAsync(NewStream(EndpointType.Grpc, GrpcUrl), async created =>
-		{
-			var result = await GetAsync(created.Id!);
+	public Task GetStreamStatus_AfterCreation_ValidatesStatus() => WithStreamAsync(NewStream(EndpointType.Grpc, GrpcUrl), async created =>
+	{
+		var result = await GetAsync(created.Id!);
 
-			_ = result.Should().NotBeNull();
-			_ = result.Id.Should().Be(created.Id);
-			if (result.StreamStatus != null)
-			{
-				_ = result.StreamStatus.Status.Should().BeDefined();
-			}
-		}));
+		_ = result.Should().NotBeNull();
+		_ = result.Id.Should().Be(created.Id);
+		if (result.StreamStatus != null)
+		{
+			_ = result.StreamStatus.Status.Should().BeDefined();
+		}
+	});
 
 	private static OtelStream NewSplunkStream() => new()
 	{
