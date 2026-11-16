@@ -10,123 +10,64 @@ namespace ThousandEyes.Api.Test;
 [Trait("Category", "Integration")]
 public class TestSnapshotsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 {
-	[Fact]
-	public async Task CreateTestSnapshot_WithValidRequest_CreatesSnapshot()
+	private async Task<SnapshotResponse> CreateSnapshotAsync(string label, TimeSpan from, TimeSpan to, bool isPublic, Action<string>? checkTestId = null)
 	{
-		// Arrange
-		// First, get a test to snapshot
-		var testsModule = ThousandEyesClient.Tests;
-		var testsResult = await testsModule.Tests.GetAllAsync(aid: null, CancellationToken);
-		testsResult.Should().NotBeNull();
-		testsResult.TestsList.Should().NotBeEmpty();
-
-		var testId = testsResult.TestsList.First().TestId;
-		testId.Should().NotBeNullOrEmpty();
+		var tests = await ThousandEyesClient.Tests.Tests.GetAllAsync(aid: null, CancellationToken);
+		_ = tests.TestsList.Should().NotBeEmpty();
+		var testId = tests.TestsList.First().TestId;
+		checkTestId?.Invoke(testId!);
 
 		var request = new SnapshotRequest
 		{
-			DisplayName = $"API Test Snapshot - {DateTimeOffset.UtcNow.ToUnixTimeSeconds()}",
-			StartDate = DateTime.UtcNow.AddHours(-2),
-			EndDate = DateTime.UtcNow.AddHours(-1),
-			IsPublic = false
+			DisplayName = $"{label} - {DateTimeOffset.UtcNow.ToUnixTimeSeconds()}",
+			StartDate = DateTime.UtcNow - from,
+			EndDate = DateTime.UtcNow - to,
+			IsPublic = isPublic
 		};
 
-		// Act
 		var result = await ThousandEyesClient.TestSnapshots.CreateAsync(testId!, request, aid: null, CancellationToken);
 
-		// Assert
-		result.Should().NotBeNull();
-		result.Id.Should().NotBeNullOrEmpty();
-		result.DisplayName.Should().Be(request.DisplayName);
-		result.SourceTestId.Should().Be(testId);
+		_ = result.Should().NotBeNull();
+		_ = result.DisplayName.Should().Be(request.DisplayName);
+		return result;
+	}
+
+	[Fact]
+	public async Task CreateTestSnapshot_WithValidRequest_CreatesSnapshot()
+	{
+		string? testId = null;
+
+		var result = await CreateSnapshotAsync("API Test Snapshot", TimeSpan.FromHours(2), TimeSpan.FromHours(1), false, id => testId = id);
+
+		_ = result.Id.Should().NotBeNullOrEmpty();
+		_ = result.SourceTestId.Should().Be(testId);
 	}
 
 	[Fact]
 	public async Task CreateTestSnapshot_WithOneHourRange_CreatesSnapshot()
 	{
-		// Arrange
-		var testsModule = ThousandEyesClient.Tests;
-		var testsResult = await testsModule.Tests.GetAllAsync(aid: null, CancellationToken);
-		testsResult.Should().NotBeNull();
-		testsResult.TestsList.Should().NotBeEmpty();
+		var result = await CreateSnapshotAsync("1-Hour Snapshot", TimeSpan.FromHours(1), TimeSpan.Zero, false);
 
-		var testId = testsResult.TestsList.First().TestId;
-
-		var request = new SnapshotRequest
-		{
-			DisplayName = $"1-Hour Snapshot - {DateTimeOffset.UtcNow.ToUnixTimeSeconds()}",
-			StartDate = DateTime.UtcNow.AddHours(-1),
-			EndDate = DateTime.UtcNow,
-			IsPublic = false
-		};
-
-		// Act
-		var result = await ThousandEyesClient.TestSnapshots.CreateAsync(testId!, request, aid: null, CancellationToken);
-
-		// Assert
-		result.Should().NotBeNull();
-		result.Id.Should().NotBeNullOrEmpty();
-		result.StartRoundId.Should().NotBeNull();
-		result.StartRoundId!.Value.Should().BePositive();
-		result.EndRoundId.Should().NotBeNull();
-		result.EndRoundId!.Value.Should().BePositive();
-		result.EndRoundId.Value.Should().BeGreaterThan(result.StartRoundId.Value);
+		_ = result.Id.Should().NotBeNullOrEmpty();
+		_ = result.StartRoundId.Should().BePositive();
+		_ = result.EndRoundId.Should().BeGreaterThan(result.StartRoundId!.Value);
 	}
 
 	[Fact]
 	public async Task CreateTestSnapshot_PublicSnapshot_CreatesPublicSnapshot()
 	{
-		// Arrange
-		var testsModule = ThousandEyesClient.Tests;
-		var testsResult = await testsModule.Tests.GetAllAsync(aid: null, CancellationToken);
-		testsResult.Should().NotBeNull();
-		testsResult.TestsList.Should().NotBeEmpty();
+		var result = await CreateSnapshotAsync("Public Snapshot", TimeSpan.FromHours(2), TimeSpan.Zero, true);
 
-		var testId = testsResult.TestsList.First().TestId;
-
-		var request = new SnapshotRequest
-		{
-			DisplayName = $"Public Snapshot - {DateTimeOffset.UtcNow.ToUnixTimeSeconds()}",
-			StartDate = DateTime.UtcNow.AddHours(-2),
-			EndDate = DateTime.UtcNow,
-			IsPublic = true
-		};
-
-		// Act
-		var result = await ThousandEyesClient.TestSnapshots.CreateAsync(testId!, request, aid: null, CancellationToken);
-
-		// Assert
-		result.Should().NotBeNull();
-		result.Id.Should().NotBeNullOrEmpty();
-		result.TestId.Should().NotBeNullOrEmpty();
-		result.Uid.Should().NotBeNullOrEmpty();
+		_ = result.Id.Should().NotBeNullOrEmpty();
+		_ = result.TestId.Should().NotBeNullOrEmpty();
+		_ = result.Uid.Should().NotBeNullOrEmpty();
 	}
 
 	[Fact]
 	public async Task CreateTestSnapshot_With24HourRange_CreatesSnapshot()
 	{
-		// Arrange
-		var testsModule = ThousandEyesClient.Tests;
-		var testsResult = await testsModule.Tests.GetAllAsync(aid: null, CancellationToken);
-		testsResult.Should().NotBeNull();
-		testsResult.TestsList.Should().NotBeEmpty();
+		var result = await CreateSnapshotAsync("24-Hour Snapshot", TimeSpan.FromHours(24), TimeSpan.Zero, false);
 
-		var testId = testsResult.TestsList.First().TestId;
-
-		var request = new SnapshotRequest
-		{
-			DisplayName = $"24-Hour Snapshot - {DateTimeOffset.UtcNow.ToUnixTimeSeconds()}",
-			StartDate = DateTime.UtcNow.AddHours(-24),
-			EndDate = DateTime.UtcNow,
-			IsPublic = false
-		};
-
-		// Act
-		var result = await ThousandEyesClient.TestSnapshots.CreateAsync(testId!, request, aid: null, CancellationToken);
-
-		// Assert
-		result.Should().NotBeNull();
-		result.ShareDate.Should().NotBeNull();
-		result.DisplayName.Should().Be(request.DisplayName);
+		_ = result.ShareDate.Should().NotBeNull();
 	}
 }

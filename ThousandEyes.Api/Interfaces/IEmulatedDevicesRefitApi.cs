@@ -12,11 +12,11 @@ internal interface IEmulatedDevicesRefitApi
 	/// Get all emulated devices
 	/// </summary>
 	[Get("/emulated-devices")]
-	Task<EmulatedDeviceResponses> GetAllAsync([Query] ExpandEmulatedDeviceOptions[]? expand, CancellationToken cancellationToken);
+	Task<EmulatedDeviceResponses> GetAllAsync([Query] ExpandEmulatedDeviceOptions[]? expand, CancellationToken ct);
 
 	/// <summary>
 	/// Create emulated device
 	/// </summary>
 	[Post("/emulated-devices")]
-	Task<EmulatedDeviceResponse> CreateAsync([Body] EmulatedDevice request, [Query] string? aid, CancellationToken cancellationToken);
+	Task<EmulatedDeviceResponse> CreateAsync([Body] EmulatedDevice request, [Query] string? aid, CancellationToken ct);
 }

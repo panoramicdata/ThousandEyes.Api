@@ -21,7 +21,7 @@ internal interface IEndpointAgentsRefitApi
 		[Query] bool? useAllPermittedAids,
 		[Query] string? agentName,
 		[Query] string? computerName,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Get endpoint agent by ID
@@ -32,7 +32,7 @@ internal interface IEndpointAgentsRefitApi
 		[Query] string? aid,
 		[Query] ExpandEndpointAgentOptions[]? expand,
 		[Query] bool? includeDeleted,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Update endpoint agent
@@ -43,13 +43,13 @@ internal interface IEndpointAgentsRefitApi
 		[Body] EndpointAgentUpdate request,
 		[Query] string? aid,
 		[Query] ExpandEndpointAgentOptions[]? expand,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Delete endpoint agent
 	/// </summary>
 	[Delete("/endpoint/agents/{agentId}")]
-	Task DeleteAsync(string agentId, [Query] string? aid, CancellationToken cancellationToken);
+	Task DeleteAsync(string agentId, [Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Filter endpoint agents
@@ -62,29 +62,29 @@ internal interface IEndpointAgentsRefitApi
 		[Query] string? cursor,
 		[Query] ExpandEndpointAgentOptions[]? expand,
 		[Query] bool? includeDeleted,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Get connection string
 	/// </summary>
 	[Get("/endpoint/agents/connection-string")]
-	Task<ConnectionString> GetConnectionStringAsync([Query] string? aid, CancellationToken cancellationToken);
+	Task<ConnectionString> GetConnectionStringAsync([Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Enable endpoint agent
 	/// </summary>
 	[Post("/endpoint/agents/{agentId}/enable")]
-	Task<EndpointAgent> EnableAsync(string agentId, [Query] string? aid, CancellationToken cancellationToken);
+	Task<EndpointAgent> EnableAsync(string agentId, [Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Disable endpoint agent
 	/// </summary>
 	[Post("/endpoint/agents/{agentId}/disable")]
-	Task<EndpointAgent> DisableAsync(string agentId, [Query] string? aid, CancellationToken cancellationToken);
+	Task<EndpointAgent> DisableAsync(string agentId, [Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Transfer endpoint agent
 	/// </summary>
 	[Post("/endpoint/agents/{agentId}/transfer")]
-	Task TransferAsync(string agentId, [Body] AgentTransferRequest request, [Query] string? aid, CancellationToken cancellationToken);
+	Task TransferAsync(string agentId, [Body] AgentTransferRequest request, [Query] string? aid, CancellationToken ct);
 }

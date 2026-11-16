@@ -14,7 +14,7 @@ internal interface IHttpServerTestsRefitApi
 	[Get("/tests/http-server")]
 	Task<HttpServerTests> GetAllAsync(
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Get HTTP Server test by ID
@@ -25,7 +25,7 @@ internal interface IHttpServerTestsRefitApi
 		[Query] string? aid,
 		[Query] string? versionId,
 		[Query] string[]? expand,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Create HTTP Server test
@@ -35,7 +35,7 @@ internal interface IHttpServerTestsRefitApi
 		[Body] HttpServerTestRequest request,
 		[Query] string? aid,
 		[Query] string[]? expand,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Update HTTP Server test
@@ -46,7 +46,7 @@ internal interface IHttpServerTestsRefitApi
 		[Body] HttpServerTestRequest request,
 		[Query] string? aid,
 		[Query] string[]? expand,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Delete HTTP Server test
@@ -55,5 +55,5 @@ internal interface IHttpServerTestsRefitApi
 	Task DeleteAsync(
 		string testId,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 }

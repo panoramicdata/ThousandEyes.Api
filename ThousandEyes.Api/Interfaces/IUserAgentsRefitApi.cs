@@ -12,5 +12,5 @@ internal interface IUserAgentsRefitApi
 	/// Get all user agents
 	/// </summary>
 	[Get("/user-agents")]
-	Task<UserAgents> GetAllAsync([Query] string? aid, CancellationToken cancellationToken);
+	Task<UserAgents> GetAllAsync([Query] string? aid, CancellationToken ct);
 }

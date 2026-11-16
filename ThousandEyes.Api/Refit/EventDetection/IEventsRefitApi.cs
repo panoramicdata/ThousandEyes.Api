@@ -19,7 +19,7 @@ internal interface IEventsRefitApi
 		[Query] DateTime? endDate,
 		[Query] int? max,
 		[Query] string? cursor,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Get event by ID
@@ -28,5 +28,5 @@ internal interface IEventsRefitApi
 	Task<EventDetail> GetByIdAsync(
 		string eventId,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 }

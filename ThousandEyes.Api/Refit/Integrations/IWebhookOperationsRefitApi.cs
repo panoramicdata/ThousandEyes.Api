@@ -14,7 +14,7 @@ internal interface IWebhookOperationsRefitApi
 	[Get("/operations/webhooks")]
 	Task<WebhookOperations> GetAllAsync(
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Create webhook operation
@@ -23,7 +23,7 @@ internal interface IWebhookOperationsRefitApi
 	Task<WebhookOperation> CreateAsync(
 		[Body] WebhookOperation operation,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Get webhook operation by ID
@@ -32,7 +32,7 @@ internal interface IWebhookOperationsRefitApi
 	Task<WebhookOperation> GetByIdAsync(
 		string id,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Update webhook operation
@@ -42,7 +42,7 @@ internal interface IWebhookOperationsRefitApi
 		string id,
 		[Body] WebhookOperation operation,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Delete webhook operation
@@ -51,5 +51,5 @@ internal interface IWebhookOperationsRefitApi
 	Task DeleteAsync(
 		string id,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 }

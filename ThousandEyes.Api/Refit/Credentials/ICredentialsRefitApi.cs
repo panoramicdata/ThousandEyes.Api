@@ -12,27 +12,27 @@ internal interface ICredentialsRefitApi
 	/// Retrieves a list of credentials configured in ThousandEyes.
 	/// </summary>
 	/// <param name="aid">Optional account group ID</param>
-	/// <param name="cancellationToken">Cancellation token</param>
+	/// <param name="ct">Cancellation token</param>
 	[Get("/credentials")]
-	Task<Models.Credentials.Credentials> GetAllAsync([Query] string? aid, CancellationToken cancellationToken);
+	Task<Models.Credentials.Credentials> GetAllAsync([Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Creates a new credential for ThousandEyes transaction tests.
 	/// </summary>
 	/// <param name="request">The credential request</param>
 	/// <param name="aid">Optional account group ID</param>
-	/// <param name="cancellationToken">Cancellation token</param>
+	/// <param name="ct">Cancellation token</param>
 	[Post("/credentials")]
-	Task<CredentialWithoutValue> CreateAsync([Body] CredentialRequest request, [Query] string? aid, CancellationToken cancellationToken);
+	Task<CredentialWithoutValue> CreateAsync([Body] CredentialRequest request, [Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Retrieves detailed information about a credential.
 	/// </summary>
 	/// <param name="id">Credential ID</param>
 	/// <param name="aid">Optional account group ID</param>
-	/// <param name="cancellationToken">Cancellation token</param>
+	/// <param name="ct">Cancellation token</param>
 	[Get("/credentials/{id}")]
-	Task<Credential> GetByIdAsync(string id, [Query] string? aid, CancellationToken cancellationToken);
+	Task<Credential> GetByIdAsync(string id, [Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Updates the credential for ThousandEyes transaction tests.
@@ -40,16 +40,16 @@ internal interface ICredentialsRefitApi
 	/// <param name="id">Credential ID</param>
 	/// <param name="request">The credential request</param>
 	/// <param name="aid">Optional account group ID</param>
-	/// <param name="cancellationToken">Cancellation token</param>
+	/// <param name="ct">Cancellation token</param>
 	[Put("/credentials/{id}")]
-	Task<CredentialWithoutValue> UpdateAsync(string id, [Body] CredentialRequest request, [Query] string? aid, CancellationToken cancellationToken);
+	Task<CredentialWithoutValue> UpdateAsync(string id, [Body] CredentialRequest request, [Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Deletes a ThousandEyes transaction test credential.
 	/// </summary>
 	/// <param name="id">Credential ID</param>
 	/// <param name="aid">Optional account group ID</param>
-	/// <param name="cancellationToken">Cancellation token</param>
+	/// <param name="ct">Cancellation token</param>
 	[Delete("/credentials/{id}")]
-	Task DeleteAsync(string id, [Query] string? aid, CancellationToken cancellationToken);
+	Task DeleteAsync(string id, [Query] string? aid, CancellationToken ct);
 }

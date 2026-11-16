@@ -12,17 +12,17 @@ internal interface ITestResultsRefitApi
 	/// Get network test results
 	/// </summary>
 	[Get("/test-results/{testId}/network")]
-	Task<NetworkTestResults> GetNetworkResultsAsync(string testId, [Query("from")] DateTime? fromDate, [Query("to")] DateTime? toDate, [Query] string? aid, CancellationToken cancellationToken);
+	Task<NetworkTestResults> GetNetworkResultsAsync(string testId, [Query("from")] DateTime? fromDate, [Query("to")] DateTime? toDate, [Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Get HTTP Server test results
 	/// </summary>
 	[Get("/test-results/{testId}/http-server")]
-	Task<HttpServerTestResults> GetHttpServerResultsAsync(string testId, [Query("from")] DateTime? fromDate, [Query("to")] DateTime? toDate, [Query] string? aid, CancellationToken cancellationToken);
+	Task<HttpServerTestResults> GetHttpServerResultsAsync(string testId, [Query("from")] DateTime? fromDate, [Query("to")] DateTime? toDate, [Query] string? aid, CancellationToken ct);
 
 	/// <summary>
 	/// Get path visualization results
 	/// </summary>
 	[Get("/test-results/{testId}/path-vis")]
-	Task<NetworkTestResults> GetPathVisualizationResultsAsync(string testId, [Query("from")] DateTime? fromDate, [Query("to")] DateTime? toDate, [Query] string? aid, CancellationToken cancellationToken);
+	Task<NetworkTestResults> GetPathVisualizationResultsAsync(string testId, [Query("from")] DateTime? fromDate, [Query("to")] DateTime? toDate, [Query] string? aid, CancellationToken ct);
 }

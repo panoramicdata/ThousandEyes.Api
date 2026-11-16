@@ -14,7 +14,7 @@ internal interface IGenericConnectorsRefitApi
 	[Get("/connectors/generic")]
 	Task<GenericConnectors> GetAllAsync(
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Create connector
@@ -23,7 +23,7 @@ internal interface IGenericConnectorsRefitApi
 	Task<GenericConnector> CreateAsync(
 		[Body] GenericConnector connector,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Get connector by ID
@@ -32,7 +32,7 @@ internal interface IGenericConnectorsRefitApi
 	Task<GenericConnector> GetByIdAsync(
 		string id,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Update connector
@@ -42,7 +42,7 @@ internal interface IGenericConnectorsRefitApi
 		string id,
 		[Body] GenericConnector connector,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Delete connector
@@ -51,7 +51,7 @@ internal interface IGenericConnectorsRefitApi
 	Task DeleteAsync(
 		string id,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// List operations assigned to connector
@@ -60,7 +60,7 @@ internal interface IGenericConnectorsRefitApi
 	Task<Assignments> GetOperationsAsync(
 		string id,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Set operations for connector
@@ -70,5 +70,5 @@ internal interface IGenericConnectorsRefitApi
 		string id,
 		[Body] string[] operationIds,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 }

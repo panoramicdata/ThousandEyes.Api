@@ -8,5 +8,5 @@ internal interface IPermissionsRefitApi
 {
 	/// <summary>Get all assignable permissions</summary>
 	[Get("/permissions")]
-	Task<Permissions> GetAllAsync([Query] string? aid, CancellationToken cancellationToken);
+	Task<Permissions> GetAllAsync([Query] string? aid, CancellationToken ct);
 }

@@ -8,21 +8,21 @@ internal interface IAccountGroupsRefitApi
 {
 	/// <summary>Get all account groups</summary>
 	[Get("/account-groups")]
-	Task<AccountGroups> GetAllAsync(CancellationToken cancellationToken);
+	Task<AccountGroups> GetAllAsync(CancellationToken ct);
 
 	/// <summary>Get a specific account group by ID</summary>
 	[Get("/account-groups/{id}")]
 	Task<AccountGroupDetail> GetByIdAsync(
 		string id,
 		[Query] string? expand,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>Create a new account group</summary>
 	[Post("/account-groups")]
 	Task<CreatedAccountGroup> CreateAsync(
 		[Body] AccountGroupRequest request,
 		[Query] string? expand,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>Update an existing account group</summary>
 	[Put("/account-groups/{id}")]
@@ -30,9 +30,9 @@ internal interface IAccountGroupsRefitApi
 		string id,
 		[Body] AccountGroupRequest request,
 		[Query] string? expand,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>Delete an account group</summary>
 	[Delete("/account-groups/{id}")]
-	Task DeleteAsync(string id, CancellationToken cancellationToken);
+	Task DeleteAsync(string id, CancellationToken ct);
 }

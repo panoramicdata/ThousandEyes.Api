@@ -14,5 +14,5 @@ internal interface IBgpMonitorsRefitApi
 	[Get("/monitors")]
 	Task<Monitors> GetAllAsync(
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 }

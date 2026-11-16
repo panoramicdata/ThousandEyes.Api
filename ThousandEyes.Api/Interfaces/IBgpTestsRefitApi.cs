@@ -12,5 +12,5 @@ internal interface IBgpTestsRefitApi
 	/// Get all BGP tests
 	/// </summary>
 	[Get("/tests/bgp")]
-	Task<BgpTests> GetAllAsync([Query] string? aid, CancellationToken cancellationToken);
+	Task<BgpTests> GetAllAsync([Query] string? aid, CancellationToken ct);
 }
