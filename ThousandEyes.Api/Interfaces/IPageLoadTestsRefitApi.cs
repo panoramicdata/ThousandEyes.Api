@@ -12,5 +12,5 @@ internal interface IPageLoadTestsRefitApi
 	/// Get all Page Load tests
 	/// </summary>
 	[Get("/tests/page-load")]
-	Task<PageLoadTests> GetAllAsync([Query] string? aid, CancellationToken cancellationToken);
+	Task<PageLoadTests> GetAllAsync([Query] string? aid, CancellationToken ct);
 }

@@ -10,22 +10,22 @@ namespace ThousandEyes.Api.Implementations.Credentials;
 internal class CredentialsImpl(ICredentialsRefitApi refitApi) : ICredentials
 {
 	/// <inheritdoc/>
-	public async Task<Models.Credentials.Credentials> GetAllAsync(string? aid, CancellationToken cancellationToken)
-		=> await refitApi.GetAllAsync(aid, cancellationToken).ConfigureAwait(false);
+	public async Task<Models.Credentials.Credentials> GetAllAsync(string? aid, CancellationToken cancel)
+		=> await refitApi.GetAllAsync(aid, cancel).ConfigureAwait(false);
 
 	/// <inheritdoc/>
-	public async Task<CredentialWithoutValue> CreateAsync(CredentialRequest request, string? aid, CancellationToken cancellationToken)
-		=> await refitApi.CreateAsync(request, aid, cancellationToken).ConfigureAwait(false);
+	public async Task<CredentialWithoutValue> CreateAsync(CredentialRequest request, string? aid, CancellationToken cancel)
+		=> await refitApi.CreateAsync(request, aid, cancel).ConfigureAwait(false);
 
 	/// <inheritdoc/>
-	public async Task<Credential> GetByIdAsync(string id, string? aid, CancellationToken cancellationToken)
-		=> await refitApi.GetByIdAsync(id, aid, cancellationToken).ConfigureAwait(false);
+	public async Task<Credential> GetByIdAsync(string id, string? aid, CancellationToken cancel)
+		=> await refitApi.GetByIdAsync(id, aid, cancel).ConfigureAwait(false);
 
 	/// <inheritdoc/>
-	public async Task<CredentialWithoutValue> UpdateAsync(string id, CredentialRequest request, string? aid, CancellationToken cancellationToken)
-		=> await refitApi.UpdateAsync(id, request, aid, cancellationToken).ConfigureAwait(false);
+	public async Task<CredentialWithoutValue> UpdateAsync(string id, CredentialRequest request, string? aid, CancellationToken cancel)
+		=> await refitApi.UpdateAsync(id, request, aid, cancel).ConfigureAwait(false);
 
 	/// <inheritdoc/>
-	public async Task DeleteAsync(string id, string? aid, CancellationToken cancellationToken)
-		=> await refitApi.DeleteAsync(id, aid, cancellationToken).ConfigureAwait(false);
+	public async Task DeleteAsync(string id, string? aid, CancellationToken cancel)
+		=> await refitApi.DeleteAsync(id, aid, cancel).ConfigureAwait(false);
 }

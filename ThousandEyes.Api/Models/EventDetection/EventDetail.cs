@@ -8,31 +8,44 @@ namespace ThousandEyes.Api.Models.EventDetection;
 public class EventDetail
 {
 	/// <summary>
-	/// Unique event ID
+	/// Event grouping information (type-specific)
 	/// </summary>
-	public required string Id { get; set; }
+	public EventGrouping? Grouping { get; set; }
 
 	/// <summary>
-	/// Account group ID
+	/// Causes of the error
 	/// </summary>
-	public string? Aid { get; set; }
+	public string[] Cause { get; set; } = [];
 
 	/// <summary>
-	/// Event type name (human-readable)
+	/// Affected agents details
 	/// </summary>
-	public string? TypeName { get; set; }
+	public AffectedCount? AffectedAgents { get; set; }
 
 	/// <summary>
-	/// Event type (machine-readable)
+	/// Affected targets details
 	/// </summary>
-	[JsonPropertyName("type")]
-	public EventType? EventTypeValue { get; set; }
+	public AffectedTargets? AffectedTargets { get; set; }
 
 	/// <summary>
-	/// Event state (active or resolved)
+	/// Affected tests details
 	/// </summary>
-	[JsonPropertyName("state")]
-	public EventState? StateValue { get; set; }
+	public AffectedCount? AffectedTests { get; set; }
+
+	/// <summary>
+	/// Brief summary describing the cause of the event
+	/// </summary>
+	public string? Summary { get; set; }
+
+	/// <summary>
+	/// End date and time when event was resolved (UTC)
+	/// </summary>
+	public DateTime? EndDate { get; set; }
+
+	/// <summary>
+	/// Start date and time when event was first detected (UTC)
+	/// </summary>
+	public DateTime? StartDate { get; set; }
 
 	/// <summary>
 	/// Event severity
@@ -41,42 +54,29 @@ public class EventDetail
 	public EventSeverity? SeverityValue { get; set; }
 
 	/// <summary>
-	/// Start date and time when event was first detected (UTC)
+	/// Event state (active or resolved)
 	/// </summary>
-	public DateTime? StartDate { get; set; }
+	[JsonPropertyName("state")]
+	public EventState? StateValue { get; set; }
 
 	/// <summary>
-	/// End date and time when event was resolved (UTC)
+	/// Event type (machine-readable)
 	/// </summary>
-	public DateTime? EndDate { get; set; }
+	[JsonPropertyName("type")]
+	public EventType? EventTypeValue { get; set; }
 
 	/// <summary>
-	/// Brief summary describing the cause of the event
+	/// Event type name (human-readable)
 	/// </summary>
-	public string? Summary { get; set; }
+	public string? TypeName { get; set; }
 
 	/// <summary>
-	/// Affected tests details
+	/// Account group ID
 	/// </summary>
-	public AffectedCount? AffectedTests { get; set; }
+	public string? Aid { get; set; }
 
 	/// <summary>
-	/// Affected targets details
+	/// Unique event ID
 	/// </summary>
-	public AffectedTargets? AffectedTargets { get; set; }
-
-	/// <summary>
-	/// Affected agents details
-	/// </summary>
-	public AffectedCount? AffectedAgents { get; set; }
-
-	/// <summary>
-	/// Causes of the error
-	/// </summary>
-	public string[] Cause { get; set; } = [];
-
-	/// <summary>
-	/// Event grouping information (type-specific)
-	/// </summary>
-	public EventGrouping? Grouping { get; set; }
+	public required string Id { get; set; }
 }

@@ -8,25 +8,14 @@ namespace ThousandEyes.Api.Models.InternetInsights;
 public class CatalogProviderDetails
 {
 	/// <summary>
-	/// The catalog provider ID
+	/// List of locations covered by the provider
 	/// </summary>
-	public required string Id { get; set; }
+	public ProviderLocation[] Locations { get; set; } = [];
 
 	/// <summary>
-	/// The name of the catalog provider
+	/// List of ASN's covered by the provider
 	/// </summary>
-	public string? ProviderName { get; set; }
-
-	/// <summary>
-	/// The type of catalog provider
-	/// </summary>
-	[JsonPropertyName("providerType")]
-	public ProviderType? ProviderTypeValue { get; set; }
-
-	/// <summary>
-	/// The catalog provider region
-	/// </summary>
-	public string? Region { get; set; }
+	public Asn[] Asns { get; set; } = [];
 
 	/// <summary>
 	/// The type of data produced by the provider
@@ -35,12 +24,23 @@ public class CatalogProviderDetails
 	public DataType? DataTypeValue { get; set; }
 
 	/// <summary>
-	/// List of ASN's covered by the provider
+	/// The catalog provider region
 	/// </summary>
-	public Asn[] Asns { get; set; } = [];
+	public string? Region { get; set; }
 
 	/// <summary>
-	/// List of locations covered by the provider
+	/// The type of catalog provider
 	/// </summary>
-	public ProviderLocation[] Locations { get; set; } = [];
+	[JsonPropertyName("providerType")]
+	public ProviderType? ProviderTypeValue { get; set; }
+
+	/// <summary>
+	/// The name of the catalog provider
+	/// </summary>
+	public string? ProviderName { get; set; }
+
+	/// <summary>
+	/// The catalog provider ID
+	/// </summary>
+	public required string Id { get; set; }
 }

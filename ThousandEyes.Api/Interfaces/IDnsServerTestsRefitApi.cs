@@ -12,5 +12,5 @@ internal interface IDnsServerTestsRefitApi
 	/// Get all DNS Server tests
 	/// </summary>
 	[Get("/tests/dns-server")]
-	Task<DnsServerTests> GetAllAsync([Query] string? aid, CancellationToken cancellationToken);
+	Task<DnsServerTests> GetAllAsync([Query] string? aid, CancellationToken ct);
 }

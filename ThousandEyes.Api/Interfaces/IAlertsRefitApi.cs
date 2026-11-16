@@ -12,11 +12,11 @@ internal interface IAlertsRefitApi
 	/// Get all alerts
 	/// </summary>
 	[Get("/alerts")]
-	Task<Alerts> GetAllAsync([Query] string? aid, [Query] string? window, [Query("from")] DateTime? fromDate, [Query("to")] DateTime? toDate, CancellationToken cancellationToken);
+	Task<Alerts> GetAllAsync([Query] string? aid, [Query] string? window, [Query("from")] DateTime? fromDate, [Query("to")] DateTime? toDate, CancellationToken ct);
 
 	/// <summary>
 	/// Get alert by ID
 	/// </summary>
 	[Get("/alerts/{alertId}")]
-	Task<Alert> GetByIdAsync(string alertId, [Query] string? aid, CancellationToken cancellationToken);
+	Task<Alert> GetByIdAsync(string alertId, [Query] string? aid, CancellationToken ct);
 }

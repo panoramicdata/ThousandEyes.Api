@@ -15,7 +15,7 @@ internal interface IOutagesRefitApi
 	Task<OutagesResponse> FilterAsync(
 		[Body] OutageFilter filter,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Get network outage by ID
@@ -24,7 +24,7 @@ internal interface IOutagesRefitApi
 	Task<NetworkOutageDetails> GetNetworkOutageAsync(
 		string outageId,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Get application outage by ID
@@ -33,5 +33,5 @@ internal interface IOutagesRefitApi
 	Task<ApplicationOutageDetails> GetApplicationOutageAsync(
 		string outageId,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 }

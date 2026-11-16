@@ -16,34 +16,34 @@ internal class TemplatesApi(ITemplatesRefitApi refitApi) : ITemplatesApi
 		CertificationLevel? certificationLevel, 
 		TemplateModule? templateModule, 
 		string? name, 
-		CancellationToken cancellationToken) =>
-		_refitApi.GetAllAsync(aid, certificationLevel, templateModule, name, cancellationToken);
+		CancellationToken token) =>
+		_refitApi.GetAllAsync(aid, certificationLevel, templateModule, name, token);
 
 	/// <inheritdoc />
-	public Task<TemplateResponse> GetByIdAsync(string id, string? aid, CancellationToken cancellationToken) =>
-		_refitApi.GetByIdAsync(id, aid, cancellationToken);
+	public Task<TemplateResponse> GetByIdAsync(string id, string? aid, CancellationToken token) =>
+		_refitApi.GetByIdAsync(id, aid, token);
 
 	/// <inheritdoc />
-	public Task<TemplateResponse> CreateAsync(Template request, string? aid, CancellationToken cancellationToken) =>
-		_refitApi.CreateAsync(request, aid, cancellationToken);
+	public Task<TemplateResponse> CreateAsync(Template request, string? aid, CancellationToken token) =>
+		_refitApi.CreateAsync(request, aid, token);
 
 	/// <inheritdoc />
-	public Task<TemplateResponse> UpdateAsync(string id, Template request, string? aid, CancellationToken cancellationToken) =>
-		_refitApi.UpdateAsync(id, request, aid, cancellationToken);
+	public Task<TemplateResponse> UpdateAsync(string id, Template request, string? aid, CancellationToken token) =>
+		_refitApi.UpdateAsync(id, request, aid, token);
 
 	/// <inheritdoc />
-	public Task DeleteAsync(string id, string? aid, CancellationToken cancellationToken) =>
-		_refitApi.DeleteAsync(id, aid, cancellationToken);
+	public Task DeleteAsync(string id, string? aid, CancellationToken token) =>
+		_refitApi.DeleteAsync(id, aid, token);
 
 	/// <inheritdoc />
-	public Task<TemplateResponse> DeployAsync(string id, DeployTemplate request, string? aid, CancellationToken cancellationToken) =>
-		_refitApi.DeployAsync(id, request, aid, cancellationToken);
+	public Task<TemplateResponse> DeployAsync(string id, DeployTemplate request, string? aid, CancellationToken token) =>
+		_refitApi.DeployAsync(id, request, aid, token);
 
 	/// <inheritdoc />
-	public Task<SharingSettingsResponse> GetSharingSettingsAsync(string id, string? aid, CancellationToken cancellationToken) =>
-		_refitApi.GetSharingSettingsAsync(id, aid, cancellationToken);
+	public Task<SharingSettingsResponse> GetSharingSettingsAsync(string id, string? aid, CancellationToken token) =>
+		_refitApi.GetSharingSettingsAsync(id, aid, token);
 
 	/// <inheritdoc />
-	public Task<SharingSettingsResponse> UpdateSharingSettingsAsync(string id, SharingSettings request, string? aid, CancellationToken cancellationToken) =>
-		_refitApi.UpdateSharingSettingsAsync(id, request, aid, cancellationToken);
+	public Task<SharingSettingsResponse> UpdateSharingSettingsAsync(string id, SharingSettings request, string? aid, CancellationToken token) =>
+		_refitApi.UpdateSharingSettingsAsync(id, request, aid, token);
 }

@@ -15,7 +15,7 @@ internal interface ICatalogProvidersRefitApi
 	Task<CatalogProviderResponse> FilterAsync(
 		[Body] CatalogProviderFilter filter,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Get catalog provider by ID
@@ -24,5 +24,5 @@ internal interface ICatalogProvidersRefitApi
 	Task<CatalogProviderDetails> GetByIdAsync(
 		string providerId,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 }

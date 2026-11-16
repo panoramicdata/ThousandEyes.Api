@@ -14,7 +14,7 @@ internal interface ITestsRefitApi
 	[Get("/tests")]
 	Task<Tests> GetAllAsync(
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Get test version history
@@ -24,5 +24,5 @@ internal interface ITestsRefitApi
 		string testId,
 		[Query] string? aid,
 		[Query] int? limit,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 }

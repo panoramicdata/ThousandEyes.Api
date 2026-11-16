@@ -12,5 +12,5 @@ internal interface IWebTransactionTestsRefitApi
 	/// Get all Web Transaction tests
 	/// </summary>
 	[Get("/tests/web-transactions")]
-	Task<WebTransactionTests> GetAllAsync([Query] string? aid, CancellationToken cancellationToken);
+	Task<WebTransactionTests> GetAllAsync([Query] string? aid, CancellationToken ct);
 }

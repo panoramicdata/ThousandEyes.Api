@@ -15,5 +15,5 @@ internal interface IUserEventsRefitApi
 		[Query] string? startDate,
 		[Query] string? endDate,
 		[Query] string? cursor,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 }

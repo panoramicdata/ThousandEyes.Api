@@ -12,5 +12,5 @@ internal interface IAgentToServerTestsRefitApi
 	/// Get all Agent to Server tests
 	/// </summary>
 	[Get("/tests/agent-to-server")]
-	Task<AgentToServerTests> GetAllAsync([Query] string? aid, CancellationToken cancellationToken);
+	Task<AgentToServerTests> GetAllAsync([Query] string? aid, CancellationToken ct);
 }

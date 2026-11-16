@@ -16,7 +16,7 @@ internal interface IOperationConnectorsRefitApi
 		string type,
 		string id,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 
 	/// <summary>
 	/// Set connectors for operation
@@ -27,5 +27,5 @@ internal interface IOperationConnectorsRefitApi
 		string id,
 		[Body] string[] connectorIds,
 		[Query] string? aid,
-		CancellationToken cancellationToken);
+		CancellationToken ct);
 }
