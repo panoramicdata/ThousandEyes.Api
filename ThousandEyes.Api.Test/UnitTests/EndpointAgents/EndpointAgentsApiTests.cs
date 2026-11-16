@@ -32,11 +32,36 @@ public class EndpointAgentsApiTests
 			.ReturnsAsync(expectedResponse);
 
 		// Act
-		var result = await _sut.GetAllAsync(null, null, null, null, null, null, null, null, cancellationToken);
+		var result = await _sut.GetAllAsync(null, cancellationToken);
 
 		// Assert
 		_ = result.Should().Be(expectedResponse);
 		_refitApi.Verify(x => x.GetAllAsync(null, null, null, null, null, null, null, null, cancellationToken), Times.Once);
+	}
+
+	[Fact]
+	public async Task GetAllAsync_WithOptions_PassesEveryOptionToTheRefitApi()
+	{
+		var cancellationToken = new CancellationToken(true);
+		ExpandEndpointAgentOptions[] expand = [ExpandEndpointAgentOptions.Clients];
+		var expectedResponse = new EndpointAgentsCollection();
+		_ = _refitApi.Setup(x => x.GetAllAsync("acc", 5, "cur", expand, true, false, "agent", "computer", cancellationToken))
+			.ReturnsAsync(expectedResponse);
+		var options = new EndpointAgentListOptions
+		{
+			Aid = "acc",
+			Max = 5,
+			Cursor = "cur",
+			Expand = expand,
+			IncludeDeleted = true,
+			UseAllPermittedAids = false,
+			AgentName = "agent",
+			ComputerName = "computer"
+		};
+
+		var result = await _sut.GetAllAsync(options, cancellationToken);
+
+		_ = result.Should().BeSameAs(expectedResponse);
 	}
 
 	[Fact]

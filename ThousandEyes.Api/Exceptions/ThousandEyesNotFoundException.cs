@@ -41,23 +41,9 @@ public class ThousandEyesNotFoundException : ThousandEyesApiException
 	/// <param name="message">The message that describes the error</param>
 	/// <param name="resourceType">The type of resource that was not found</param>
 	/// <param name="resourceId">The ID of the resource that was not found</param>
-	/// <param name="statusCode">The HTTP status code associated with the error</param>
-	/// <param name="errorCode">The error code from the API response</param>
-	/// <param name="details">Additional error details from the API</param>
-	/// <param name="requestUrl">The request URL that caused the error</param>
-	/// <param name="requestMethod">The request method that caused the error</param>
-	/// <param name="innerException">The exception that is the cause of the current exception</param>
-	public ThousandEyesNotFoundException(
-		string message,
-		string? resourceType,
-		object? resourceId,
-		int? statusCode,
-		string? errorCode,
-		Dictionary<string, object?>? details,
-		string? requestUrl,
-		string? requestMethod,
-		Exception? innerException)
-		: base(message, statusCode, errorCode, details, requestUrl, requestMethod, innerException)
+	/// <param name="context">The HTTP status, error code, details, request and inner exception</param>
+	public ThousandEyesNotFoundException(string message, string? resourceType, object? resourceId, ThousandEyesApiErrorContext context)
+		: base(message, context.StatusCode, context.ErrorCode, context.Details, context.RequestUrl, context.RequestMethod, context.InnerException)
 	{
 		ResourceType = resourceType;
 		ResourceId = resourceId;

@@ -43,6 +43,11 @@ public class ExceptionAndAuthenticationHandlerTests
 			{
 				_ = exception.Message.Should().Be((string)args[i]!);
 			}
+			else if (args[i] is ThousandEyesApiErrorContext context)
+			{
+				_ = (exception.StatusCode, exception.ErrorCode, exception.Details, exception.RequestUrl, exception.RequestMethod)
+					.Should().Be((context.StatusCode, context.ErrorCode, context.Details, context.RequestUrl, context.RequestMethod));
+			}
 			else if (name == "innerException")
 			{
 				_ = exception.InnerException.Should().BeSameAs(args[i]);

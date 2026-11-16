@@ -13,26 +13,10 @@ public interface IEndpointAgentsApi
 	/// <summary>
 	/// Retrieves a list of endpoint agents in the account group
 	/// </summary>
-	/// <param name="aid">Account group ID (optional)</param>
-	/// <param name="max">Maximum number of objects to return (optional)</param>
-	/// <param name="cursor">Pagination cursor (optional)</param>
-	/// <param name="expand">Optional expansion parameters</param>
-	/// <param name="includeDeleted">Include deleted agents (optional)</param>
-	/// <param name="useAllPermittedAids">Load data from all permitted accounts (optional)</param>
-	/// <param name="agentName">Filter by agent name (optional)</param>
-	/// <param name="computerName">Filter by computer name (optional)</param>
+	/// <param name="options">Filters, paging and expansion (optional)</param>
 	/// <param name="cancellationToken">Cancellation token</param>
 	/// <returns>List of endpoint agents</returns>
-	Task<EndpointAgents> GetAllAsync(
-		string? aid,
-		int? max,
-		string? cursor,
-		ExpandEndpointAgentOptions[]? expand,
-		bool? includeDeleted,
-		bool? useAllPermittedAids,
-		string? agentName,
-		string? computerName,
-		CancellationToken cancellationToken);
+	Task<EndpointAgents> GetAllAsync(EndpointAgentListOptions? options, CancellationToken cancellationToken);
 
 	/// <summary>
 	/// Retrieves details of an agent with the specified agent ID
