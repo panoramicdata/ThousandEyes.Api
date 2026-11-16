@@ -6,73 +6,84 @@ namespace ThousandEyes.Api.Test;
 [Trait("Category", "Integration")]
 public class TestResultsIntegrationTest(IntegrationTestFixture fixture) : TestBase(fixture)
 {
-	/// <summary>
-	/// Runs the body for the first test in the account, or returns when the account has none
-	/// </summary>
-	private async Task WithTestAsync(bool httpServerOnly, Func<string, DateTime, DateTime, Task> body)
+	private static readonly TimeSpan Window = TimeSpan.FromHours(24);
+
+	private async Task<string?> FirstTestIdAsync() =>
+		(await ThousandEyesClient.Tests.Tests.GetAllAsync(aid: null, cancellationToken: CancellationToken)).TestsList.FirstOrDefault()?.TestId;
+
+	private async Task<string?> FirstHttpServerTestIdAsync() =>
+		(await ThousandEyesClient.Tests.HttpServerTests.GetAllAsync(aid: null, cancellationToken: CancellationToken)).Tests.FirstOrDefault()?.TestId;
+
+	private static void CheckHop(Models.TestResults.PathVisualization[]? pathVis)
 	{
-		var testId = httpServerOnly
-			? (await ThousandEyesClient.Tests.HttpServerTests.GetAllAsync(aid: null, cancellationToken: CancellationToken)).Tests.FirstOrDefault()?.TestId
-			: (await ThousandEyesClient.Tests.Tests.GetAllAsync(aid: null, cancellationToken: CancellationToken)).TestsList.FirstOrDefault()?.TestId;
+		if (pathVis?.Length > 0)
+		{
+			_ = pathVis[0].HopNumber.Should().BePositive();
+			_ = pathVis[0].IpAddress.Should().NotBeNullOrEmpty();
+		}
+	}
+
+	/// <summary>
+	/// Checks the first result, when there is one, against the identity fields every result type carries
+	/// </summary>
+	private static void CheckFirst<T>(T[] results, string testId, DateTime from, Func<T, (string TestId, string TestName, string RoundId, DateTime Date)> project, Action<T>? extra = null)
+	{
+		_ = results.Should().NotBeNull();
+		if (results.Length == 0)
+		{
+			return;
+		}
+
+		var (resultTestId, testName, roundId, date) = project(results[0]);
+		_ = resultTestId.Should().Be(testId);
+		_ = testName.Should().NotBeNullOrEmpty();
+		_ = roundId.Should().NotBeNullOrEmpty();
+		_ = date.Should().BeAfter(from);
+		extra?.Invoke(results[0]);
+	}
+
+	[Fact]
+	public async Task GetNetworkResults_WithValidTestId_ReturnsNetworkResults()
+	{
+		var testId = await FirstTestIdAsync();
 		if (testId is null)
 		{
 			return;
 		}
 
-		await body(testId, DateTime.UtcNow.AddHours(-24), DateTime.UtcNow);
+		var from = DateTime.UtcNow - Window;
+		var result = await ThousandEyesClient.TestResults.TestResults.GetNetworkResultsAsync(testId, from, DateTime.UtcNow, aid: null, cancellationToken: CancellationToken);
+
+		CheckFirst(result.Results, testId, from, r => (r.TestId, r.TestName, r.RoundId, r.Date), r => _ = r.AgentName.Should().NotBeNullOrEmpty());
 	}
 
 	[Fact]
-	public Task GetNetworkResults_WithValidTestId_ReturnsNetworkResults() => WithTestAsync(false, async (testId, from, to) =>
+	public async Task GetHttpServerResults_WithValidTestId_ReturnsHttpServerResults()
 	{
-		var result = await ThousandEyesClient.TestResults.TestResults.GetNetworkResultsAsync(testId, from, to, aid: null, cancellationToken: CancellationToken);
-
-		_ = result.Results.Should().NotBeNull();
-		if (result.Results.Length > 0)
+		var testId = await FirstHttpServerTestIdAsync();
+		if (testId is null)
 		{
-			var first = result.Results[0];
-			_ = first.TestId.Should().Be(testId);
-			_ = first.TestName.Should().NotBeNullOrEmpty();
-			_ = first.AgentId.Should().NotBeNullOrEmpty();
-			_ = first.AgentName.Should().NotBeNullOrEmpty();
-			_ = first.RoundId.Should().NotBeNullOrEmpty();
-			_ = first.Date.Should().BeAfter(from);
+			return;
 		}
-	});
+
+		var from = DateTime.UtcNow - Window;
+		var result = await ThousandEyesClient.TestResults.TestResults.GetHttpServerResultsAsync(testId, from, DateTime.UtcNow, aid: null, cancellationToken: CancellationToken);
+
+		CheckFirst(result.Results, testId, from, r => (r.TestId, r.TestName, r.RoundId, r.Date), r => _ = r.ResponseCode.Should().BePositive());
+	}
 
 	[Fact]
-	public Task GetHttpServerResults_WithValidTestId_ReturnsHttpServerResults() => WithTestAsync(true, async (testId, from, to) =>
+	public async Task GetPathVisualizationResults_WithValidTestId_ReturnsPathVisResults()
 	{
-		var result = await ThousandEyesClient.TestResults.TestResults.GetHttpServerResultsAsync(testId, from, to, aid: null, cancellationToken: CancellationToken);
-
-		_ = result.Results.Should().NotBeNull();
-		if (result.Results.Length > 0)
+		var testId = await FirstTestIdAsync();
+		if (testId is null)
 		{
-			var first = result.Results[0];
-			_ = first.TestId.Should().Be(testId);
-			_ = first.TestName.Should().NotBeNullOrEmpty();
-			_ = first.RoundId.Should().NotBeNullOrEmpty();
-			_ = first.Date.Should().BeAfter(from);
-			_ = first.ResponseCode.Should().BePositive();
+			return;
 		}
-	});
 
-	[Fact]
-	public Task GetPathVisualizationResults_WithValidTestId_ReturnsPathVisResults() => WithTestAsync(false, async (testId, from, to) =>
-	{
-		var result = await ThousandEyesClient.TestResults.TestResults.GetPathVisualizationResultsAsync(testId, from, to, aid: null, cancellationToken: CancellationToken);
+		var from = DateTime.UtcNow - Window;
+		var result = await ThousandEyesClient.TestResults.TestResults.GetPathVisualizationResultsAsync(testId, from, DateTime.UtcNow, aid: null, cancellationToken: CancellationToken);
 
-		_ = result.Results.Should().NotBeNull();
-		if (result.Results.Length > 0)
-		{
-			var first = result.Results[0];
-			_ = first.TestId.Should().Be(testId);
-			_ = first.Date.Should().BeAfter(from);
-			if (first.PathVis?.Length > 0)
-			{
-				_ = first.PathVis[0].HopNumber.Should().BePositive();
-				_ = first.PathVis[0].IpAddress.Should().NotBeNullOrEmpty();
-			}
-		}
-	});
+		CheckFirst(result.Results, testId, from, r => (r.TestId, r.TestName, r.RoundId, r.Date), r => CheckHop(r.PathVis));
+	}
 }

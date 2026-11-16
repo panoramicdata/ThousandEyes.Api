@@ -7,7 +7,7 @@ namespace ThousandEyes.Api.Test;
 [Trait("Category", "Integration")]
 public class EmulationIntegrationTest(IntegrationTestFixture fixture) : TestBase(fixture)
 {
-	private async Task CreateDeviceAndCheckAsync(EmulatedDeviceCategory category, int width, int height)
+	private Task CreateDeviceAndCheckAsync(EmulatedDeviceCategory category, int width, int height) => RunIfAvailableAsync(async () =>
 	{
 		var deviceRequest = new EmulatedDevice { Category = category, Width = width, Height = height };
 
@@ -17,6 +17,16 @@ public class EmulationIntegrationTest(IntegrationTestFixture fixture) : TestBase
 		_ = result.Category.Should().Be(category);
 		_ = result.Width.Should().Be(width);
 		_ = result.Height.Should().Be(height);
+	});
+
+	/// <summary>
+	/// Lists emulated devices and returns the first one, or null when the account has none
+	/// </summary>
+	private async Task<EmulatedDeviceResponse?> FirstDeviceAsync(ExpandEmulatedDeviceOptions[]? expand)
+	{
+		var result = await ThousandEyesClient.Emulation.EmulatedDevices.GetAllAsync(expand: expand, cancellationToken: CancellationToken);
+		_ = result.EmulatedDevicesList.Should().NotBeNull();
+		return result.EmulatedDevicesList.FirstOrDefault();
 	}
 
 	[Fact]
@@ -24,55 +34,35 @@ public class EmulationIntegrationTest(IntegrationTestFixture fixture) : TestBase
 	{
 		var result = await ThousandEyesClient.Emulation.UserAgents.GetAllAsync(aid: null, cancellationToken: CancellationToken);
 
-		_ = result.UserAgentsList.Should().NotBeNull();
-		if (result.UserAgentsList.Length > 0)
-		{
-			_ = result.UserAgentsList[0].Value.Should().NotBeNullOrEmpty();
-		}
+		_ = result.UserAgentsList.Should().NotBeNull().And.OnlyContain(u => !string.IsNullOrEmpty(u.Value));
 	});
 
 	[Fact]
 	public Task GetEmulatedDevices_WithValidRequest_ReturnsDevices() => RunIfAvailableAsync(async () =>
 	{
-		var result = await ThousandEyesClient.Emulation.EmulatedDevices.GetAllAsync(expand: null, cancellationToken: CancellationToken);
+		var device = await FirstDeviceAsync(null);
 
-		_ = result.EmulatedDevicesList.Should().NotBeNull();
-		if (result.EmulatedDevicesList.Length > 0)
-		{
-			var firstDevice = result.EmulatedDevicesList[0];
-			_ = firstDevice.Id.Should().NotBeNullOrEmpty();
-			_ = firstDevice.Name.Should().NotBeNullOrEmpty();
-			_ = firstDevice.Category.Should().BeDefined();
-			_ = firstDevice.Width.Should().BePositive();
-			_ = firstDevice.Height.Should().BePositive();
-		}
+		_ = device?.Id.Should().NotBeNullOrEmpty();
+		_ = device?.Name.Should().NotBeNullOrEmpty();
+		_ = device?.Category.Should().BeDefined();
+		_ = device?.Width.Should().BePositive();
+		_ = device?.Height.Should().BePositive();
 	});
 
 	[Fact]
 	public Task GetEmulatedDevices_WithExpandUserAgent_ReturnsDevicesWithUserAgents() => RunIfAvailableAsync(async () =>
 	{
-		var result = await ThousandEyesClient.Emulation.EmulatedDevices.GetAllAsync(
-			expand: [ExpandEmulatedDeviceOptions.UserAgent],
-			cancellationToken: CancellationToken);
+		var device = await FirstDeviceAsync([ExpandEmulatedDeviceOptions.UserAgent]);
 
-		_ = result.EmulatedDevicesList.Should().NotBeNull();
-		if (result.EmulatedDevicesList.Length > 0)
-		{
-			var firstDevice = result.EmulatedDevicesList[0];
-			_ = firstDevice.Id.Should().NotBeNullOrEmpty();
-			_ = firstDevice.Name.Should().NotBeNullOrEmpty();
-			if (firstDevice.AvailableUserAgents.Length > 0)
-			{
-				_ = firstDevice.AvailableUserAgents[0].Should().NotBeNullOrEmpty();
-			}
-		}
+		_ = device?.Id.Should().NotBeNullOrEmpty();
+		_ = device?.AvailableUserAgents.Should().OnlyContain(a => !string.IsNullOrEmpty(a));
 	});
 
 	[Fact]
 	public Task CreateEmulatedDevice_WithValidRequest_CreatesDevice() =>
-		RunIfAvailableAsync(() => CreateDeviceAndCheckAsync(EmulatedDeviceCategory.Desktop, 1920, 1080));
+		CreateDeviceAndCheckAsync(EmulatedDeviceCategory.Desktop, 1920, 1080);
 
 	[Fact]
 	public Task CreateEmulatedDevice_WithTabletCategory_CreatesTabletDevice() =>
-		RunIfAvailableAsync(() => CreateDeviceAndCheckAsync(EmulatedDeviceCategory.Tablet, 768, 1024));
+		CreateDeviceAndCheckAsync(EmulatedDeviceCategory.Tablet, 768, 1024);
 }

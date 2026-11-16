@@ -1,5 +1,6 @@
 using AwesomeAssertions;
 using ThousandEyes.Api.Exceptions;
+using ThousandEyes.Api.Interfaces.Integrations;
 using ThousandEyes.Api.Models.Integrations;
 
 namespace ThousandEyes.Api.Test;
@@ -8,352 +9,170 @@ namespace ThousandEyes.Api.Test;
 [Trait("Category", "Integration")]
 public class IntegrationsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 {
+	private IWebhookOperations Webhooks => ThousandEyesClient.Integrations.WebhookOperations;
+
+	private IGenericConnectors Connectors => ThousandEyesClient.Integrations.GenericConnectors;
+
+	private static WebhookOperation NewOperation(string label) => new()
+	{
+		Name = $"Test {label} {Guid.NewGuid()}",
+		Enabled = false,
+		CategoryValue = OperationCategory.Alerts,
+		StatusValue = OperationStatus.Pending
+	};
+
+	private static GenericConnector NewConnector(string label) => new()
+	{
+		TypeValue = ConnectorType.Generic,
+		Name = $"Test {label} {Guid.NewGuid()}",
+		Target = "https://hooks.slack.com/test"
+	};
+
+	private Task DeleteOperationAsync(string id) => Webhooks.DeleteAsync(id, aid: null, CancellationToken);
+
+	/// <summary>
+	/// Creates a webhook operation, runs the body against it and always deletes it afterwards
+	/// </summary>
+	private async Task WithOperationAsync(string label, Func<WebhookOperation, Task> body)
+	{
+		var created = await Webhooks.CreateAsync(NewOperation(label), aid: null, CancellationToken);
+		try
+		{
+			await body(created);
+		}
+		finally
+		{
+			await DeleteOperationAsync(created.Id!);
+		}
+	}
+
 	[Fact]
 	public async Task GetWebhookOperations_WithValidRequest_ReturnsOperations()
 	{
-		// Act
-		var result = await ThousandEyesClient.Integrations.WebhookOperations.GetAllAsync(
-			aid: null,
-			CancellationToken);
+		var result = await Webhooks.GetAllAsync(aid: null, CancellationToken);
 
-		// Assert
-		_ = result.Should().NotBeNull();
 		_ = result.OperationsList.Should().NotBeNull();
-		// Note: Operations list may be empty if none configured
 	}
 
 	[Fact]
 	public async Task CreateWebhookOperation_WithValidRequest_CreatesOperation()
 	{
-		// Arrange
-		var operation = new WebhookOperation
-		{
-			Name = $"Test Webhook {Guid.NewGuid()}",
-			Enabled = false,
-			CategoryValue = OperationCategory.Alerts,
-			StatusValue = OperationStatus.Pending,
-			Path = "/test/webhook",
-			Payload = "{\"test\": true}"
-		};
+		var operation = NewOperation("Webhook");
+		operation.Path = "/test/webhook";
+		operation.Payload = "{\"test\": true}";
 
-		// Act
-		try
-		{
-			var result = await ThousandEyesClient.Integrations.WebhookOperations.CreateAsync(
-				operation,
-				aid: null,
-				CancellationToken);
+		var result = await Webhooks.CreateAsync(operation, aid: null, CancellationToken);
 
-			// Assert
-			_ = result.Should().NotBeNull();
-			_ = result.Id.Should().NotBeNullOrWhiteSpace();
-			_ = result.Name.Should().Be(operation.Name);
-
-			// Cleanup
-			if (result.Id != null)
-			{
-				await ThousandEyesClient.Integrations.WebhookOperations.DeleteAsync(
-					result.Id,
-					aid: null,
-					CancellationToken);
-			}
-		}
-		catch (Exception e)
-		{
-			// Test may fail if rate limit exceeded or permissions insufficient
-			// This is expected in some environments
-			throw new Exception("CreateWebhookOperation test failed", e);
-		}
-	}
-
-	[Fact]
-	public async Task GetWebhookOperation_WithValidId_ReturnsOperation()
-	{
-		// Arrange - Create operation first
-		var operation = new WebhookOperation
-		{
-			Name = $"Test Get Webhook {Guid.NewGuid()}",
-			Enabled = false,
-			CategoryValue = OperationCategory.Alerts,
-			StatusValue = OperationStatus.Pending
-		};
-
-		var created = await ThousandEyesClient.Integrations.WebhookOperations.CreateAsync(
-			operation,
-			aid: null,
-			CancellationToken);
-
-		// Act
-		var result = await ThousandEyesClient.Integrations.WebhookOperations.GetByIdAsync(
-			created.Id!,
-			aid: null,
-			CancellationToken);
-
-		// Assert
-		_ = result.Should().NotBeNull();
-		_ = result.Id.Should().Be(created.Id);
+		_ = result.Id.Should().NotBeNullOrWhiteSpace();
 		_ = result.Name.Should().Be(operation.Name);
-
-		// Cleanup
-		await ThousandEyesClient.Integrations.WebhookOperations.DeleteAsync(
-			created.Id!,
-			aid: null,
-			CancellationToken);
+		await DeleteOperationAsync(result.Id!);
 	}
 
 	[Fact]
-	public async Task UpdateWebhookOperation_WithValidRequest_UpdatesOperation()
+	public Task GetWebhookOperation_WithValidId_ReturnsOperation() => WithOperationAsync("Get Webhook", async created =>
 	{
-		// Arrange - Create operation first
-		var operation = new WebhookOperation
-		{
-			Name = $"Test Update Webhook {Guid.NewGuid()}",
-			Enabled = false,
-			CategoryValue = OperationCategory.Alerts,
-			StatusValue = OperationStatus.Pending
-		};
+		var result = await Webhooks.GetByIdAsync(created.Id!, aid: null, CancellationToken);
 
-		var created = await ThousandEyesClient.Integrations.WebhookOperations.CreateAsync(
-			operation,
-			aid: null,
-			CancellationToken);
+		_ = result.Id.Should().Be(created.Id);
+		_ = result.Name.Should().Be(created.Name);
+	});
 
-		// Modify
+	[Fact]
+	public Task UpdateWebhookOperation_WithValidRequest_UpdatesOperation() => WithOperationAsync("Update Webhook", async created =>
+	{
 		created.Name = $"Updated {created.Name}";
 		created.Enabled = true;
 
-		// Act
-		var result = await ThousandEyesClient.Integrations.WebhookOperations.UpdateAsync(
-			created.Id!,
-			created,
-			aid: null,
-			CancellationToken);
+		var result = await Webhooks.UpdateAsync(created.Id!, created, aid: null, CancellationToken);
 
-		// Assert
-		_ = result.Should().NotBeNull();
 		_ = result.Name.Should().Contain("Updated");
 		_ = result.Enabled.Should().BeTrue();
-
-		// Cleanup
-		await ThousandEyesClient.Integrations.WebhookOperations.DeleteAsync(
-			created.Id!,
-			aid: null,
-			CancellationToken);
-	}
+	});
 
 	[Fact]
 	public async Task DeleteWebhookOperation_WithValidId_DeletesOperation()
 	{
-		// Arrange - Create operation first
-		var operation = new WebhookOperation
-		{
-			Name = $"Test Delete Webhook {Guid.NewGuid()}",
-			Enabled = false,
-			CategoryValue = OperationCategory.Alerts,
-			StatusValue = OperationStatus.Pending
-		};
+		var created = await Webhooks.CreateAsync(NewOperation("Delete Webhook"), aid: null, CancellationToken);
 
-		var created = await ThousandEyesClient
-			.Integrations
-			.WebhookOperations.CreateAsync(
-			operation,
-			aid: null,
-			CancellationToken);
+		var act = () => DeleteOperationAsync(created.Id!);
 
-		// Act - Delete should not throw
-		await ThousandEyesClient.Integrations.WebhookOperations.DeleteAsync(
-			created.Id!,
-			aid: null,
-			CancellationToken);
-
-		// Assert - Verify deleted by trying to get (should throw or return null)
-		// Note: Actual behavior depends on API - may throw 404
+		_ = await act.Should().NotThrowAsync();
 	}
 
 	[Fact]
 	public async Task GetGenericConnectors_WithValidRequest_ReturnsConnectors()
 	{
-		// Act
-		var result = await ThousandEyesClient.Integrations.GenericConnectors.GetAllAsync(
-			aid: null,
-			CancellationToken);
+		var result = await Connectors.GetAllAsync(aid: null, CancellationToken);
 
-		// Assert
-		_ = result.Should().NotBeNull();
 		_ = result.ConnectorsList.Should().NotBeNull();
-		// Note: Connectors list may be empty if none configured
 	}
 
 	[Fact]
 	public async Task CreateGenericConnector_WithValidRequest_CreatesConnector()
 	{
-		// Arrange
-		var connector = new GenericConnector
+		var connector = NewConnector("Connector");
+		connector.Authentication = new BearerTokenAuthentication
 		{
-			TypeValue = ConnectorType.Generic,
-			Name = $"Test Connector {Guid.NewGuid()}",
-			Target = "https://hooks.slack.com/test",
-			Authentication = new BearerTokenAuthentication
-			{
-				AuthenticationTypeValue = AuthenticationType.BearerToken,
-				Token = "test-token-123"
-			}
+			AuthenticationTypeValue = AuthenticationType.BearerToken,
+			Token = "test-token-123"
 		};
 
-		// Act
-		var result = await ThousandEyesClient.Integrations.GenericConnectors.CreateAsync(
-			connector,
-			aid: null,
-			CancellationToken);
+		var result = await Connectors.CreateAsync(connector, aid: null, CancellationToken);
 
-		// Assert
-		_ = result.Should().NotBeNull();
 		_ = result.Id.Should().NotBeNullOrWhiteSpace();
 		_ = result.Name.Should().Be(connector.Name);
-
-		// Cleanup
-		if (result.Id != null)
-		{
-			await ThousandEyesClient.Integrations.GenericConnectors.DeleteAsync(
-				result.Id,
-				aid: null,
-				CancellationToken);
-		}
+		await Connectors.DeleteAsync(result.Id!, aid: null, CancellationToken);
 	}
 
 	[Fact]
-	public async Task GetOperationConnectors_WithValidOperationId_ReturnsConnectors()
+	public Task GetOperationConnectors_WithValidOperationId_ReturnsConnectors() => WithOperationAsync("Op Connectors", async created =>
 	{
-		// Arrange - Create operation first
-		var operation = new WebhookOperation
-		{
-			Name = $"Test Op Connectors {Guid.NewGuid()}",
-			Enabled = false,
-			CategoryValue = OperationCategory.Alerts,
-			StatusValue = OperationStatus.Pending
-		};
-
-		var created = await ThousandEyesClient.Integrations.WebhookOperations.CreateAsync(
-			operation,
-			aid: null,
-			CancellationToken);
-
-		// Act
 		var result = await ThousandEyesClient.Integrations.OperationConnectors.GetConnectorsAsync(
 			type: "webhooks",
 			id: created.Id!,
 			aid: null,
 			CancellationToken);
 
-		// Assert
-		_ = result.Should().NotBeNull();
 		_ = result.Items.Should().NotBeNull();
-
-		// Cleanup
-		await ThousandEyesClient.Integrations.WebhookOperations.DeleteAsync(
-			created.Id!,
-			aid: null,
-			CancellationToken);
-	}
+	});
 
 	[Fact]
-	public async Task SetOperationConnectors_WithValidRequest_AssignsConnectors()
+	public Task SetOperationConnectors_WithValidRequest_AssignsConnectors() => WithOperationAsync("Set Connectors", async createdOp =>
 	{
-		// Arrange - Create operation and connector
-		var operation = new WebhookOperation
+		var createdConn = await Connectors.CreateAsync(NewConnector("Assign Connector"), aid: null, CancellationToken);
+		try
 		{
-			Name = $"Test Set Connectors {Guid.NewGuid()}",
-			Enabled = false,
-			CategoryValue = OperationCategory.Alerts,
-			StatusValue = OperationStatus.Pending
-		};
+			var result = await ThousandEyesClient.Integrations.OperationConnectors.SetConnectorsAsync(
+				type: "webhooks",
+				id: createdOp.Id!,
+				connectorIds: [createdConn.Id!],
+				aid: null,
+				CancellationToken);
 
-		var connector = new GenericConnector
+			_ = result.Items.Should().Contain(createdConn.Id!);
+		}
+		finally
 		{
-			TypeValue = ConnectorType.Generic,
-			Name = $"Test Assign Connector {Guid.NewGuid()}",
-			Target = "https://hooks.slack.com/test"
-		};
-
-		var createdOp = await ThousandEyesClient.Integrations.WebhookOperations.CreateAsync(
-			operation,
-			aid: null,
-			CancellationToken);
-
-		var createdConn = await ThousandEyesClient.Integrations.GenericConnectors.CreateAsync(
-			connector,
-			aid: null,
-			CancellationToken);
-
-		// Act
-		var result = await ThousandEyesClient.Integrations.OperationConnectors.SetConnectorsAsync(
-			type: "webhooks",
-			id: createdOp.Id!,
-			connectorIds: [createdConn.Id!],
-			aid: null,
-			CancellationToken);
-
-		// Assert
-		_ = result.Should().NotBeNull();
-		_ = result.Items.Should().Contain(createdConn.Id!);
-
-		// Cleanup
-		await ThousandEyesClient.Integrations.WebhookOperations.DeleteAsync(
-			createdOp.Id!,
-			aid: null,
-			CancellationToken);
-		await ThousandEyesClient.Integrations.GenericConnectors.DeleteAsync(
-			createdConn.Id!,
-			aid: null,
-			CancellationToken);
-	}
+			await Connectors.DeleteAsync(createdConn.Id!, aid: null, CancellationToken);
+		}
+	});
 
 	[Fact]
 	public async Task CreateWebhookOperation_WithMissingRequiredFields_ThrowsThousandEyesBadRequestException()
 	{
-		// Arrange - Create an operation with missing required fields to trigger 400 Bad Request
-		// Note: We're testing that the exception is properly parsed, not that validation works
-		var operation = new WebhookOperation
-		{
-			Name = "", // Empty name should cause validation error
-			CategoryValue = OperationCategory.Alerts,
-			StatusValue = OperationStatus.Pending
-		};
+		var operation = NewOperation("Invalid");
+		operation.Name = "";
 
-		// Act & Assert
-		var act = () => ThousandEyesClient.Integrations.WebhookOperations.CreateAsync(
-				operation,
-				aid: null,
-				CancellationToken);
+		var act = () => Webhooks.CreateAsync(operation, aid: null, CancellationToken);
 
 		var exception = (await act.Should().ThrowAsync<ThousandEyesBadRequestException>()).Which;
 
-		// Verify exception properties are properly populated
-		_ = exception.Should().NotBeNull();
 		_ = exception.StatusCode.Should().Be(400);
 		_ = exception.Message.Should().NotBeNullOrWhiteSpace();
-
-		// Verify Details dictionary contains the error response fields
-		_ = exception.Details.Should().NotBeNull();
-		_ = exception.Details.Should().ContainKey("status");
-		_ = exception.Details.Should().ContainKey("message");
-		_ = exception.Details.Should().ContainKey("path");
-
-		// Verify the path is correct
-		_ = exception.Details["path"].Should().Be("/v7/operations/webhooks");
-
-		// Verify StatusCode in Details matches the exception property
+		_ = exception.Details.Should().ContainKeys("status", "message", "path");
+		_ = exception.Details!["path"].Should().Be("/v7/operations/webhooks");
 		_ = exception.Details["status"].Should().Be(400);
-
-		// Verify error code is populated
 		_ = exception.ErrorCode.Should().NotBeNullOrWhiteSpace();
-
-		// Note: InnerException is null when ErrorHandler intercepts the error response
-		// before Refit can throw an ApiException. This is the correct behavior.
-		// If we needed to preserve the original ApiException, we would have to let Refit throw first,
-		// but that would complicate the error handling logic.
-
-		// Verify request context is captured
 		_ = exception.RequestUrl.Should().Contain("/v7/operations/webhooks");
 		_ = exception.RequestMethod.Should().Be("POST");
 	}

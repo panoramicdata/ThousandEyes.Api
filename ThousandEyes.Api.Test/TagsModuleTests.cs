@@ -11,6 +11,17 @@ namespace ThousandEyes.Api.Test;
 [Trait("Category", "Integration")]
 public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 {
+	private static long Timestamp => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+	private static TagInfo NewTag(string color, string key = "test-key", string valuePrefix = "test-value", ObjectType objectType = ObjectType.Test) => new()
+	{
+		Key = key,
+		Value = $"{valuePrefix}-{Timestamp}",
+		Color = color,
+		Description = $"Test Tag - {Timestamp}",
+		ObjectType = objectType
+	};
+
 	private static Tag NewBulkTag(int index, string color, long timestamp) => new()
 	{
 		Key = $"test-key-{index}",
@@ -20,190 +31,111 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 		ObjectType = ObjectType.Test
 	};
 
+	private Task<Tag> GetAsync(string id, string[]? expand = null) =>
+		ThousandEyesClient.Tags.GetByIdAsync(id, aid: null, expand: expand, CancellationToken);
+
+	private Task DeleteAsync(string id) => ThousandEyesClient.Tags.DeleteAsync(id, aid: null, CancellationToken);
+
+	/// <summary>
+	/// Creates a tag, runs the body against it and always deletes it afterwards
+	/// </summary>
+	private async Task WithTagAsync(TagInfo request, Func<TagInfo, Task> body)
+	{
+		var created = await ThousandEyesClient.Tags.CreateAsync(request, aid: null, CancellationToken);
+		try
+		{
+			await body(created);
+		}
+		finally
+		{
+			await DeleteAsync(created.Id!);
+		}
+	}
+
 	[Fact]
 	public async Task GetTags_WithValidRequest_ReturnsTags()
 	{
-		// Act
 		var result = await ThousandEyesClient.Tags.GetAllAsync(aid: null, expand: null, CancellationToken);
 
-		// Assert
-		_ = result.Should().NotBeNull();
 		_ = result.Items.Should().NotBeNull();
 	}
 
 	[Fact]
 	public async Task CreateTag_WithValidRequest_CreatesTag()
 	{
-		// Arrange
-		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-		var request = new TagInfo
+		var request = NewTag("#FF0000");
+
+		await WithTagAsync(request, created =>
 		{
-			Key = "test-key",
-			Value = $"test-value-{timestamp}",
-			Color = "#FF0000",
-			Description = $"Test Tag - {timestamp}",
-			ObjectType = ObjectType.Test
-		};
-
-		// Act
-		var result = await ThousandEyesClient.Tags.CreateAsync(request, aid: null, CancellationToken);
-
-		// Assert
-		_ = result.Should().NotBeNull();
-		_ = result.Id.Should().NotBeNullOrEmpty();
-		_ = result.Key.Should().Be(request.Key);
-		_ = result.Value.Should().Be(request.Value);
-
-		// Cleanup
-		await ThousandEyesClient.Tags.DeleteAsync(result.Id!, aid: null, CancellationToken);
+			_ = created.Id.Should().NotBeNullOrEmpty();
+			_ = created.Key.Should().Be(request.Key);
+			_ = created.Value.Should().Be(request.Value);
+			return Task.CompletedTask;
+		});
 	}
 
 	[Fact]
 	public async Task GetTag_WithValidId_ReturnsTag()
 	{
-		// Arrange
-		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-		var request = new TagInfo
+		var request = NewTag("#00FF00");
+
+		await WithTagAsync(request, async created =>
 		{
-			Key = "test-key",
-			Value = $"test-value-{timestamp}",
-			Color = "#00FF00",
-			Description = $"Test Tag - {timestamp}",
-			ObjectType = ObjectType.Test
-		};
+			var result = await GetAsync(created.Id!);
 
-		// Create a tag first
-		var created = await ThousandEyesClient.Tags.CreateAsync(request, aid: null, CancellationToken);
-
-		try
-		{
-			// Act
-			var result = await ThousandEyesClient.Tags.GetByIdAsync(created.Id!, aid: null, expand: null, CancellationToken);
-
-			// Assert
-			_ = result.Should().NotBeNull();
 			_ = result.Id.Should().Be(created.Id);
 			_ = result.Key.Should().Be(request.Key);
 			_ = result.Value.Should().Be(request.Value);
-		}
-		finally
-		{
-			// Cleanup
-			await ThousandEyesClient.Tags.DeleteAsync(created.Id!, aid: null, CancellationToken);
-		}
+		});
 	}
 
 	[Fact]
 	public async Task UpdateTag_WithValidRequest_UpdatesTag()
 	{
-		// Arrange
-		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-		var createRequest = new TagInfo
+		await WithTagAsync(NewTag("#0000FF"), async created =>
 		{
-			Key = "test-key",
-			Value = $"test-value-{timestamp}",
-			Color = "#0000FF",
-			Description = $"Test Tag - {timestamp}",
-			ObjectType = ObjectType.Test
-		};
+			var updateRequest = NewTag("#FFFF00", valuePrefix: "updated-value");
 
-		// Create a tag first
-		var created = await ThousandEyesClient.Tags.CreateAsync(createRequest, aid: null, CancellationToken);
-
-		try
-		{
-			// Act
-			var updateRequest = new TagInfo
-			{
-				Key = "test-key",
-				Value = $"updated-value-{timestamp}",
-				Color = "#FFFF00",
-				Description = $"Updated Test Tag - {timestamp}",
-				ObjectType = ObjectType.Test
-			};
 			var result = await ThousandEyesClient.Tags.UpdateAsync(created.Id!, updateRequest, aid: null, CancellationToken);
 
-			// Assert
-			_ = result.Should().NotBeNull();
 			_ = result.Id.Should().Be(created.Id);
 			_ = result.Value.Should().Be(updateRequest.Value);
 			_ = result.Color.Should().Be(updateRequest.Color);
-
-			// Verify update by getting the tag
-			var retrieved = await ThousandEyesClient.Tags.GetByIdAsync(created.Id!, aid: null, expand: null, CancellationToken);
-			_ = retrieved.Value.Should().Be(updateRequest.Value);
-		}
-		finally
-		{
-			// Cleanup
-			await ThousandEyesClient.Tags.DeleteAsync(created.Id!, aid: null, CancellationToken);
-		}
+			_ = (await GetAsync(created.Id!)).Value.Should().Be(updateRequest.Value);
+		});
 	}
 
 	[Fact]
 	public async Task DeleteTag_WithValidId_DeletesTag()
 	{
-		// Arrange
-		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-		var request = new TagInfo
-		{
-			Key = "test-key",
-			Value = $"test-value-{timestamp}",
-			Color = "#FF00FF",
-			Description = $"Test Tag - {timestamp}",
-			ObjectType = ObjectType.Test
-		};
+		var created = await ThousandEyesClient.Tags.CreateAsync(NewTag("#FF00FF"), aid: null, CancellationToken);
 
-		// Create a tag first
-		var created = await ThousandEyesClient.Tags.CreateAsync(request, aid: null, CancellationToken);
+		await DeleteAsync(created.Id!);
 
-		// Act
-		await ThousandEyesClient.Tags.DeleteAsync(created.Id!, aid: null, CancellationToken);
-
-		// Assert - verify deletion by attempting to get the tag
-		// This should throw an exception (404 Not Found)
-		var act = async () => await ThousandEyesClient.Tags.GetByIdAsync(created.Id!, aid: null, expand: null, CancellationToken);
-		_ = await act.Should().ThrowAsync<Exception>(); // Refit will throw an exception for 404
+		// Refit throws for the 404 that follows a successful delete
+		var act = () => GetAsync(created.Id!);
+		_ = await act.Should().ThrowAsync<Exception>();
 	}
 
 	[Fact]
 	public async Task CreateTags_Bulk_CreatesMultipleTags()
 	{
-		// Arrange
-		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-		var request = new BulkTagResponse
-		{
-			Tags =
-			[
-				NewBulkTag(1, "#FF0000", timestamp),
-				NewBulkTag(2, "#00FF00", timestamp)
-			]
-		};
-
+		var timestamp = Timestamp;
+		var request = new BulkTagResponse { Tags = [NewBulkTag(1, "#FF0000", timestamp), NewBulkTag(2, "#00FF00", timestamp)] };
 		var createdIds = new List<string>();
 
 		try
 		{
-			// Act
 			var result = await ThousandEyesClient.Tags.CreateBulkAsync(request, aid: null, CancellationToken);
 
-			// Assert
-			_ = result.Should().NotBeNull();
-			_ = result.Tags.Should().NotBeEmpty();
 			_ = result.Tags.Should().HaveCount(2);
-
-			// Track IDs for cleanup
 			createdIds.AddRange(result.Tags.Select(t => t.Id!).Where(id => id != null));
 		}
 		finally
 		{
-			// Cleanup all created tags
 			foreach (var id in createdIds)
 			{
-				await IgnoreErrorsAsync(async () =>
-				{
-					await ThousandEyesClient.Tags.DeleteAsync(id, aid: null, CancellationToken);
-				});
+				await IgnoreErrorsAsync(() => DeleteAsync(id));
 			}
 		}
 	}
@@ -211,67 +143,27 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 	[Fact]
 	public async Task GetTags_WithExpandAssignments_ReturnsTagsWithAssignments()
 	{
-		// Arrange
-		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-		var request = new TagInfo
+		await WithTagAsync(NewTag("#00FFFF"), async created =>
 		{
-			Key = "test-key",
-			Value = $"test-value-{timestamp}",
-			Color = "#00FFFF",
-			Description = $"Test Tag - {timestamp}",
-			ObjectType = ObjectType.Test
-		};
+			var result = await GetAsync(created.Id!, ["assignments"]);
 
-		// Create a tag first
-		var created = await ThousandEyesClient.Tags.CreateAsync(request, aid: null, CancellationToken);
-
-		try
-		{
-			// Act
-			var result = await ThousandEyesClient.Tags.GetByIdAsync(
-				created.Id!,
-				aid: null,
-				expand: ["assignments"],
-				CancellationToken
-			);
-
-			// Assert
-			_ = result.Should().NotBeNull();
 			_ = result.Id.Should().Be(created.Id);
-			_ = result.Assignments.Should().NotBeNull(); // Should be populated with expand
-		}
-		finally
-		{
-			// Cleanup
-			await ThousandEyesClient.Tags.DeleteAsync(created.Id!, aid: null, CancellationToken);
-		}
+			_ = result.Assignments.Should().NotBeNull();
+		});
 	}
 
 	[Fact]
 	public async Task TagOperations_WithColorAndIcon_HandlesCustomization()
 	{
-		// Arrange
-		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-		var request = new TagInfo
+		var request = NewTag("#ABCDEF", key: "custom-key", valuePrefix: "custom-value", objectType: ObjectType.Dashboard);
+		request.Icon = "star";
+
+		await WithTagAsync(request, created =>
 		{
-			Key = "custom-key",
-			Value = $"custom-value-{timestamp}",
-			Color = "#ABCDEF",
-			Icon = "star",
-			Description = $"Customized Test Tag - {timestamp}",
-			ObjectType = ObjectType.Dashboard
-		};
-
-		// Act - Create
-		var created = await ThousandEyesClient.Tags.CreateAsync(request, aid: null, CancellationToken);
-
-		// Assert - Create
-		_ = created.Should().NotBeNull();
-		_ = created.Color.Should().Be(request.Color);
-		_ = created.Icon.Should().Be(request.Icon);
-		_ = created.ObjectType.Should().Be(ObjectType.Dashboard);
-
-		// Cleanup
-		await ThousandEyesClient.Tags.DeleteAsync(created.Id!, aid: null, CancellationToken);
+			_ = created.Color.Should().Be(request.Color);
+			_ = created.Icon.Should().Be(request.Icon);
+			_ = created.ObjectType.Should().Be(ObjectType.Dashboard);
+			return Task.CompletedTask;
+		});
 	}
 }

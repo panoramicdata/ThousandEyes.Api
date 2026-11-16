@@ -31,7 +31,7 @@ public class ThousandEyesServerException : ThousandEyesApiException
 		string? requestUrl,
 		string? requestMethod,
 		Exception? innerException)
-		: base(message, statusCode, errorCode, details, requestUrl, requestMethod, innerException)
+		: base(message, statusCode: statusCode, errorCode: errorCode, details: details, requestUrl: requestUrl, requestMethod: requestMethod, innerException: innerException)
 	{
 	}
 }
