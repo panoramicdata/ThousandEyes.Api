@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking changes
+- `IEndpointAgentsApi.GetAllAsync` now takes `(EndpointAgentListOptions? options, CancellationToken cancellationToken)` instead of nine separate parameters. Move `aid`, `max`, `cursor`, `expand`, `includeDeleted`, `useAllPermittedAids`, `agentName` and `computerName` into the new `EndpointAgentListOptions` record; pass `null` for no options.
+- The nine-argument `ThousandEyesNotFoundException` constructor is replaced by `(string message, string? resourceType, object? resourceId, ThousandEyesApiErrorContext context)`, where the context carries `StatusCode`, `ErrorCode`, `Details`, `RequestUrl`, `RequestMethod` and `InnerException`.
+
 ### Added
 - Initial release of ThousandEyes.Api - comprehensive .NET library for ThousandEyes Administrative API v7.0.63
 - Complete implementation covering all administrative endpoints with full CRUD operations

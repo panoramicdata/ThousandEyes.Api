@@ -93,14 +93,7 @@ Successfully completed **ALL PHASE 6 APIs**, bringing the ThousandEyes.Api .NET 
 ```csharp
 // List all endpoint agents
 var agents = await client.EndpointAgents.EndpointAgents.GetAllAsync(
-    aid: null,
-    max: 100,
-    cursor: null,
-    expand: null,
-    includeDeleted: false,
-    useAllPermittedAids: false,
-    agentName: null,
-    computerName: null,
+    new EndpointAgentListOptions { Max = 100, IncludeDeleted = false, UseAllPermittedAids = false },
     cancellationToken);
 
 // Get specific agent details

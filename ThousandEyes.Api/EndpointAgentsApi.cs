@@ -11,17 +11,11 @@ internal class EndpointAgentsApi(IEndpointAgentsRefitApi refitApi) : IEndpointAg
 	private readonly IEndpointAgentsRefitApi _refitApi = refitApi;
 
 	/// <inheritdoc />
-	public Task<EndpointAgents> GetAllAsync(
-		string? aid,
-		int? max,
-		string? cursor,
-		ExpandEndpointAgentOptions[]? expand,
-		bool? includeDeleted,
-		bool? useAllPermittedAids,
-		string? agentName,
-		string? computerName,
-		CancellationToken cancellationToken) =>
-		_refitApi.GetAllAsync(aid, max, cursor, expand, includeDeleted, useAllPermittedAids, agentName, computerName, cancellationToken);
+	public Task<EndpointAgents> GetAllAsync(EndpointAgentListOptions? options, CancellationToken cancellationToken)
+	{
+		var o = options ?? new EndpointAgentListOptions();
+		return _refitApi.GetAllAsync(o.Aid, o.Max, o.Cursor, o.Expand, o.IncludeDeleted, o.UseAllPermittedAids, o.AgentName, o.ComputerName, cancellationToken);
+	}
 
 	/// <inheritdoc />
 	public Task<EndpointAgent> GetByIdAsync(

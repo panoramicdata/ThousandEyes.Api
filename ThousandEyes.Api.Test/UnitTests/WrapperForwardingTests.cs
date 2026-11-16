@@ -29,7 +29,7 @@ public class WrapperForwardingTests
 		var wrapper = Activator.CreateInstance(wrapperType, proxy)!;
 		var checkedMethods = 0;
 
-		foreach (var method in apiType.GetMethods().Where(m => !CustomMappedWrappers.Contains(wrapperType)))
+		foreach (var method in apiType.GetMethods().Where(m => !CustomMappedWrappers.Contains(wrapperType) && !IsOptionsMapped(wrapperType, m)))
 		{
 			var parameters = method.GetParameters();
 			var args = parameters.Select(p => ValueFactory.Make(p.ParameterType, p.Name!)).ToArray();
@@ -51,8 +51,11 @@ public class WrapperForwardingTests
 			checkedMethods++;
 		}
 
-		_ = checkedMethods.Should().Be(CustomMappedWrappers.Contains(wrapperType) ? 0 : apiType.GetMethods().Length);
+		_ = checkedMethods.Should().Be(CustomMappedWrappers.Contains(wrapperType) ? 0 : apiType.GetMethods().Count(m => !IsOptionsMapped(wrapperType, m)));
 	}
+
+	private static bool IsOptionsMapped(Type wrapperType, MethodInfo method) =>
+		wrapperType == typeof(EndpointAgentsApi) && method.Name == nameof(IEndpointAgentsApi.GetAllAsync);
 
 	private static IEnumerable<(Type Wrapper, Type Api, Type Refit)> Discover() =>
 		typeof(ThousandEyesClient).Assembly.GetTypes()

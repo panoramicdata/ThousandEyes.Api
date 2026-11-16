@@ -15,14 +15,7 @@ public class EndpointAgentsIntegrationTest(IntegrationTestFixture fixture) : Tes
 		ExpandEndpointAgentOptions[]? expand = null,
 		bool? includeDeleted = null) =>
 		(await Api.GetAllAsync(
-			aid: null,
-			max: max,
-			cursor: null,
-			expand: expand,
-			includeDeleted: includeDeleted,
-			useAllPermittedAids: null,
-			agentName: null,
-			computerName: null,
+			new EndpointAgentListOptions { Max = max, Expand = expand, IncludeDeleted = includeDeleted },
 			cancellationToken: CancellationToken)).AgentsList;
 
 	/// <summary>

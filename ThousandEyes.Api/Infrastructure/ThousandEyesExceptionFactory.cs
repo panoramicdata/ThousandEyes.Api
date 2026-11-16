@@ -38,13 +38,15 @@ internal static class ThousandEyesExceptionFactory
 			message,
 			ExtractResourceType(url),
 			ExtractResourceId(url),
-			code,
-			parsed.Code,
-			parsed.Details,
-			url,
-			method,
-			inner);
-
+			new ThousandEyesApiErrorContext
+			{
+				StatusCode = code,
+				ErrorCode = parsed.Code,
+				Details = parsed.Details,
+				RequestUrl = url,
+				RequestMethod = method,
+				InnerException = inner
+			});
 	private static string? ExtractResourceType(string? url) =>
 		SegmentAfterVersion(url, 1)?.TrimEnd('/');
 
