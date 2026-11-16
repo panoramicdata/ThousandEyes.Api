@@ -1,3 +1,4 @@
+using AwesomeAssertions;
 using Refit;
 using ThousandEyes.Api.Exceptions;
 using System.Text.Json;
@@ -81,5 +82,34 @@ public abstract class TestBase(IntegrationTestFixture fixture)
 		}
 
 		await body();
+	}
+
+	/// <summary>
+	/// Seconds since the Unix epoch, for unique test resource names
+	/// </summary>
+	protected static long Timestamp => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+	/// <summary>
+	/// Creates a resource, runs the body against it and always deletes it afterwards
+	/// </summary>
+	protected static async Task WithCreatedAsync<T>(Task<T> create, Func<T, string> idOf, Func<string, Task> delete, Func<T, Task> body)
+	{
+		var created = await create;
+		try
+		{
+			await body(created);
+		}
+		finally
+		{
+			await delete(idOf(created));
+		}
+	}
+
+	/// <summary>
+	/// Asserts that fetching a deleted resource fails
+	/// </summary>
+	protected static async Task AssertGoneAsync(Func<Task> fetch)
+	{
+		_ = await AwesomeAssertions.FluentActions.Awaiting(fetch).Should().ThrowAsync<Exception>();
 	}
 }

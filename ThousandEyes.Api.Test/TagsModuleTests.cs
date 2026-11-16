@@ -11,8 +11,6 @@ namespace ThousandEyes.Api.Test;
 [Trait("Category", "Integration")]
 public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 {
-	private static long Timestamp => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
 	private static TagInfo NewTag(string color, string key = "test-key", string valuePrefix = "test-value", ObjectType objectType = ObjectType.Test) => new()
 	{
 		Key = key,
@@ -39,18 +37,8 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 	/// <summary>
 	/// Creates a tag, runs the body against it and always deletes it afterwards
 	/// </summary>
-	private async Task WithTagAsync(TagInfo request, Func<TagInfo, Task> body)
-	{
-		var created = await ThousandEyesClient.Tags.CreateAsync(request, aid: null, CancellationToken);
-		try
-		{
-			await body(created);
-		}
-		finally
-		{
-			await DeleteAsync(created.Id!);
-		}
-	}
+	private Task WithTagAsync(TagInfo request, Func<TagInfo, Task> body) =>
+		WithCreatedAsync(ThousandEyesClient.Tags.CreateAsync(request, aid: null, CancellationToken), t => t.Id!, DeleteAsync, body);
 
 	[Fact]
 	public async Task GetTags_WithValidRequest_ReturnsTags()
@@ -112,9 +100,8 @@ public class TagsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 
 		await DeleteAsync(created.Id!);
 
-		// Refit throws for the 404 that follows a successful delete
-		var act = () => GetAsync(created.Id!);
-		_ = await act.Should().ThrowAsync<Exception>();
+		await AssertGoneAsync(() => GetAsync(created.Id!));
+
 	}
 
 	[Fact]

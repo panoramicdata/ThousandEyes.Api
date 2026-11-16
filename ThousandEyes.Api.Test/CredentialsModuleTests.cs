@@ -10,8 +10,6 @@ namespace ThousandEyes.Api.Test;
 [Trait("Category", "Integration")]
 public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(fixture)
 {
-	private static long Timestamp => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
 	private static CredentialRequest NewRequest(string namePrefix = "Test Credential", string valuePrefix = "test-password") =>
 		new(Name: $"{namePrefix} - {Timestamp}", Value: $"{valuePrefix}-{Timestamp}");
 
@@ -29,18 +27,8 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 	/// <summary>
 	/// Creates a credential, runs the body against it and always deletes it afterwards
 	/// </summary>
-	private Task WithCredentialAsync(CredentialRequest request, Func<CredentialWithoutValue, Task> body) => RunWhenAvailableAsync(async () =>
-	{
-		var created = await ThousandEyesClient.Credentials.CreateAsync(request, aid: null, CancellationToken);
-		try
-		{
-			await body(created);
-		}
-		finally
-		{
-			await DeleteAsync(created.Id!);
-		}
-	});
+	private Task WithCredentialAsync(CredentialRequest request, Func<CredentialWithoutValue, Task> body) => RunWhenAvailableAsync(() =>
+		WithCreatedAsync(ThousandEyesClient.Credentials.CreateAsync(request, aid: null, CancellationToken), c => c.Id!, DeleteAsync, body));
 
 	[Fact]
 	public Task GetCredentials_WithValidRequest_ReturnsCredentials() => RunWhenAvailableAsync(async () =>
@@ -101,9 +89,8 @@ public class CredentialsModuleTests(IntegrationTestFixture fixture) : TestBase(f
 
 		await DeleteAsync(created.Id!);
 
-		// Refit throws for the 404 that follows a successful delete
-		var act = () => GetAsync(created.Id!);
-		_ = await act.Should().ThrowAsync<Exception>();
+		await AssertGoneAsync(() => GetAsync(created.Id!));
+
 	});
 
 	[Fact]
