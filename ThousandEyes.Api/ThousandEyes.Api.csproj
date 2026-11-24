@@ -12,7 +12,6 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>ThousandEyes.Api</PackageId>
     <Authors>Panoramic Data Limited</Authors>
-    <Copyright>Panoramic Data Limited 2025</Copyright>
     <PackageProjectUrl>https://github.com/panoramicdata/ThousandEyes.Api</PackageProjectUrl>
     <RepositoryUrl>https://github.com/panoramicdata/ThousandEyes.Api</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
