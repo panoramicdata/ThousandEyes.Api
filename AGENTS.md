@@ -16,7 +16,7 @@ You are a careful, security-conscious contributor to this repository.
   CI/CD checks.
 - Do not commit secrets, credentials, or API tokens.
 - Do not force-push to `main`, rewrite published history, or delete branches without explicit
-  approval.
+  Approval.
 - Do not add `Co-Authored-By` trailers or other AI attribution to commit messages or pull requests.
 
 ## Tools
@@ -29,8 +29,8 @@ You are a careful, security-conscious contributor to this repository.
 ### Code Style Guidelines
 
 #### One File Per Type Policy ? **MANDATORY**
-- **Each type (class, interface, enum, record) must be in its own separate file**. If this cannot be met, explain why in your summary.
-- **File name MUST match the type name exactly** (e.g., `UserDetail.cs` for `class UserDetail`). If this cannot be met, explain why in your summary.
+- **Each type (class, interface, enum, record) need to be in its own separate file**.
+- **File name need to match the type name exactly** (e.g., `UserDetail.cs` for `class UserDetail`).
 - **No exceptions** - this rule applies to:
   - Classes (models, implementations, modules)
   - Interfaces (public and internal Refit interfaces)
@@ -43,15 +43,15 @@ You are a careful, security-conscious contributor to this repository.
   - ?? Clear responsibilities (one concept per file)
   - ?? Easier testing and maintenance
 
-#### Zero Tolerance Policy - NO Errors, Warnings, or Messages
-- **zero TOLERANCE**: No errors, no warnings, no messages - EVER
-- **Always check Roslyn diagnostics** before attempting any build. If this cannot be met, explain why in your summary.
+#### Zero Tolerance Policy - no Errors, Warnings, or Messages
+- **Zero TOLERANCE**: No errors, no warnings, no messages - ever
+- **Check Roslyn diagnostics** before attempting any build.
 - Use Visual Studio's Roslyn analyzer to detect issues in real-time
 - **Address all compiler diagnostics** before considering code complete
 - Use `#pragma warning disable` only in exceptional cases with clear justification and documentation
 - **Add new words to the custom dictionary file** (`ThousandEyes.Api.dic`) instead of suppressing spelling warnings
 - Enable "Treat warnings as errors" where appropriate
-- **Every commit must have zero diagnostics** - no exceptions. If this cannot be met, explain why in your summary.
+- **Every commit need to have zero diagnostics** - no exceptions.
 
 #### Modern C# Practices (.NET 11.0)
 
@@ -100,7 +100,7 @@ public class ThousandEyesClientOptions
 ```
 
 ##### File-Scoped Namespaces
-- Always use file-scoped namespaces: If this cannot be met, explain why in your summary.
+- Use file-scoped namespaces:
 ```csharp
 // Preferred
 namespace ThousandEyes.Api;
@@ -173,9 +173,9 @@ public record ThousandEyesApiResponse(string Data, int StatusCode, DateTime Time
 ##### Async/Await and CancellationTokens
 
 ###### Mandatory CancellationTokens
-- **ALWAYS include CancellationToken parameters** in async methods - no exceptions. If this cannot be met, explain why in your summary.
-- **Never use optional CancellationToken parameters** - this avoids developer confusion at the expense of verbosity. If this cannot be met, explain why in your summary.
-- **Always pass CancellationTokens through the call chain**. If this cannot be met, explain why in your summary.
+- **Include CancellationToken parameters** in async methods - no exceptions.
+- **Do not use optional CancellationToken parameters** - this avoids developer confusion at the expense of verbosity.
+- **Pass CancellationTokens through the call chain**.
 
 ```csharp
 // Preferred - Explicit CancellationToken required
@@ -222,7 +222,7 @@ Task<UserDetail> GetByIdAsync(string id, [Query] string? aid = null, Cancellatio
 - Remove unused using statements
 
 ##### Access Modifiers
-- Always be explicit about access modifiers. If this cannot be met, explain why in your summary.
+- Be explicit about access modifiers.
 - Use `internal` for implementation details not meant for public API
 
 ##### Naming Conventions
@@ -234,10 +234,10 @@ Task<UserDetail> GetByIdAsync(string id, [Query] string? aid = null, Cancellatio
 
 ##### Comprehensive Testing Requirements
 - **Maintain 100% test success rate** for all code
-- **Write tests first or alongside implementation** - never leave code untested. If this cannot be met, explain why in your summary.
+- **Write tests first or alongside implementation** - do not leave code untested.
 - **Update existing tests** when modifying functionality
-- **All tests must pass** before considering any task complete. If this cannot be met, explain why in your summary.
-- **Zero failing tests policy** - no exceptions, all tests must be green. If this cannot be met, explain why in your summary.
+- **All tests need to pass** before considering any task complete.
+- **Zero failing tests policy** - no exceptions, all tests need to be green.
 
 ##### Testing Patterns
 - Use AwesomeAssertions for fluent test assertions (note: uses `.Should()` syntax like FluentAssertions)
@@ -262,7 +262,7 @@ Task<UserDetail> GetByIdAsync(string id, [Query] string? aid = null, Cancellatio
 - **HTTP Infrastructure**: 100% test success rate (handlers, retry logic, authentication)
 - **Configuration/Options**: 100% test success rate (validation, edge cases)
 - **Internal Utilities**: 100% test success rate
-- **Exception Scenarios**: All custom exceptions must have passing tests
+- **Exception Scenarios**: All custom exceptions need to have passing tests
 
 ##### Test Quality Standards
 ```csharp
@@ -308,13 +308,13 @@ public async Task GetUsers_WithValidRequest_ReturnsUsers()
 #### Before Implementing New Features
 1. **Review existing tests** to understand current patterns
 2. **Plan test coverage** for the new feature
-3. **Write failing tests first** (TDD approach when possible). If this cannot be met, explain why in your summary.
+3. **Write failing tests first** (TDD approach when possible).
 4. **Implement the feature** to make tests pass
 5. **Verify 100% test success rate** on all tests
 6. **Run full test suite** to ensure no regressions
 
 #### Before Submitting Code
-1. **All tests must pass** (unit + integration) - **100% success rate required**. If this cannot be met, explain why in your summary.
+1. **All tests need to pass** (unit + integration) - **100% success rate required**.
 2. **Zero build warnings** policy enforced
 3. **All functionality fully tested** with comprehensive test coverage
 4. **Integration tests validate real-world scenarios**
@@ -325,8 +325,8 @@ public async Task GetUsers_WithValidRequest_ReturnsUsers()
 - Test collection: `[Collection("Integration Tests")]`
 - ThousandEyes test environment credentials are for testing.
 - Creating and destroying test data in that environment is safe.
-- Always clean up test data to leave system in original state. If this cannot be met, explain why in your summary.
-- **Always pass CancellationToken.None or a real CancellationToken** in tests - never rely on default values. If this cannot be met, explain why in your summary.
+- Clean up test data to leave system in original state.
+- **Pass CancellationToken.None or a real CancellationToken** in tests - do not rely on default values.
 
 #### ThousandEyes API Specific Guidelines
 - **Administrative API v7.0.63**: Complete coverage of account management, user management, roles, permissions, and audit logs
@@ -339,4 +339,4 @@ public async Task GetUsers_WithValidRequest_ReturnsUsers()
 ## PanoramicData staff
 
 PanoramicData staff have shared tooling in a private sibling checkout of PanoramicData.Skills. Anyone
-without it can ignore this section: everything needed to work on this repository is above.
+Without it can ignore this section: everything needed to work on this repository is above.
