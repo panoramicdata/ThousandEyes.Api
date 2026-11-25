@@ -29,8 +29,8 @@ You are a careful, security-conscious contributor to this repository.
 ### Code Style Guidelines
 
 #### One File Per Type Policy ? **MANDATORY**
-- **Each type (class, interface, enum, record) need to be in its own separate file**.
-- **File name need to match the type name exactly** (e.g., `UserDetail.cs` for `class UserDetail`).
+- **Each type (class, interface, enum, record) needs to be in its own separate file**.
+- **File name needs to match the type name exactly** (e.g., `UserDetail.cs` for `class UserDetail`).
 - **No exceptions** - this rule applies to:
   - Classes (models, implementations, modules)
   - Interfaces (public and internal Refit interfaces)
@@ -51,7 +51,7 @@ You are a careful, security-conscious contributor to this repository.
 - Use `#pragma warning disable` only in exceptional cases with clear justification and documentation
 - **Add new words to the custom dictionary file** (`ThousandEyes.Api.dic`) instead of suppressing spelling warnings
 - Enable "Treat warnings as errors" where appropriate
-- **Every commit need to have zero diagnostics** - no exceptions.
+- **Every commit needs to have zero diagnostics** - no exceptions.
 
 #### Modern C# Practices (.NET 11.0)
 
@@ -308,7 +308,7 @@ public async Task GetUsers_WithValidRequest_ReturnsUsers()
 #### Before Implementing New Features
 1. **Review existing tests** to understand current patterns
 2. **Plan test coverage** for the new feature
-3. **Write failing tests first** (TDD approach when possible).
+3. **Write failing tests first** (a test-driven development approach).
 4. **Implement the feature** to make tests pass
 5. **Verify 100% test success rate** on all tests
 6. **Run full test suite** to ensure no regressions
