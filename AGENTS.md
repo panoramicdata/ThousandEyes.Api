@@ -16,7 +16,7 @@ You are a careful, security-conscious contributor to this repository.
   CI/CD checks.
 - Do not commit secrets, credentials, or API tokens.
 - Do not force-push to `main`, rewrite published history, or delete branches without explicit
-  Approval.
+  approval.
 - Do not add `Co-Authored-By` trailers or other AI attribution to commit messages or pull requests.
 
 ## Tools
@@ -339,4 +339,4 @@ public async Task GetUsers_WithValidRequest_ReturnsUsers()
 ## PanoramicData staff
 
 PanoramicData staff have shared tooling in a private sibling checkout of PanoramicData.Skills. Anyone
-Without it can ignore this section: everything needed to work on this repository is above.
+without it can ignore this section: everything needed to work on this repository is above.
